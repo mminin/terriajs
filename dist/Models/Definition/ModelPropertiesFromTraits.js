@@ -1,0 +1,1 @@
+//# sourceMappingURL=ModelPropertiesFromTraits.js.map

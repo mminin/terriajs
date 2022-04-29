@@ -1,0 +1,1 @@
+{"version":3,"file":"HighlightColorTraits.js","sourceRoot":"","sources":["../../../lib/Traits/TraitsClasses/HighlightColorTraits.ts"],"names":[],"mappings":";;;;;;AAAA,OAAO,WAAW,MAAM,gBAAgB,CAAC;AACzC,OAAO,cAAc,MAAM,8BAA8B,CAAC;AAE1D,MAAM,CAAC,OAAO,OAAO,oBAAqB,SAAQ,WAAW;CAQ5D;AADC;IANC,cAAc,CAAC;QACd,IAAI,EAAE,iBAAiB;QACvB,IAAI,EAAE,QAAQ;QACd,WAAW,EACT,qHAAqH;KACxH,CAAC;4DACsB"}

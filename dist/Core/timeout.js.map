@@ -1,0 +1,1 @@
+{"version":3,"file":"timeout.js","sourceRoot":"","sources":["../../lib/Core/timeout.ts"],"names":[],"mappings":"AAAA;;GAEG;AACH,MAAM,CAAC,OAAO,UAAU,OAAO,CAAC,YAAoB;IAClD,OAAO,IAAI,OAAO,CAAC,OAAO,CAAC,EAAE,CAAC,MAAM,CAAC,UAAU,CAAC,OAAO,EAAE,YAAY,CAAC,CAAC,CAAC;AAC1E,CAAC"}

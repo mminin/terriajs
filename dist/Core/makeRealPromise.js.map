@@ -1,0 +1,1 @@
+{"version":3,"file":"makeRealPromise.js","sourceRoot":"","sources":["../../lib/Core/makeRealPromise.ts"],"names":[],"mappings":"AAAA,OAAO,IAAI,MAAM,wCAAwC,CAAC;AAE1D;;;;GAIG;AACH,MAAM,CAAC,OAAO,UAAU,eAAe,CACrC,OAAgC;IAEhC,OAAO,IAAI,OAAO,CAAI,CAAC,OAAO,EAAE,MAAM,EAAE,EAAE;QACxC,IAAI,CAAC,OAAO,EAAE,OAAO,EAAE,MAAM,CAAC,CAAC;IACjC,CAAC,CAAC,CAAC;AACL,CAAC"}

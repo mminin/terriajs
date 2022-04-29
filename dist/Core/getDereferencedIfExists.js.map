@@ -1,0 +1,1 @@
+{"version":3,"file":"getDereferencedIfExists.js","sourceRoot":"","sources":["../../lib/Core/getDereferencedIfExists.ts"],"names":[],"mappings":"AAEA,OAAO,cAAc,MAAM,+BAA+B,CAAC;AAE3D,MAAM,CAAC,OAAO,UAAU,uBAAuB,CAC7C,IAAqC;IAErC,IAAI,cAAc,CAAC,WAAW,CAAC,IAAI,CAAC,IAAI,IAAI,CAAC,MAAM,EAAE;QACnD,OAAO,IAAI,CAAC,MAAM,CAAC;KACpB;IACD,OAAO,IAAI,CAAC;AACd,CAAC"}

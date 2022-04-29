@@ -1,0 +1,1 @@
+{"version":3,"file":"ModelReference.js","sourceRoot":"","sources":["../../lib/Traits/ModelReference.ts"],"names":[],"mappings":"AAYA,IAAU,cAAc,CAQvB;AARD,WAAU,cAAc;IACtB,SAAgB,SAAS,CACvB,SAAyB;QAEzB,OAAO,SAAS;YACd,CAAC,CAAkB,SAAU,CAAC,OAAO,KAAK,SAAS;YACnD,CAAC,CAAC,KAAK,CAAC;IACZ,CAAC;IANe,wBAAS,YAMxB,CAAA;AACH,CAAC,EARS,cAAc,KAAd,cAAc,QAQvB;AAED,eAAe,cAAc,CAAC"}
