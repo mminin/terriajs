@@ -25,6 +25,9 @@ import classNames from "classnames";
 import { observer, disposeOnUnmount } from "mobx-react";
 import { action, reaction, runInAction } from "mobx";
 
+export let currentLongitude = "0";
+export let currentLatitude = "0";
+
 @observer
 class FeatureInfoPanel extends React.Component {
   static propTypes = {
@@ -179,7 +182,9 @@ class FeatureInfoPanel extends React.Component {
   }
 
   pinClicked(longitude, latitude) {
+    console.log(longitude, latitude);
     if (!isMarkerVisible(this.props.terria)) {
+
       this.addManualMarker(longitude, latitude);
     } else {
       removeMarker(this.props.terria);
@@ -229,6 +234,9 @@ class FeatureInfoPanel extends React.Component {
       ? Styles.btnLocationSelected
       : Styles.btnLocation;
 
+    currentLatitude = latitude.toString();
+    currentLongitude = longitude.toString();
+    console.log("updating long lat", currentLatitude, currentLongitude);
     return (
       <div className={Styles.location}>
         <span>Lat / Lon&nbsp;</span>

@@ -27,6 +27,11 @@ import Styles from "./feature-info-section.scss";
 import { runInAction } from "mobx";
 import TableMixin from "../../ModelMixins/TableMixin";
 
+/* IMPORT SPECTRAL PROFILE */
+import { currentLatitude, currentLongitude } from "./FeatureInfoPanel";
+import { spectralActive, spectralApiRequest } from "../Map/Navigation/Items/SpectralProfile";
+import { updateCurrentData } from "./SpectralDisplay";
+
 // We use Mustache templates inside React views, where React does the escaping; don't escape twice, or eg. " => &quot;
 Mustache.escape = function(string) {
   return string;
@@ -77,6 +82,7 @@ export const FeatureInfoSection = observer(
     },
 
     getPropertyValues() {
+      // console.log("calling getPropertyValues");
       return getPropertyValuesForFeature(
         this.props.feature,
         currentTimeIfAvailable(this),
@@ -85,6 +91,7 @@ export const FeatureInfoSection = observer(
     },
 
     getTemplateData() {
+      // console.log("calling getTemplateData");
       const propertyData = Object.assign({}, this.getPropertyValues());
 
       // Alises is a map from `key` (which exists in propertyData.properties) to some `aliasKey` which needs to resolve to `key`
@@ -98,6 +105,7 @@ export const FeatureInfoSection = observer(
 
       // Always overwrite using aliases so that applying titles to columns doesn't break feature info templates
       aliases.forEach(([name, title]) => {
+        // console.log(propertyData[title]);
         propertyData[name] = propertyData[title];
       });
 
@@ -143,12 +151,14 @@ export const FeatureInfoSection = observer(
     },
 
     clickHeader() {
+      // console.log("calling clickHeader");
       if (defined(this.props.onClickHeader)) {
         this.props.onClickHeader(this.props.feature);
       }
     },
 
     hasTemplate() {
+      // console.log("calling hasTemplate");
       return (
         this.props.template &&
         (typeof this.props.template === "string" ||
@@ -157,6 +167,7 @@ export const FeatureInfoSection = observer(
     },
 
     descriptionFromTemplate() {
+      // console.log("calling descriptionFromTemplate");
       const { t } = this.props;
       const template = this.props.template;
       const templateData = this.getTemplateData();
@@ -164,6 +175,7 @@ export const FeatureInfoSection = observer(
       // templateData may not be defined if a re-render gets triggered in the middle of a feature updating.
       // (Recall we re-render whenever feature.definitionChanged triggers.)
       if (defined(templateData)) {
+        console.log(templateData);
         return typeof template === "string"
           ? Mustache.render(template, templateData)
           : Mustache.render(template.template, templateData, template.partials);
@@ -173,6 +185,7 @@ export const FeatureInfoSection = observer(
     },
 
     descriptionFromFeature() {
+      // console.log("calling descriptionFromFeature");
       const feature = this.props.feature;
       const showStringIfPropertyValueIsNull =
         this.props.catalogItem === undefined
@@ -201,12 +214,17 @@ export const FeatureInfoSection = observer(
     },
 
     renderDataTitle() {
+      // console.log("calling renderDataTitle");
+      // console.log("using siteData");
       const { t } = this.props;
       const template = this.props.template;
       if (typeof template === "object" && defined(template.name)) {
-        return Mustache.render(template.name, this.getPropertyValues());
+        return Mustache.render(template.name, this.getPropertyValues());  
       }
       const feature = this.props.feature;
+      // console.log(feature);
+      // console.log(feature.name);
+      // console.log(t("featureInfo.siteData"));
       return (feature && feature.name) || t("featureInfo.siteData");
     },
 
@@ -463,6 +481,7 @@ function getPropertyValuesForFeature(feature, currentTime, formats) {
 }
 
 function parseValues(properties) {
+  console.log("parsing Values");
   // JSON.parse property values that look like arrays or objects
   const result = {};
   for (const key in properties) {
@@ -477,9 +496,22 @@ function parseValues(properties) {
           val = JSON.parse(val);
         } catch (e) {}
       }
+       if (key == "ProductId") {
+        console.log(key, val);
+
+        /* IF SPECTRAL TOOL IS ACTIVE THEN PERFORM THE API REQUEST ON CLICK ON THE MAP */
+        if (spectralActive) {
+          // spectralApiRequest(val, currentLatitude, currentLongitude);
+          updateCurrentData(val, currentLatitude, currentLongitude);
+        }
+      }
+
       result[key] = val;
     }
   }
+
+  
+
   return result;
 }
 

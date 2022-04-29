@@ -98,6 +98,13 @@ export default class ViewState {
 
   @observable printWindow: Window | null = null;
 
+  /* SPECTRAL PROFILE */
+  @observable spectralProfileActive: boolean = false;
+
+  @action setSpectralProfileActive(bool: boolean){
+    this.spectralProfileActive = bool;
+  }
+
   @action
   setSelectedTrainerItem(trainerItem: string) {
     this.selectedTrainerItem = trainerItem;

@@ -127,7 +127,10 @@ export const GLYPHS = {
   minimize: require("../../wwwroot/images/icons/minimize.svg"),
   maximize: require("../../wwwroot/images/icons/maximize.svg"),
   closeTool: require("../../wwwroot/images/icons/close-tool.svg"),
-  moreItems: require("../../wwwroot/images/icons/more-items.svg")
+  moreItems: require("../../wwwroot/images/icons/more-items.svg"),
+
+  spectral: require("../../wwwroot/images/icons/spectral.svg"),
+  spectralOn: require("../../wwwroot/images/icons/spectralOn.svg"),
 };
 
 interface IconProps {

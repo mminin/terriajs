@@ -11,6 +11,7 @@ import DragDropFile from "../DragDropFile";
 import DragDropNotification from "./../DragDropNotification";
 import ExplorerWindow from "../ExplorerWindow/ExplorerWindow";
 import FeatureInfoPanel from "../FeatureInfo/FeatureInfoPanel";
+import SpectralDisplay from "../FeatureInfo/SpectralDisplay";
 import FeedbackForm from "../Feedback/FeedbackForm";
 import MapColumn from "./MapColumn";
 import MapInteractionWindow from "../Notification/MapInteractionWindow";
@@ -145,6 +146,10 @@ const StandardUserInterface = observer(
       ]),
       t: PropTypes.func.isRequired
     },
+
+    // getInitialState() {
+    //   return { isSpectralActive: false };
+    // },
 
     getDefaultProps() {
       return { minimumLargeScreenWidth: 768 };
@@ -449,6 +454,9 @@ const StandardUserInterface = observer(
               >
                 <FeatureInfoPanel
                   terria={terria}
+                  viewState={this.props.viewState}
+                />
+                <SpectralDisplay 
                   viewState={this.props.viewState}
                 />
               </div>

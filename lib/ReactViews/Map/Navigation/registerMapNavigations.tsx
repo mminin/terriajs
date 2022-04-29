@@ -27,6 +27,8 @@ import MyLocation from "./Items/MyLocation";
 import { ToggleSplitterController } from "./Items/ToggleSplitterTool";
 import ZoomControl, { ZOOM_CONTROL_ID } from "./Items/ZoomControl";
 
+import SpectralProfile from "./Items/SpectralProfile";
+
 export const CLOSE_TOOL_ID = "close-tool";
 
 export const registerMapNavigations = (viewState: ViewState) => {
@@ -46,6 +48,17 @@ export const registerMapNavigations = (viewState: ViewState) => {
     order: 1,
     screenSize: "medium",
     render: <Compass terria={terria} viewState={viewState} />
+  });
+
+  /* CUSTOM SPECTRAL PROFILE TOOL */
+  const spectralProfile = new SpectralProfile(viewState);
+  mapNavigationModel.addItem({
+    id: SpectralProfile.id,
+    name: "Spectral Profile",
+    controller: spectralProfile,
+    location: "TOP",
+    order: 7,
+    screenSize: undefined
   });
 
   const zoomToolController = new GenericMapNavigationItemController({
