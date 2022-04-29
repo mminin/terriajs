@@ -91,6 +91,17 @@ function EmptyWorkbench(props) {
           </Box>
           <ResponsiveSpacing />
         </BoxHelpfulHints>
+        <Box>
+          <div style={{ display: "flex", alignItems: "flex-end" }}>
+            <p style={{ fontSize: "10px", padding: "15px" }}>
+              "This project has received funding from the European Union’s
+              Horizon 2020 research and innovation programme under grant
+              agreement No 101004214. This web site reflects only the author’s
+              view and the Commission is not responsible for any use that may be
+              made of the information it contains."
+            </p>
+          </div>
+        </Box>
       </Box>
     </Text>
   );
