@@ -100,10 +100,95 @@ export default class ViewState {
 
   /* SPECTRAL PROFILE */
   @observable spectralProfileActive: boolean = false;
+  @observable spectralLocationSelected: boolean = false;
+  @observable currentSpectralImage: string = "";
+  @observable spectralAtomic: boolean = false;
 
   @action setSpectralProfileActive(bool: boolean){
     this.spectralProfileActive = bool;
   }
+
+  @action setSpectralLocationSelected(bool: boolean){
+    this.spectralLocationSelected = bool;
+  }
+
+  @action setCurrentSpectralImage(str: string){
+    this.currentSpectralImage = str;
+  }
+
+  @action setSpectralAtomic(bool: boolean){
+    // console.log("setting atomic to: ", bool);
+    this.spectralAtomic = bool;
+  }
+
+  @observable spectralDataObject: object = {
+    image_id: "",
+    lat: "",
+    lon: ""
+  };
+
+  @action setSpectralDataObject(id:string, latitude:string, longitude:string){
+    this.spectralDataObject = {
+      image_id:id,
+      lat:latitude,
+      lon:longitude
+    };
+  }
+
+  @observable spectralX: number[] = [];
+
+  @action setSpectralX(arr: number[]){
+    this.spectralX = [...arr];
+  }
+
+  @observable spectralY: number[] = [];
+
+  @action setSpectralY(arr: number[]){
+    this.spectralY = arr;
+  }
+
+  @observable currentSpectralArray: any[] = [];
+
+  @action 
+  addObjectToSpectralArray(obj: object){
+    this.currentSpectralArray.push(obj);
+  }
+
+  @action 
+  nullifyArray(){
+     this.currentSpectralArray.length = 0;
+  }
+
+  @computed
+  get getSpectralArrayObject(){
+    return (
+      this.currentSpectralArray
+    );
+  }
+
+  @computed
+  get getSpectralArrayLength(){
+    return (
+      this.currentSpectralArray.length
+    );
+  }
+
+  @observable spectralCounter: number = 0;
+
+  @action
+  incrementSpectralCounter(){
+    this.spectralCounter += 1;
+    console.log("spectral counter ", this.spectralCounter);
+  }
+
+  @action
+  nullifySpectralCounter(){
+    this.spectralCounter = 0;
+    console.log("spectral counter ", this.spectralCounter);
+  }
+
+
+  /* THE REMAINING STATES */
 
   @action
   setSelectedTrainerItem(trainerItem: string) {

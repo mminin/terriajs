@@ -14,7 +14,7 @@ export function setSpectralActive(val: boolean){
 	spectralActive = val;
 }
 
-export function spectralApiRequest(imageName: string, latitude: string, longitude: string){
+export function spectralApiRequest(imageName: string, latitude: string, longitude: string, that: any){
 	let link = "http://10.72.254.130:5000/get-spectra/?";
 	let params = {
 		image_id: imageName,
@@ -33,7 +33,12 @@ export function spectralApiRequest(imageName: string, latitude: string, longitud
 	fetch(link)
 	.then(response => response.json())
 	.then(data => {
-		console.log(data);
+		console.log("api req:", data);
+		that.props.viewState.setSpectralX(data.X);
+		that.props.viewState.setSpectralY(data.Y);
+		console.log("api x:", that.props.viewState.spectralX);
+		console.log("api y:", that.props.viewState.spectralY);
+		return data;
 	});
 }
 

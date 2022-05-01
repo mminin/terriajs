@@ -24,7 +24,7 @@ import parseCustomMarkdownToReact from "../Custom/parseCustomMarkdownToReact";
 import { withTranslation } from "react-i18next";
 
 import Styles from "./feature-info-section.scss";
-import { runInAction } from "mobx";
+import { action, runInAction } from "mobx";
 import TableMixin from "../../ModelMixins/TableMixin";
 
 /* IMPORT SPECTRAL PROFILE */
@@ -86,9 +86,20 @@ export const FeatureInfoSection = observer(
       return getPropertyValuesForFeature(
         this.props.feature,
         currentTimeIfAvailable(this),
-        this.props.template && this.props.template.formats
+        this.props.template && this.props.template.formats,
+        this
       );
     },
+
+    /* UPDATE SPECTRAL DATA */
+    
+    // updateSpectralState(){
+    //   this.props.viewState.spectralDataObject = {
+    //     image_id: 0,
+    //     lat: 0,
+    //     lon: 0
+    //   };
+    // },
 
     getTemplateData() {
       // console.log("calling getTemplateData");
@@ -463,7 +474,7 @@ function removeSubscriptionsAndTimeouts(featureInfoSection) {
  * @param {JulianDate} currentTime A knockout observable containing the currentTime.
  * @param {Object} [formats] A map of property labels to the number formats that should be applied for them.
  */
-function getPropertyValuesForFeature(feature, currentTime, formats) {
+function getPropertyValuesForFeature(feature, currentTime, formats, that) {
   // Manipulate the properties before templating them.
   // If they require .getValue, apply that.
   // If they have bad keys, fix them.
@@ -472,7 +483,7 @@ function getPropertyValuesForFeature(feature, currentTime, formats) {
     feature.currentProperties ||
     propertyGetTimeValues(feature.properties, currentTime);
   // Try JSON.parse on values that look like JSON arrays or objects
-  let result = parseValues(properties);
+  let result = parseValues(properties, that);
   result = replaceBadKeyCharacters(result);
   if (defined(formats)) {
     applyFormatsInPlace(result, formats);
@@ -480,8 +491,8 @@ function getPropertyValuesForFeature(feature, currentTime, formats) {
   return result;
 }
 
-function parseValues(properties) {
-  console.log("parsing Values");
+function parseValues(properties, that) {
+  // console.log("parsing Values");
   // JSON.parse property values that look like arrays or objects
   const result = {};
   for (const key in properties) {
@@ -497,12 +508,26 @@ function parseValues(properties) {
         } catch (e) {}
       }
        if (key == "ProductId") {
-        console.log(key, val);
+        // console.log(key, val);
 
         /* IF SPECTRAL TOOL IS ACTIVE THEN PERFORM THE API REQUEST ON CLICK ON THE MAP */
-        if (spectralActive) {
-          // spectralApiRequest(val, currentLatitude, currentLongitude);
-          updateCurrentData(val, currentLatitude, currentLongitude);
+        if (spectralActive && !that.props.viewState.spectralLocationSelected) {
+          // updateCurrentData(val, currentLatitude, currentLongitude);
+
+          // that.props.viewState.setCurrentSpectralImage(val);
+
+          // console.log("current", currentLatitude, currentLongitude);
+          // console.log("global", that.props.viewState.spectralDataObject.lat, that.props.viewState.spectralDataObject.lon);
+
+          if (currentLongitude != that.props.viewState.spectralDataObject.lon || 
+              currentLatitude  != that.props.viewState.spectralDataObject.lat){
+            that.props.viewState.setSpectralAtomic(true);
+          }
+
+          // console.log(spectralApiRequest(val, currentLatitude, currentLongitude));
+          that.props.viewState.setSpectralLocationSelected(true);
+          that.props.viewState.setSpectralDataObject(val, currentLatitude, currentLongitude);
+          console.log("spectralDataObject: ", that.props.viewState.spectralDataObject);
         }
       }
 

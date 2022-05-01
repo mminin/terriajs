@@ -234,8 +234,10 @@ class FeatureInfoPanel extends React.Component {
       ? Styles.btnLocationSelected
       : Styles.btnLocation;
 
-    currentLatitude = latitude.toString();
-    currentLongitude = longitude.toString();
+
+    this.props.viewState.setSpectralLocationSelected(false);
+    currentLatitude = latitude.toFixed(3);
+    currentLongitude = longitude.toFixed(3);
     console.log("updating long lat", currentLatitude, currentLongitude);
     return (
       <div className={Styles.location}>

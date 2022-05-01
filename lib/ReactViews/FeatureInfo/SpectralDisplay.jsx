@@ -12,23 +12,33 @@ import "./spectral-display.scss";
 
 import { spectralActive } from "../Map/Navigation/Items/SpectralProfile";
 
-let currentData = {
-	image_id: null,
-	lat: null,
-	lon: null
+// First set of colors to appear, then plotly puts its own colors
+const colors = [
+	"red",
+	"yellow",
+	"blue",
+	"green",
+	"brown",
+	"orange",
+	"purple"
+];
+
+let dataObj = {
+	Y:[],
+	X:[]
 };
 
-export function updateCurrentData(imageName, latitude, longitude){
-	currentData = {
-		image_id: imageName,
-		lat: latitude,
-		lon: longitude
-	};
+let graphArray = [
+	{
+		x: [],
+		y: [],
+		type: 'scatter',
+		mode: 'lines+markers',
+        marker: {color: 'red'},
+    }
+];
 
-	console.log("updated data: ", currentData);
-}
-
-let dataObj;
+let currentImage = "";
 
 function spectralApiRequest(imageName, latitude, longitude){
 	let link = "http://10.72.254.130:5000/get-spectra/?";
@@ -36,7 +46,7 @@ function spectralApiRequest(imageName, latitude, longitude){
 		image_id: imageName,
 		lat: latitude,
 		lon: longitude,
-	}
+	};
 		
 	Object.entries(params).forEach(([key, value]) => {
 		// console.log(key, value);
@@ -46,14 +56,8 @@ function spectralApiRequest(imageName, latitude, longitude){
 	link = link.slice(0, -1);
 	// console.log("link", link);
 
-	fetch(link)
-	.then(response => response.json())
-	.then(data => {
-		dataObj = Object.assign({}, data);
-		// console.log(data);
-		console.log("data object:", dataObj);
-	});
-	return dataObj;
+
+
 }
 
 @observer
@@ -62,19 +66,65 @@ export default class SpectralDisplay extends React.Component {
 		viewState: PropTypes.object.isRequired,
 	};
 
-	constructor(){
-		super();
-		this.state = {
-			spectralData:Object.assign({}, spectralApiRequest("M3_Archytas", "50", "100")),
-		};
+	updateData(obj, newImg){
+		const that = this;
 
-		this.handleClick = this.handleClick.bind(this);
+		dataObj.X = obj.X;
+		dataObj.Y = obj.Y;
+		console.log("setting dataObj ", dataObj);
+
+		let entry = that.props.viewState.spectralDataObject.lat + " / " +  that.props.viewState.spectralDataObject.lat;
+
+ 		if(newImg){
+			// that.props.viewState.nullifyArray();
+			// that.props.viewState.addObjectToSpectralArray(obj);
+			graphArray.length = 0;
+			graphArray.push({
+	          	x: dataObj.X,
+	          	y: dataObj.Y,
+	          	name: entry,
+	          	type: 'scatter',
+	          	mode: 'lines+markers',
+	          	marker: {color: colors[that.props.viewState.spectralCounter]}
+	        });
+			that.props.viewState.nullifySpectralCounter();	
+			that.props.viewState.incrementSpectralCounter();
+		} else {
+			graphArray.push({
+	          	x: dataObj.X,
+	          	y: dataObj.Y,
+	          	name: entry,
+	          	type: 'scatter',
+	          	mode: 'lines+markers',
+	          	marker: {color: colors[that.props.viewState.spectralCounter]}
+	        });
+			// that.props.viewState.addObjectToSpectralArray(obj);
+			that.props.viewState.incrementSpectralCounter();
+		}
 	}
 
-	handleClick(){
-		console.log(this.props.viewState.spectralProfileActive);
-		this.setState({
-			spectralData:Object.assign({}, spectralApiRequest(currentData.image_id, currentData.lat, currentData.lon)),
+	apiRequest(obj, newImg){
+		const that = this;
+		let link = "http://10.72.254.130:5000/get-spectra/?";
+		let params = {
+			image_id: obj.image_id,
+			lat: obj.lat,
+			lon: obj.lon,
+		};
+			
+		Object.entries(params).forEach(([key, value]) => {
+			// console.log(key, value);
+			link = link.concat(key, "=", value, "&");
+		});
+
+		link = link.slice(0, -1);
+		// console.log("link", link);
+
+		fetch(link)
+		.then((res) => res.json())
+		.then((res) => {
+			console.log("fetching data", res);
+			this.updateData(res, newImg);
 		});
 	}
 
@@ -85,28 +135,51 @@ export default class SpectralDisplay extends React.Component {
 			height: "500px"
 		};
 
+
+		/* when we allow changes, to avoid repeating the calls, 
+		   for some reason the render is invoked multiple times */
+		if (this.props.viewState.spectralAtomic){
+			/*if currentImage and newImage are different*/
+			if(currentImage != this.props.viewState.spectralDataObject.image_id){
+				console.log("Nullifying the array");
+
+				this.apiRequest(
+		        	this.props.viewState.spectralDataObject,
+		        	true
+		        );
+
+				currentImage = this.props.viewState.spectralDataObject.image_id;
+
+				this.props.viewState.setSpectralAtomic(false);
+			} else {
+				console.log("Adding to array")
+
+				this.apiRequest(
+		        	this.props.viewState.spectralDataObject,
+		        	false
+		        );
+				
+				this.props.viewState.setSpectralAtomic(false);
+			}
+		}
+
+
+		console.log(graphArray);
+		
+
 		if (this.props.viewState.spectralProfileActive){
 			return(
 				<DragWrapper>
-					<button onClick={this.handleClick}>reload values</button>
 					<div style={style}>
 						<Plot
-					        data={[
-					          {
-					            x: this.state.spectralData["X"],
-					            y: this.state.spectralData["Y"],
-					            type: 'scatter',
-					            mode: 'lines+markers',
-					            marker: {color: 'red'},
-					          }
-					        ]}
+					        data={graphArray}
 					        layout={{
 					        	width: 500, 
 					        	height: 500, 
-					        	title: this.state.spectralData["NAME"],
-					        	showlegend: false,
+					        	title: "Image: " + currentImage + ", Traces: " + this.props.viewState.spectralCounter + " (latitude/longitude)",
+					        	showlegend: true,
 					        	xaxis: {autorange: true},
-					        	yaxis: {autorange: true}
+					        	yaxis: {autorange: true},
 					        }}
 					        config={{
 					        	scale: 1,
@@ -122,3 +195,5 @@ export default class SpectralDisplay extends React.Component {
 		}
 	}
 }
+
+
