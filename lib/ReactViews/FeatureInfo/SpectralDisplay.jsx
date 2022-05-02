@@ -73,7 +73,7 @@ export default class SpectralDisplay extends React.Component {
 		dataObj.Y = obj.Y;
 		console.log("setting dataObj ", dataObj);
 
-		let entry = that.props.viewState.spectralDataObject.lat + " / " +  that.props.viewState.spectralDataObject.lat;
+		let entry = that.props.viewState.spectralDataObject.lat + " / " +  that.props.viewState.spectralDataObject.lon;
 
  		if(newImg){
 			// that.props.viewState.nullifyArray();
