@@ -236,8 +236,8 @@ class FeatureInfoPanel extends React.Component {
 
 
     this.props.viewState.setSpectralLocationSelected(false);
-    currentLatitude = latitude.toFixed(3);
-    currentLongitude = longitude.toFixed(3);
+    currentLatitude = latitude.toFixed(6);
+    currentLongitude = longitude.toFixed(6);
     console.log("updating long lat", currentLatitude, currentLongitude);
     return (
       <div className={Styles.location}>
@@ -454,7 +454,7 @@ function getFeaturesGroupedByCatalogItems(terria) {
 }
 
 export function determineCatalogItem(workbench, feature) {
-  // If the feature is a marker return a fake item
+  // If the feature is a marker return a fake 3
   if (feature.entityCollection && feature.entityCollection.owner) {
     const dataSource = feature.entityCollection.owner;
     if (dataSource.name === LOCATION_MARKER_DATA_SOURCE_NAME) {

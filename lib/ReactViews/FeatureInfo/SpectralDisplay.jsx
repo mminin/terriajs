@@ -40,14 +40,19 @@ let graphArray = [
 
 let currentImage = "";
 
+// Intended format: [[title],[image_id, lat, lon, reflectance:Y], [...], ...];
+let csv = [];
+let csvTitle = ["ImageID", "LAT", "LON", 540.840,580.760,620.690,660.610,700.540,730.480,750.440,770.400,790.370,810.330,830.290,850.250,870.210,890.170,910.140,930.100,950.060,970.020,989.980,1009.95,1029.91,1049.87,1069.83,1089.79,1109.76,1129.72,1149.68,1169.64,1189.60,1209.57,1229.53,1249.49,1269.45,1289.41,1309.38,1329.34,1349.30,1369.26,1389.22,1409.19,1429.15,1449.11,1469.07,1489.03,1508.99,1528.96,1548.92,1578.86,1618.79,1658.71,1698.63,1738.56,1778.48,1818.40,1858.33,1898.25,1938.18,1978.10,2018.02,2057.95,2097.87,2137.80,2177.72,2217.64,2257.57,2297.49,2337.42,2377.34,2417.26,2457.19,2497.11,2537.03,2576.96,2616.88,2656.81,2696.73,2736.65,2776.58,2816.50,2856.43,2896.35,2936.27,2976.200];
+
+
 function spectralApiRequest(imageName, latitude, longitude){
-	let link = "http://10.72.254.130:5000/get-spectra/?";
+	let link = "https://explore.jacobs-university.de/explore-api/get-spectra/?";
 	let params = {
 		image_id: imageName,
 		lat: latitude,
 		lon: longitude,
 	};
-		
+
 	Object.entries(params).forEach(([key, value]) => {
 		// console.log(key, value);
 		link = link.concat(key, "=", value, "&");
@@ -73,7 +78,10 @@ export default class SpectralDisplay extends React.Component {
 		dataObj.Y = obj.Y;
 		console.log("setting dataObj ", dataObj);
 
-		let entry = that.props.viewState.spectralDataObject.lat + " / " +  that.props.viewState.spectralDataObject.lon;
+		const lat = that.props.viewState.spectralDataObject.lat;
+		const lon = that.props.viewState.spectralDataObject.lon;
+
+		let entry = lat + " / " +  lon;
 
  		if(newImg){
 			// that.props.viewState.nullifyArray();
@@ -87,7 +95,12 @@ export default class SpectralDisplay extends React.Component {
 	          	mode: 'lines+markers',
 	          	marker: {color: colors[that.props.viewState.spectralCounter]}
 	        });
-			that.props.viewState.nullifySpectralCounter();	
+
+			csv.length = 0;
+			csv.unshift(csvTitle);
+			csv.push([currentImage, lat, lon, dataObj.Y]);
+
+			that.props.viewState.nullifySpectralCounter();
 			that.props.viewState.incrementSpectralCounter();
 		} else {
 			graphArray.push({
@@ -99,6 +112,8 @@ export default class SpectralDisplay extends React.Component {
 	          	marker: {color: colors[that.props.viewState.spectralCounter]}
 	        });
 			// that.props.viewState.addObjectToSpectralArray(obj);
+			csv.push([currentImage, lat, lon, dataObj.Y]);
+
 			that.props.viewState.incrementSpectralCounter();
 		}
 	}
@@ -111,7 +126,7 @@ export default class SpectralDisplay extends React.Component {
 			lat: obj.lat,
 			lon: obj.lon,
 		};
-			
+
 		Object.entries(params).forEach(([key, value]) => {
 			// console.log(key, value);
 			link = link.concat(key, "=", value, "&");
@@ -128,15 +143,47 @@ export default class SpectralDisplay extends React.Component {
 		});
 	}
 
+	resetPlot(){
+		const that = this;
+
+		graphArray.length = 0;
+		csv.length = 0;
+		currentImage = "";
+		that.props.viewState.nullifySpectralCounter();
+
+		console.log("reset");
+	}
+
+	downloadCSV(){
+		const that = this;
+
+		let csvContent = "";
+
+		csv.forEach(function(csvArray){
+			let row = csvArray.join(";");
+			csvContent += row + "\r\n";
+		});
+		
+		csvContent = csvContent.replaceAll(',', ';').replace(/\./g, ',');
+
+		let link = document.createElement("a");
+		link.href = 'data:attachment/csv,' + encodeURIComponent(csvContent);
+		link.target = '_blank';
+		link.download = 'data.csv';
+		document.body.appendChild(link);
+
+		link.click();
+	}
+
 	render(){
 		const style = {
 			backgroundColor: "#fff",
-			width: "500px",
+			width: "800px",
 			height: "500px"
 		};
 
 
-		/* when we allow changes, to avoid repeating the calls, 
+		/* when we allow changes, to avoid repeating the calls,
 		   for some reason the render is invoked multiple times */
 		if (this.props.viewState.spectralAtomic){
 			/*if currentImage and newImage are different*/
@@ -158,14 +205,14 @@ export default class SpectralDisplay extends React.Component {
 		        	this.props.viewState.spectralDataObject,
 		        	false
 		        );
-				
+
 				this.props.viewState.setSpectralAtomic(false);
 			}
 		}
 
 
 		console.log(graphArray);
-		
+
 
 		if (this.props.viewState.spectralProfileActive){
 			return(
@@ -174,17 +221,52 @@ export default class SpectralDisplay extends React.Component {
 						<Plot
 					        data={graphArray}
 					        layout={{
-					        	width: 500, 
-					        	height: 500, 
+					        	width: 800,
+					        	height: 500,
 					        	title: "Image: " + currentImage + ", Traces: " + this.props.viewState.spectralCounter + " (latitude/longitude)",
 					        	showlegend: true,
-					        	xaxis: {autorange: true},
-					        	yaxis: {autorange: true},
+					        	xaxis: {autorange: true,
+											showgrid: true,
+											zeroline: true,
+											showline: true,
+											mirror: 'ticks',
+											gridcolor: '#bdbdbd',
+											gridwidth: 2,
+											autotick: false,
+											ticks: 'outside',
+											tick0: 500,
+											dtick: 250,
+											ticklen: 8,
+											tickwidth: 4,
+											tickcolor: '#000',
+											title:"Wavelength (nm)"
+													},
+					        	yaxis: {autorange: true,
+											showgrid: true,
+											zeroline: true,
+											showline: true,
+											mirror: 'ticks',
+											gridcolor: '#bdbdbd',
+											gridwidth: 2,
+											autotick: true,
+											ticks: 'outside',
+									    tick0: 0,
+									    //dtick: 0.025,
+									    ticklen: 8,
+									    tickwidth: 4,
+									    tickcolor: '#000',
+											title: "Normalized Reflectance"
+													},
 					        }}
 					        config={{
 					        	scale: 1,
 					        }}
 					      />
+								
+					</div>
+					<div className="plot-btn-group">
+						<button onClick={()=>this.resetPlot()}><span>Reset</span></button>
+						<button onClick={()=>this.downloadCSV()}><span>Download CSV</span></button>
 					</div>
 				</DragWrapper>
 			);
@@ -195,5 +277,3 @@ export default class SpectralDisplay extends React.Component {
 		}
 	}
 }
-
-
