@@ -44,27 +44,6 @@ let currentImage = "";
 let csv = [];
 let csvTitle = ["ImageID", "LAT", "LON", 540.840,580.760,620.690,660.610,700.540,730.480,750.440,770.400,790.370,810.330,830.290,850.250,870.210,890.170,910.140,930.100,950.060,970.020,989.980,1009.95,1029.91,1049.87,1069.83,1089.79,1109.76,1129.72,1149.68,1169.64,1189.60,1209.57,1229.53,1249.49,1269.45,1289.41,1309.38,1329.34,1349.30,1369.26,1389.22,1409.19,1429.15,1449.11,1469.07,1489.03,1508.99,1528.96,1548.92,1578.86,1618.79,1658.71,1698.63,1738.56,1778.48,1818.40,1858.33,1898.25,1938.18,1978.10,2018.02,2057.95,2097.87,2137.80,2177.72,2217.64,2257.57,2297.49,2337.42,2377.34,2417.26,2457.19,2497.11,2537.03,2576.96,2616.88,2656.81,2696.73,2736.65,2776.58,2816.50,2856.43,2896.35,2936.27,2976.200];
 
-
-function spectralApiRequest(imageName, latitude, longitude){
-	let link = "https://explore.jacobs-university.de/explore-api/get-spectra/?";
-	let params = {
-		image_id: imageName,
-		lat: latitude,
-		lon: longitude,
-	};
-
-	Object.entries(params).forEach(([key, value]) => {
-		// console.log(key, value);
-		link = link.concat(key, "=", value, "&");
-	});
-
-	link = link.slice(0, -1);
-	// console.log("link", link);
-
-
-
-}
-
 @observer
 export default class SpectralDisplay extends React.Component {
 	static PropTypes = {

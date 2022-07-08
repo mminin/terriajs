@@ -459,6 +459,9 @@ const StandardUserInterface = observer(
                 <SpectralDisplay 
                   viewState={this.props.viewState}
                 />
+               {/* <BandDisplay 
+                  viewState={this.props.viewState}
+                />*/}
               </div>
               <DragDropFile
                 terria={this.props.terria}

@@ -187,6 +187,9 @@ export default class ViewState {
     console.log("spectral counter ", this.spectralCounter);
   }
 
+  /* BAND PROFILE STATES */
+
+  @observable bandProfileActive: boolean = false;
 
   /* THE REMAINING STATES */
 

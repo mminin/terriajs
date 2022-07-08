@@ -131,6 +131,9 @@ export const GLYPHS = {
 
   spectral: require("../../wwwroot/images/icons/spectral.svg"),
   spectralOn: require("../../wwwroot/images/icons/spectralOn.svg"),
+
+  band: require("../../wwwroot/images/icons/band.svg"),
+  bandOn: require("../../wwwroot/images/icons/bandOn.svg"),
 };
 
 interface IconProps {
