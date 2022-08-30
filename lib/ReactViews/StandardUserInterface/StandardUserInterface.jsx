@@ -12,6 +12,7 @@ import DragDropNotification from "./../DragDropNotification";
 import ExplorerWindow from "../ExplorerWindow/ExplorerWindow";
 import FeatureInfoPanel from "../FeatureInfo/FeatureInfoPanel";
 import SpectralDisplay from "../FeatureInfo/SpectralDisplay";
+import BandDisplay from "../FeatureInfo/BandDisplay";
 import FeedbackForm from "../Feedback/FeedbackForm";
 import MapColumn from "./MapColumn";
 import MapInteractionWindow from "../Notification/MapInteractionWindow";
@@ -459,9 +460,9 @@ const StandardUserInterface = observer(
                 <SpectralDisplay 
                   viewState={this.props.viewState}
                 />
-               {/* <BandDisplay 
+               <BandDisplay 
                   viewState={this.props.viewState}
-                />*/}
+                />
               </div>
               <DragDropFile
                 terria={this.props.terria}
