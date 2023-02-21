@@ -3,16 +3,15 @@ import SelectableDimensions, {
   Placement,
   SelectableDimension,
   SelectableDimensionCheckbox,
-  SelectableDimensionSelect,
+  SelectableDimensionEnum,
   filterSelectableDimensions,
   findSelectedValueName
-} from "../../lib/Models/SelectableDimensions";
+} from "../../lib/Models/SelectableDimensions/SelectableDimensions";
 
 describe("SelectableDimension", () => {
   describe("filterSelectableDimensions", () => {
-    const filterDefaultPlacement = filterSelectableDimensions(
-      DEFAULT_PLACEMENT
-    );
+    const filterDefaultPlacement =
+      filterSelectableDimensions(DEFAULT_PLACEMENT);
 
     it("should filter out selectable dimensions with no options", () => {
       const dimWithNoOptions: SelectableDimension = {
@@ -60,9 +59,8 @@ describe("SelectableDimension", () => {
     });
   });
   it("should return disabled for checkboxes with no selection", () => {
-    const checkboxWithNoSelection: SelectableDimension = mkSelectableCheckbox(
-      DEFAULT_PLACEMENT
-    );
+    const checkboxWithNoSelection: SelectableDimension =
+      mkSelectableCheckbox(DEFAULT_PLACEMENT);
     expect(findSelectedValueName(checkboxWithNoSelection)).toBe("Disabled");
   });
   it("should return enabled for checkboxes with true selection", () => {
@@ -89,7 +87,7 @@ function mkSelectableCheckbox(
 function mkSelectableSelect(
   placement: Placement | undefined = undefined,
   options: any[] = []
-): SelectableDimensionSelect {
+): SelectableDimensionEnum {
   return {
     type: "select",
     setDimensionValue: () => undefined,

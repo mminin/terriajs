@@ -2,10 +2,11 @@ import CatalogMemberFactory from "../../Models/Catalog/CatalogMemberFactory";
 import modelReferenceArrayTrait from "../Decorators/modelReferenceArrayTrait";
 import primitiveArrayTrait from "../Decorators/primitiveArrayTrait";
 import primitiveTrait from "../Decorators/primitiveTrait";
+import mixTraits from "../mixTraits";
 import ModelReference from "../ModelReference";
-import ModelTraits from "../ModelTraits";
+import { ItemPropertiesTraits } from "./ItemPropertiesTraits";
 
-export default class GroupTraits extends ModelTraits {
+export default class GroupTraits extends mixTraits(ItemPropertiesTraits) {
   @primitiveArrayTrait({
     name: "Exclude members",
     type: "string",
@@ -22,12 +23,19 @@ export default class GroupTraits extends ModelTraits {
   isOpen: boolean = false;
 
   @primitiveTrait({
+    name: "Merge by name",
+    description: "Merge member groups by name.",
+    type: "boolean"
+  })
+  mergeGroupsByName: boolean = false;
+
+  @primitiveTrait({
     name: "Sort members by",
     description:
       "Sort members by the given property/trait. For example `name`, will sort all members by alphabetically",
     type: "string"
   })
-  sortMembersBy: string | undefined;
+  sortMembersBy?: string;
 
   @modelReferenceArrayTrait({
     name: "Members",

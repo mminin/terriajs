@@ -10,7 +10,7 @@ import {
 import Mustache from "mustache";
 import URI from "urijs";
 import isDefined from "../../../Core/isDefined";
-import { JsonObject } from "../../../Core/Json";
+import { JsonObject, isJsonObject } from "../../../Core/Json";
 import TerriaError from "../../../Core/TerriaError";
 import CatalogFunctionJobMixin from "../../../ModelMixins/CatalogFunctionJobMixin";
 import CatalogMemberMixin from "../../../ModelMixins/CatalogMemberMixin";
@@ -19,18 +19,18 @@ import xml2json from "../../../ThirdParty/xml2json";
 import { ShortReportTraits } from "../../../Traits/TraitsClasses/CatalogMemberTraits";
 import { FeatureInfoTemplateTraits } from "../../../Traits/TraitsClasses/FeatureInfoTraits";
 import WebProcessingServiceCatalogFunctionJobTraits from "../../../Traits/TraitsClasses/WebProcessingServiceCatalogFunctionJobTraits";
-import CatalogMemberFactory from "../CatalogMemberFactory";
 import CommonStrata from "../../Definition/CommonStrata";
 import CreateModel from "../../Definition/CreateModel";
 import createStratumInstance from "../../Definition/createStratumInstance";
-import GeoJsonCatalogItem from "../CatalogItems/GeoJsonCatalogItem";
 import LoadableStratum from "../../Definition/LoadableStratum";
 import { BaseModel } from "../../Definition/Model";
-import proxyCatalogItemUrl from "../proxyCatalogItemUrl";
 import StratumFromTraits from "../../Definition/StratumFromTraits";
 import StratumOrder from "../../Definition/StratumOrder";
 import updateModelFromJson from "../../Definition/updateModelFromJson";
 import upsertModelFromJson from "../../Definition/upsertModelFromJson";
+import GeoJsonCatalogItem from "../CatalogItems/GeoJsonCatalogItem";
+import CatalogMemberFactory from "../CatalogMemberFactory";
+import proxyCatalogItemUrl from "../proxyCatalogItemUrl";
 
 const executeWpsTemplate = require("./ExecuteWpsTemplate.xml");
 
@@ -58,7 +58,7 @@ class WpsLoadableStratum extends LoadableStratum(
 
   @computed get shortReportSections() {
     const reports = this.item.outputs
-      .map(output => {
+      .map((output) => {
         let report;
         if (isDefined(output.Data.LiteralData)) {
           report = createStratumInstance(ShortReportTraits, {
@@ -76,7 +76,7 @@ class WpsLoadableStratum extends LoadableStratum(
   @computed get featureInfoTemplate() {
     const template = [
       "#### Inputs\n\n" +
-        this.item.info.find(info => info.name === "Inputs")?.content,
+        this.item.info.find((info) => info.name === "Inputs")?.content,
       "#### Outputs\n\n" + this.outputsSectionHtml
     ].join("\n\n");
     return createStratumInstance(FeatureInfoTemplateTraits, {
@@ -260,8 +260,10 @@ export default class WebProcessingServiceCatalogFunctionJob extends XmlRequestMi
     }
 
     if (isDefined(status.ProcessFailed)) {
-      throw status.ProcessFailed.ExceptionReport?.Exception?.ExceptionText ||
-        JSON.stringify(status.ProcessFailed);
+      throw (
+        status.ProcessFailed.ExceptionReport?.Exception?.ExceptionText ||
+        JSON.stringify(status.ProcessFailed)
+      );
     } else if (isDefined(status.ProcessSucceeded)) {
       return true;
     }
@@ -346,7 +348,7 @@ export default class WebProcessingServiceCatalogFunctionJob extends XmlRequestMi
 
     // Create geojson catalog item for input features
     const geojsonFeatures = runInAction(() => this.geojsonFeatures);
-    if (isDefined(geojsonFeatures)) {
+    if (isJsonObject(geojsonFeatures, false)) {
       runInAction(() => {
         this.geoJsonItem = new GeoJsonCatalogItem(createGuid(), this.terria);
         updateModelFromJson(this.geoJsonItem, CommonStrata.user, {
@@ -358,7 +360,9 @@ export default class WebProcessingServiceCatalogFunctionJob extends XmlRequestMi
             features: geojsonFeatures,
             totalFeatures: this.geojsonFeatures!.length
           }
-        });
+        }).logError(
+          "Error ocurred while updating Input Features GeoJSON model JSON"
+        );
       });
       (await this.geoJsonItem!.loadMapItems()).throwIfError;
     }
@@ -372,7 +376,7 @@ export default class WebProcessingServiceCatalogFunctionJob extends XmlRequestMi
 
   @computed get mapItems() {
     if (isDefined(this.geoJsonItem)) {
-      return this.geoJsonItem.mapItems.map(mapItem => {
+      return this.geoJsonItem.mapItems.map((mapItem) => {
         mapItem.show = this.show;
         return mapItem;
       });
@@ -410,7 +414,7 @@ export default class WebProcessingServiceCatalogFunctionJob extends XmlRequestMi
     const obj = wpsResponse.ProcessOutputs.Output;
     const outputs = Array.isArray(obj) || isObservableArray(obj) ? obj : [obj];
     return outputs.filter(
-      o => o.Identifier !== ".context" && isDefined(o.Data)
+      (o) => o.Identifier !== ".context" && isDefined(o.Data)
     );
   }
 
@@ -458,7 +462,7 @@ function formatOutputValue(title: string, value: string | undefined) {
 
   const values = value.split(",");
 
-  return values.reduce(function(previousValue, currentValue) {
+  return values.reduce(function (previousValue, currentValue) {
     if (value.match(/[.\/](png|jpg|jpeg|gif|svg)/i)) {
       return (
         previousValue +
@@ -497,7 +501,7 @@ async function convertResultV7toV8(
     const { member, messages } = convertMember(input);
     if (member === null)
       throw TerriaError.combine(
-        messages.map(m => TerriaError.from(m.message)),
+        messages.map((m) => TerriaError.from(m.message)),
         "Error converting v7 item to v8"
       );
     return member;
@@ -505,7 +509,7 @@ async function convertResultV7toV8(
     const { result, messages } = convertCatalog(input);
     if (result === null)
       throw TerriaError.combine(
-        messages.map(m => TerriaError.from(m.message)),
+        messages.map((m) => TerriaError.from(m.message)),
         "Error converting v7 catalog to v8"
       );
     return result;

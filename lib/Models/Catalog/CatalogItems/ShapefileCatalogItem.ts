@@ -12,6 +12,8 @@ import GeoJsonMixin, {
 } from "../../../ModelMixins/GeojsonMixin";
 import ShapefileCatalogItemTraits from "../../../Traits/TraitsClasses/ShapefileCatalogItemTraits";
 import CreateModel from "../../Definition/CreateModel";
+import HasLocalData from "../../HasLocalData";
+import proxyCatalogItemUrl from "../proxyCatalogItemUrl";
 import { fileApiNotSupportedError } from "./GeoJsonCatalogItem";
 
 export function isJsonArrayOrDeepArrayOfObjects(
@@ -20,14 +22,17 @@ export function isJsonArrayOrDeepArrayOfObjects(
   return (
     Array.isArray(value) &&
     value.every(
-      child => isJsonObject(child) || isJsonArrayOrDeepArrayOfObjects(child)
+      (child) => isJsonObject(child) || isJsonArrayOrDeepArrayOfObjects(child)
     )
   );
 }
 
-class ShapefileCatalogItem extends GeoJsonMixin(
-  CatalogMemberMixin(CreateModel(ShapefileCatalogItemTraits))
-) {
+class ShapefileCatalogItem
+  extends GeoJsonMixin(
+    CatalogMemberMixin(CreateModel(ShapefileCatalogItemTraits))
+  )
+  implements HasLocalData
+{
   static readonly type = "shp";
   get type() {
     return ShapefileCatalogItem.type;
@@ -59,7 +64,7 @@ class ShapefileCatalogItem extends GeoJsonMixin(
         if (typeof FileReader === "undefined") {
           throw fileApiNotSupportedError(this.terria);
         }
-        const blob = await loadBlob(this.url);
+        const blob = await loadBlob(proxyCatalogItemUrl(this, this.url));
         return await parseShapefile(blob);
       } else {
         throw TerriaError.from(

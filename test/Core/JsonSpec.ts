@@ -10,14 +10,15 @@ import {
   assertObject,
   assertString,
   assertNumber,
-  assertArray
+  assertArray,
+  isJsonObjectArray
 } from "../../lib/Core/Json";
 import Terria from "../../lib/Models/Terria";
 
-describe("Json", function() {
-  beforeEach(function() {});
+describe("Json", function () {
+  beforeEach(function () {});
 
-  it("isJsonObject", function() {
+  it("isJsonObject", function () {
     expect(isJsonObject(null)).toBeFalsy();
     expect(isJsonObject(1)).toBeFalsy();
     expect(isJsonObject("stringy")).toBeFalsy();
@@ -53,7 +54,7 @@ describe("Json", function() {
     ).toBeTruthy();
   });
 
-  it("isJsonBoolean", function() {
+  it("isJsonBoolean", function () {
     expect(isJsonBoolean(null)).toBeFalsy();
     expect(isJsonBoolean(1)).toBeFalsy();
     expect(isJsonBoolean("stringy")).toBeFalsy();
@@ -67,7 +68,7 @@ describe("Json", function() {
     expect(isJsonBoolean(new Terria())).toBeFalsy();
   });
 
-  it("isJsonNumber", function() {
+  it("isJsonNumber", function () {
     expect(isJsonNumber(null)).toBeFalsy();
     expect(isJsonNumber(1)).toBeTruthy();
     expect(isJsonNumber("stringy")).toBeFalsy();
@@ -81,7 +82,7 @@ describe("Json", function() {
     expect(isJsonNumber(new Terria())).toBeFalsy();
   });
 
-  it("isJsonString", function() {
+  it("isJsonString", function () {
     expect(isJsonString(null)).toBeFalsy();
     expect(isJsonString(1)).toBeFalsy();
     expect(isJsonString("stringy")).toBeTruthy();
@@ -95,7 +96,7 @@ describe("Json", function() {
     expect(isJsonString(new Terria())).toBeFalsy();
   });
 
-  it("isJsonValue", function() {
+  it("isJsonValue", function () {
     expect(isJsonValue(null)).toBeTruthy();
     expect(isJsonValue(1)).toBeTruthy();
     expect(isJsonValue("stringy")).toBeTruthy();
@@ -131,7 +132,7 @@ describe("Json", function() {
     ).toBeTruthy();
   });
 
-  it("isJsonArray", function() {
+  it("isJsonArray", function () {
     expect(isJsonArray(null)).toBeFalsy();
     expect(isJsonArray(1)).toBeFalsy();
     expect(isJsonArray("stringy")).toBeFalsy();
@@ -164,7 +165,7 @@ describe("Json", function() {
     ).toBeTruthy();
   });
 
-  it("isJsonStringArray", function() {
+  it("isJsonStringArray", function () {
     expect(isJsonStringArray(null)).toBeFalsy();
     expect(isJsonStringArray(1)).toBeFalsy();
     expect(isJsonStringArray("stringy")).toBeFalsy();
@@ -180,7 +181,7 @@ describe("Json", function() {
     ).toBeFalsy();
   });
 
-  it("isJsonNumberArray", function() {
+  it("isJsonNumberArray", function () {
     expect(isJsonNumberArray(null)).toBeFalsy();
     expect(isJsonNumberArray(1)).toBeFalsy();
     expect(isJsonNumberArray("stringy")).toBeFalsy();
@@ -194,7 +195,28 @@ describe("Json", function() {
     expect(isJsonNumberArray([3, 1, [3, 4]])).toBeFalsy();
   });
 
-  it("assertObject", function() {
+  it("isJsonObjectArray", function () {
+    expect(isJsonObjectArray(null)).toBeFalsy();
+    expect(isJsonObjectArray(1)).toBeFalsy();
+    expect(isJsonObjectArray("stringy")).toBeFalsy();
+    expect(isJsonObjectArray(false)).toBeFalsy();
+    expect(isJsonObjectArray([3, 234])).toBeFalsy();
+    expect(isJsonObjectArray(["JsonValues", 8])).toBeFalsy();
+    expect(isJsonObjectArray([{ some: "json object" }, 8])).toBeFalsy();
+    expect(
+      isJsonObjectArray([
+        { some: "json object" },
+        { another: { json: "object" } }
+      ])
+    ).toBeTruthy();
+
+    expect(isJsonObjectArray(() => {})).toBeFalsy();
+    expect(isJsonObjectArray(new Terria())).toBeFalsy();
+
+    expect(isJsonObjectArray([3, 1, [3, 4]])).toBeFalsy();
+  });
+
+  it("assertObject", function () {
     expect(() => assertObject(null)).toThrow();
     expect(() => assertObject(1)).toThrow();
     expect(() => assertObject("stringy")).toThrow();
@@ -217,7 +239,7 @@ describe("Json", function() {
       })
     ).toThrow();
   });
-  it("assertString", function() {
+  it("assertString", function () {
     expect(() => assertString(null)).toThrow();
     expect(() => assertString(1)).toThrow();
     expect(() => assertString("stringy")).toBeTruthy();
@@ -240,7 +262,7 @@ describe("Json", function() {
       })
     ).toThrow();
   });
-  it("assertNumber", function() {
+  it("assertNumber", function () {
     expect(() => assertNumber(null)).toThrow();
     expect(() => assertNumber(1)).toBeTruthy();
     expect(() => assertNumber("stringy")).toThrow();
@@ -263,7 +285,7 @@ describe("Json", function() {
       })
     ).toThrow();
   });
-  it("assertArray", function() {
+  it("assertArray", function () {
     expect(() => assertArray(null)).toThrow();
     expect(() => assertArray(1)).toThrow();
     expect(() => assertArray("stringy")).toThrow();

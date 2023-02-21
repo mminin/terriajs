@@ -12,12 +12,14 @@ import GeoJsonMixin, {
 } from "../../../ModelMixins/GeojsonMixin";
 import GeoJsonCatalogItemTraits from "../../../Traits/TraitsClasses/GeoJsonCatalogItemTraits";
 import CreateModel from "../../Definition/CreateModel";
+import HasLocalData from "../../HasLocalData";
 import Terria from "../../Terria";
 import proxyCatalogItemUrl from "../proxyCatalogItemUrl";
 
-class GeoJsonCatalogItem extends GeoJsonMixin(
-  CreateModel(GeoJsonCatalogItemTraits)
-) {
+class GeoJsonCatalogItem
+  extends GeoJsonMixin(CreateModel(GeoJsonCatalogItemTraits))
+  implements HasLocalData
+{
   static readonly type = "geojson";
   get type() {
     return GeoJsonCatalogItem.type;
@@ -66,7 +68,11 @@ class GeoJsonCatalogItem extends GeoJsonMixin(
           throw fileApiNotSupportedError(this.terria);
         }
         const body = this.requestData ? toJS(this.requestData) : undefined;
-        const blob = await loadBlob(this.url, undefined, body);
+        const blob = await loadBlob(
+          proxyCatalogItemUrl(this, this.url),
+          undefined,
+          body
+        );
         jsonData = await parseZipJsonBlob(blob);
       } else {
         jsonData = await loadJson(
@@ -88,7 +94,7 @@ class GeoJsonCatalogItem extends GeoJsonMixin(
     if (Array.isArray(jsonData)) {
       // Array that isn't a feature collection
       const fc = toFeatureCollection(
-        jsonData.map(item => {
+        jsonData.map((item) => {
           let geojson: any = item;
 
           if (this.responseGeoJsonPath !== undefined) {
@@ -128,15 +134,15 @@ export function fileApiNotSupportedError(terria: Terria) {
       appName: terria.appName,
       chrome:
         '<a href="http://www.google.com/chrome" target="_blank">' +
-        i18next.t("models.userData.chrome") +
+        i18next.t("browsers.chrome") +
         "</a>",
       firefox:
         '<a href="http://www.mozilla.org/firefox" target="_blank">' +
-        i18next.t("models.userData.firefox") +
+        i18next.t("browsers.firefox") +
         "</a>",
       edge:
         '<a href="http://www.microsoft.com/edge" target="_blank">' +
-        i18next.t("models.userData.edge") +
+        i18next.t("browsers.edge") +
         "</a>"
     })
   });
