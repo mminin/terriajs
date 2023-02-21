@@ -111,7 +111,7 @@ export default class BandDisplay extends React.Component {
 						<div>
 							<form action="" style={style} onSubmit={this.handleSubmit}>
 
-								<label style={labelStyle} htmlFor="">Red band:</label>
+								<label style={labelStyle} htmlFor="">Red band TEST 20230220_1644:</label>
 								<select name="R" onChange={this.redHandleChange} >
 									<option value="0" style={{display: "none"}} defaultValue></option>
 									{values}
