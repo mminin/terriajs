@@ -4,7 +4,6 @@ import ReferenceMixin from "../../../ModelMixins/ReferenceMixin";
 import UrlMixin from "../../../ModelMixins/UrlMixin";
 import ThreddsItemReferenceTraits from "../../../Traits/TraitsClasses/ThreddsItemReferenceTraits";
 import CatalogMemberFactory from "../CatalogMemberFactory";
-import CommonStrata from "../../Definition/CommonStrata";
 import CreateModel from "../../Definition/CreateModel";
 import LoadableStratum from "../../Definition/LoadableStratum";
 import StratumOrder from "../../Definition/StratumOrder";
@@ -70,11 +69,6 @@ export default class ThreddsItemReference extends UrlMixin(ReferenceMixin(Create
             return;
         runInAction(() => {
             model.strata.set(ThreddsDatasetStratum.stratumName, threddsStrata);
-        });
-    }
-    setItemProperties(model, itemProperties) {
-        runInAction(() => {
-            model.setTrait(CommonStrata.override, "itemProperties", itemProperties);
         });
     }
     async forceLoadReference(previousTarget) {

@@ -22,9 +22,10 @@ import CreateModel from "../../Definition/CreateModel";
 import LoadableStratum from "../../Definition/LoadableStratum";
 import StratumOrder from "../../Definition/StratumOrder";
 import CatalogGroup from "../CatalogGroup";
+import WebMapServiceCatalogItem from "../Ows/WebMapServiceCatalogItem";
 import proxyCatalogItemUrl from "../proxyCatalogItemUrl";
 import CkanDefaultFormatsStratum from "./CkanDefaultFormatsStratum";
-import CkanItemReference, { getSupportedFormats, prepareSupportedFormat } from "./CkanItemReference";
+import CkanItemReference, { getCkanItemName, getSupportedFormats, prepareSupportedFormat } from "./CkanItemReference";
 export function createInheritedCkanSharedTraitsStratum(model) {
     const propertyNames = Object.keys(CkanSharedTraits.traits);
     const reduced = propertyNames.reduce((p, c) => ({
@@ -38,7 +39,7 @@ export function createInheritedCkanSharedTraitsStratum(model) {
 createInheritedCkanSharedTraitsStratum.stratumName =
     "ckanItemReferenceInheritedPropertiesStratum";
 // This can't be definition stratum, as then it will sit on top of underride/definition/override
-// CkanServerStratum.createMemberFromDataset will use `underride`
+// CkanServerStratum.createMemberFromDataset will use `definition`
 StratumOrder.addLoadStratum(createInheritedCkanSharedTraitsStratum.stratumName);
 export class CkanServerStratum extends LoadableStratum(CkanCatalogGroupTraits) {
     constructor(_catalogGroup, _ckanResponse) {
@@ -86,7 +87,8 @@ export class CkanServerStratum extends LoadableStratum(CkanCatalogGroupTraits) {
                 ckanServerResponse = result;
             }
             else {
-                ckanServerResponse.result.results = ckanServerResponse.result.results.concat(result.result.results);
+                ckanServerResponse.result.results =
+                    ckanServerResponse.result.results.concat(result.result.results);
             }
         }
         if (ckanServerResponse === undefined)
@@ -104,14 +106,14 @@ export class CkanServerStratum extends LoadableStratum(CkanCatalogGroupTraits) {
         if (this.filteredGroups !== undefined &&
             this._catalogGroup.groupBy !== "none") {
             const groupIds = [];
-            this.filteredGroups.forEach(g => {
+            this.filteredGroups.forEach((g) => {
                 if (g.members.length > 0) {
                     groupIds.push(g.uniqueId);
                 }
             });
             return groupIds;
         }
-        return flatten(this.filteredDatasets.map(dataset => dataset.resources.map(resource => this.getItemId(dataset, resource))));
+        return flatten(this.filteredDatasets.map((dataset) => dataset.resources.map((resource) => this.getItemId(dataset, resource))));
     }
     getDatasets() {
         return this._ckanResponse.result.results;
@@ -121,7 +123,7 @@ export class CkanServerStratum extends LoadableStratum(CkanCatalogGroupTraits) {
             return [];
         if (this._catalogGroup.excludeMembers !== undefined) {
             const bl = this._catalogGroup.excludeMembers;
-            return this.datasets.filter(ds => bl.indexOf(ds.title) === -1);
+            return this.datasets.filter((ds) => bl.indexOf(ds.title) === -1);
         }
         return this.datasets;
     }
@@ -129,11 +131,11 @@ export class CkanServerStratum extends LoadableStratum(CkanCatalogGroupTraits) {
         if (this._catalogGroup.groupBy === "none")
             return [];
         let groups = [];
-        createUngroupedGroup(this, groups);
         if (this._catalogGroup.groupBy === "organization")
             createGroupsByOrganisations(this, groups);
         if (this._catalogGroup.groupBy === "group")
             createGroupsByCkanGroups(this, groups);
+        const ungroupedGroup = createUngroupedGroup(this);
         groups = [...new Set(groups)];
         groups.sort(function (a, b) {
             if (a.name === undefined || b.name === undefined)
@@ -146,14 +148,15 @@ export class CkanServerStratum extends LoadableStratum(CkanCatalogGroupTraits) {
             }
             return 0;
         });
-        return groups;
+        // Put "ungrouped" group at end of groups
+        return [...groups, ungroupedGroup];
     }
     getFilteredGroups() {
         if (this.groups.length === 0)
             return [];
         if (this._catalogGroup.excludeMembers !== undefined) {
             const bl = this._catalogGroup.excludeMembers;
-            return this.groups.filter(group => {
+            return this.groups.filter((group) => {
                 if (group.name === undefined)
                     return false;
                 else
@@ -163,7 +166,7 @@ export class CkanServerStratum extends LoadableStratum(CkanCatalogGroupTraits) {
         return this.groups;
     }
     createMembersFromDatasets() {
-        this.filteredDatasets.forEach(dataset => {
+        this.filteredDatasets.forEach((dataset) => {
             this.createMemberFromDataset(dataset);
         });
     }
@@ -179,13 +182,25 @@ export class CkanServerStratum extends LoadableStratum(CkanCatalogGroupTraits) {
             this.addCatalogItemToCatalogGroup(catalogItem, dataset, groupId);
             return;
         }
-        dataset.groups.forEach(g => {
+        dataset.groups.forEach((g) => {
             const groupId = this._catalogGroup.uniqueId + "/" + g.id;
             this.addCatalogItemToCatalogGroup(catalogItem, dataset, groupId);
         });
     }
     createMemberFromDataset(ckanDataset) {
+        var _a;
         if (!isDefined(ckanDataset.id)) {
+            return;
+        }
+        /** If excludeInactiveDatasets is true - then filter out datasets with one of the following
+         * - state === "deleted" (CKAN official)
+         * - state === "draft" (CKAN official)
+         * - data_state === "inactive" (Data.gov.au CKAN)
+         */
+        if (this._catalogGroup.excludeInactiveDatasets &&
+            (ckanDataset.state === "deleted" ||
+                ckanDataset.state === "draft" ||
+                ckanDataset.data_state === "inactive")) {
             return;
         }
         // Get list of resources to turn into CkanItemReferences
@@ -201,8 +216,8 @@ export class CkanServerStratum extends LoadableStratum(CkanCatalogGroupTraits) {
             // Apply CkanResourceFormatTraits constraints
             // - onlyUseIfSoleResource
             // - removeDuplicates
-            this.preparedSupportedFormats.forEach(supportedFormat => {
-                let matchingResources = supportedResources.filter(format => format.format.id === supportedFormat.id);
+            this.preparedSupportedFormats.forEach((supportedFormat) => {
+                let matchingResources = supportedResources.filter((format) => format.format.id === supportedFormat.id);
                 if (matchingResources.length === 0)
                     return;
                 // Remove duplicate resources (by name property)
@@ -258,7 +273,16 @@ export class CkanServerStratum extends LoadableStratum(CkanCatalogGroupTraits) {
                 item.setResource(resource);
                 item.setSupportedFormat(format);
                 item.setCkanStrata(item);
+                // If Item is WMS-group and allowEntireWmsServers === false, then stop here
+                if (((_a = format.definition) === null || _a === void 0 ? void 0 : _a.type) === WebMapServiceCatalogItem.type &&
+                    !item.wmsLayers &&
+                    !this._catalogGroup.allowEntireWmsServers) {
+                    return;
+                }
                 item.terria.addModel(item);
+                const name = getCkanItemName(item);
+                if (name)
+                    item.setTrait(CommonStrata.definition, "name", name);
                 if (this._catalogGroup.groupBy === "organization") {
                     const groupId = ckanDataset.organization
                         ? this._catalogGroup.uniqueId + "/" + ckanDataset.organization.id
@@ -284,6 +308,15 @@ __decorate([
 ], CkanServerStratum.prototype, "members", null);
 __decorate([
     action
+], CkanServerStratum.prototype, "getFilteredDatasets", null);
+__decorate([
+    action
+], CkanServerStratum.prototype, "getGroups", null);
+__decorate([
+    action
+], CkanServerStratum.prototype, "getFilteredGroups", null);
+__decorate([
+    action
 ], CkanServerStratum.prototype, "createMembersFromDatasets", null);
 __decorate([
     action
@@ -294,6 +327,9 @@ __decorate([
 __decorate([
     action
 ], CkanServerStratum.prototype, "createMemberFromDataset", null);
+__decorate([
+    action
+], CkanServerStratum.prototype, "getItemId", null);
 StratumOrder.addLoadStratum(CkanServerStratum.stratumName);
 export default class CkanCatalogGroup extends UrlMixin(GroupMixin(CatalogMemberMixin(CreateModel(CkanCatalogGroupTraits)))) {
     constructor(uniqueId, terria, sourceReference) {
@@ -340,16 +376,16 @@ function createGroup(groupId, terria, groupName) {
     terria.addModel(g);
     return g;
 }
-function createUngroupedGroup(ckanServer, groups) {
+function createUngroupedGroup(ckanServer) {
     const groupId = ckanServer._catalogGroup.uniqueId + "/ungrouped";
     let existingGroup = ckanServer._catalogGroup.terria.getModelById(CatalogGroup, groupId);
     if (existingGroup === undefined) {
         existingGroup = createGroup(groupId, ckanServer._catalogGroup.terria, ckanServer._catalogGroup.ungroupedTitle);
     }
-    groups.push(existingGroup);
+    return existingGroup;
 }
 function createGroupsByOrganisations(ckanServer, groups) {
-    ckanServer.filteredDatasets.forEach(ds => {
+    ckanServer.filteredDatasets.forEach((ds) => {
         if (ds.organization !== null) {
             const groupId = ckanServer._catalogGroup.uniqueId + "/" + ds.organization.id;
             let existingGroup = ckanServer._catalogGroup.terria.getModelById(CatalogGroup, groupId);
@@ -361,8 +397,8 @@ function createGroupsByOrganisations(ckanServer, groups) {
     });
 }
 function createGroupsByCkanGroups(ckanServer, groups) {
-    ckanServer.filteredDatasets.forEach(ds => {
-        ds.groups.forEach(g => {
+    ckanServer.filteredDatasets.forEach((ds) => {
+        ds.groups.forEach((g) => {
             const groupId = ckanServer._catalogGroup.uniqueId + "/" + g.id;
             let existingGroup = ckanServer._catalogGroup.terria.getModelById(CatalogGroup, groupId);
             if (existingGroup === undefined) {

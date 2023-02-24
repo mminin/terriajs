@@ -1,8 +1,9 @@
+import { uniq } from "lodash-es";
 import { isObservableArray, runInAction } from "mobx";
+import isDefined from "../../Core/isDefined";
 import Result from "../../Core/Result";
 import TerriaError from "../../Core/TerriaError";
 import createStratumInstance from "./createStratumInstance";
-import isDefined from "../../Core/isDefined";
 export default function updateModelFromJson(model, stratumName, json, replaceStratum = false) {
     const traits = model.traits;
     const errors = [];
@@ -10,7 +11,7 @@ export default function updateModelFromJson(model, stratumName, json, replaceStr
         if (replaceStratum) {
             model.strata.set(stratumName, createStratumInstance(model));
         }
-        Object.keys(json).forEach(propertyName => {
+        Object.keys(json).forEach((propertyName) => {
             var _a;
             if (propertyName === "id" ||
                 propertyName === "type" ||
@@ -49,7 +50,7 @@ export default function updateModelFromJson(model, stratumName, json, replaceStr
 function mergeWithExistingMembers(model, stratumName, propertyName, newTrait) {
     const existingTrait = model.getTrait(stratumName, propertyName);
     if (existingTrait !== undefined && isObservableArray(existingTrait)) {
-        existingTrait.push(...newTrait);
+        existingTrait.push(...uniq(newTrait).filter((id) => !existingTrait.includes(id)));
         return existingTrait;
     }
     return newTrait;

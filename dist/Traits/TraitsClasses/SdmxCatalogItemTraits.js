@@ -4,19 +4,15 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
-import CatalogMemberTraits from "./CatalogMemberTraits";
-import DimensionTraits from "./DimensionTraits";
-import DiscretelyTimeVaryingTraits from "./DiscretelyTimeVaryingTraits";
-import FeatureInfoTraits from "./FeatureInfoTraits";
-import MappableTraits from "./MappableTraits";
-import mixTraits from "../mixTraits";
 import objectArrayTrait from "../Decorators/objectArrayTrait";
 import primitiveTrait from "../Decorators/primitiveTrait";
+import mixTraits from "../mixTraits";
+import EnumDimensionTraits from "./DimensionTraits";
+import LegendOwnerTraits from "./FeatureInfoTraits";
 import SdmxCommonTraits from "./SdmxCommonTraits";
-import TableTraits from "./TableTraits";
+import TableTraits from "./Table/TableTraits";
 import UrlTraits from "./UrlTraits";
-import LegendOwnerTraits from "./LegendOwnerTraits";
-export class SdmxDimensionTraits extends mixTraits(DimensionTraits) {
+export class SdmxDimensionTraits extends mixTraits(EnumDimensionTraits) {
 }
 __decorate([
     primitiveTrait({
@@ -25,7 +21,7 @@ __decorate([
         description: "The position attribute specifies the position of the dimension in the data structure definition, starting at 0. This is important for making sdmx-csv requests"
     })
 ], SdmxDimensionTraits.prototype, "position", void 0);
-export default class SdmxCatalogItemTraits extends mixTraits(SdmxCommonTraits, MappableTraits, UrlTraits, DiscretelyTimeVaryingTraits, FeatureInfoTraits, TableTraits, CatalogMemberTraits, LegendOwnerTraits) {
+export default class SdmxCatalogItemTraits extends mixTraits(SdmxCommonTraits, UrlTraits, TableTraits, LegendOwnerTraits) {
 }
 __decorate([
     primitiveTrait({

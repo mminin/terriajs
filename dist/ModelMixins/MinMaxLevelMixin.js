@@ -5,10 +5,10 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
 import { observable } from "mobx";
-import { scaleDenominatorToLevel } from "./../Core/scaleToDenominator";
 import ImageryProvider from "terriajs-cesium/Source/Scene/ImageryProvider";
-import CommonStrata from "./../Models/Definition/CommonStrata";
 import isDefined from "../Core/isDefined";
+import { scaleDenominatorToLevel } from "./../Core/scaleToDenominator";
+import CommonStrata from "./../Models/Definition/CommonStrata";
 function MinMaxLevelMixin(Base) {
     class MinMaxLevelMixin extends Base {
         constructor() {

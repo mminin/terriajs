@@ -4,9 +4,9 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
+import i18next from "i18next";
 import { computed, runInAction } from "mobx";
 import ShadowMode from "terriajs-cesium/Source/Scene/ShadowMode";
-import i18next from "i18next";
 function ShadowMixin(Base) {
     class ShadowMixin extends Base {
         get hasShadows() {
@@ -27,20 +27,28 @@ function ShadowMixin(Base) {
             }
         }
         /** Shadow SelectableDimension. This has to be added to a catalog member's `selectableDimension` array */
-        get shadowDimension() {
-            return {
-                id: "shadows",
-                name: i18next.t("models.shadow.name"),
-                options: [
-                    { id: "NONE", name: i18next.t("models.shadow.options.none") },
-                    { id: "CAST", name: i18next.t("models.shadow.options.cast") },
-                    { id: "RECEIVE", name: i18next.t("models.shadow.options.receive") },
-                    { id: "BOTH", name: i18next.t("models.shadow.options.both") }
-                ],
-                selectedId: this.shadows,
-                disable: !this.showShadowUi,
-                setDimensionValue: (strata, shadow) => runInAction(() => this.setTrait(strata, "shadows", shadow))
-            };
+        get selectableDimensions() {
+            return [
+                ...super.selectableDimensions,
+                {
+                    id: "shadows",
+                    name: i18next.t("models.shadow.name"),
+                    options: [
+                        { id: "NONE", name: i18next.t("models.shadow.options.none") },
+                        { id: "CAST", name: i18next.t("models.shadow.options.cast") },
+                        { id: "RECEIVE", name: i18next.t("models.shadow.options.receive") },
+                        { id: "BOTH", name: i18next.t("models.shadow.options.both") }
+                    ],
+                    selectedId: this.shadows,
+                    disable: !this.showShadowUi,
+                    setDimensionValue: (strata, shadow) => shadow === "CAST" ||
+                        shadow === "RECEIVE" ||
+                        shadow === "BOTH" ||
+                        shadow === "NONE"
+                        ? runInAction(() => this.setTrait(strata, "shadows", shadow))
+                        : null
+                }
+            ];
         }
     }
     __decorate([
@@ -48,7 +56,7 @@ function ShadowMixin(Base) {
     ], ShadowMixin.prototype, "cesiumShadows", null);
     __decorate([
         computed
-    ], ShadowMixin.prototype, "shadowDimension", null);
+    ], ShadowMixin.prototype, "selectableDimensions", null);
     return ShadowMixin;
 }
 (function (ShadowMixin) {

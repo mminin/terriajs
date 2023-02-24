@@ -6,7 +6,7 @@ export default function LoadableStratum(Traits) {
     }
     // All traits return undefined by default, and throw if set.
     const traits = Traits.traits;
-    Object.keys(traits).forEach(propertyName => {
+    Object.keys(traits).forEach((propertyName) => {
         if (!(propertyName in LoadableStratum.prototype)) {
             Object.defineProperty(LoadableStratum.prototype, propertyName, {
                 get: function () {

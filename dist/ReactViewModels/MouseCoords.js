@@ -11,16 +11,15 @@ import EllipsoidTerrainProvider from "terriajs-cesium/Source/Core/EllipsoidTerra
 import Intersections2D from "terriajs-cesium/Source/Core/Intersections2D";
 import CesiumMath from "terriajs-cesium/Source/Core/Math";
 import isDefined from "../Core/isDefined";
-import JSEarthGravityModel1996 from "../Map/EarthGravityModel1996";
-import prettifyCoordinates from "../Map/prettifyCoordinates";
-import prettifyProjection from "../Map/prettifyProjection";
+import JSEarthGravityModel1996 from "../Map/Vector/EarthGravityModel1996";
+import prettifyCoordinates from "../Map/Vector/prettifyCoordinates";
+import prettifyProjection from "../Map/Vector/prettifyProjection";
 // TypeScript 3.6.3 can't tell JSEarthGravityModel1996 is a class and reports
 //   Cannot use namespace 'JSEarthGravityModel1996' as a type.ts(2709)
 // This is a dodgy workaround.
 class EarthGravityModel1996 extends JSEarthGravityModel1996 {
 }
-const sampleTerrainMostDetailed = require("terriajs-cesium/Source/Core/sampleTerrainMostDetailed")
-    .default;
+const sampleTerrainMostDetailed = require("terriajs-cesium/Source/Core/sampleTerrainMostDetailed").default;
 export default class MouseCoords {
     constructor() {
         this.useProjection = false;
@@ -133,7 +132,7 @@ export default class MouseCoords {
             positionWithHeight
         ]);
         this.tileRequestInFlight = Promise.all([geoidHeightPromise, terrainPromise])
-            .then(result => {
+            .then((result) => {
             const geoidHeight = result[0] || 0.0;
             this.tileRequestInFlight = undefined;
             if (Cartographic.equals(position, this.cartographic)) {

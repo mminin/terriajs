@@ -59,22 +59,20 @@ export const SearchBox = createReactClass({
     componentDidUpdate(prevProps) {
         if (prevProps.debounceDuration !== this.props.debounceDuration &&
             this.props.debounceDuration > 0) {
-            this.removeDebounce();
+            // Before we create a new debounced search - make sure there are no previous search values waiting to be called
+            this.searchWithDebounce.flush();
             this.searchWithDebounce = debounce(this.search, this.props.debounceDuration);
         }
     },
     componentWillUnmount() {
-        this.removeDebounce();
+        this.searchWithDebounce.cancel();
     },
     hasValue() {
         return this.props.searchText.length > 0;
     },
     search() {
-        this.removeDebounce();
-        this.props.onDoSearch();
-    },
-    removeDebounce() {
         this.searchWithDebounce.cancel();
+        this.props.onDoSearch();
     },
     handleChange(event) {
         const value = event.target.value;
@@ -105,7 +103,7 @@ export const SearchBox = createReactClass({
             React.createElement(RawButton, { type: "button", onClick: () => this.clearSearch(), fullWidth: true, fullHeight: true },
                 React.createElement(BoxSpan, { centered: true },
                     React.createElement(StyledIcon, { glyph: Icon.GLYPHS.close, styledWidth: "15px", fillColor: this.props.theme.charcoalGrey, opacity: "0.5" })))));
-        return (React.createElement("form", { autoComplete: "off", onSubmit: event => {
+        return (React.createElement("form", { autoComplete: "off", onSubmit: (event) => {
                 event.preventDefault();
                 event.stopPropagation();
                 this.search();

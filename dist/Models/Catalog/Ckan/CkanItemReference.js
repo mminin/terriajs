@@ -9,6 +9,7 @@ import { action, computed, runInAction } from "mobx";
 import { createTransformer } from "mobx-utils";
 import URI from "urijs";
 import isDefined from "../../../Core/isDefined";
+import { isJsonString } from "../../../Core/Json";
 import loadJson from "../../../Core/loadJson";
 import ReferenceMixin from "../../../ModelMixins/ReferenceMixin";
 import UrlMixin from "../../../ModelMixins/UrlMixin";
@@ -21,6 +22,7 @@ import createStratumInstance from "../../Definition/createStratumInstance";
 import LoadableStratum from "../../Definition/LoadableStratum";
 import StratumOrder from "../../Definition/StratumOrder";
 import CatalogMemberFactory from "../CatalogMemberFactory";
+import WebMapServiceCatalogGroup from "../Ows/WebMapServiceCatalogGroup";
 import WebMapServiceCatalogItem from "../Ows/WebMapServiceCatalogItem";
 import proxyCatalogItemUrl from "../proxyCatalogItemUrl";
 import { createInheritedCkanSharedTraitsStratum } from "./CkanCatalogGroup";
@@ -67,48 +69,17 @@ export class CkanDatasetStratum extends LoadableStratum(CkanItemReferenceTraits)
         return this.ckanItemReference._ckanResource;
     }
     get url() {
-        var _a;
-        if (this.ckanResource === undefined)
-            return undefined;
-        if (this.ckanItemReference._supportedFormat !== undefined) {
-            if (((_a = this.ckanItemReference._supportedFormat.definition) !== null && _a !== void 0 ? _a : {}).type ===
-                "wms" &&
-                this.ckanResource.wms_api_url) {
-                return this.ckanResource.wms_api_url;
-            }
-        }
-        return this.ckanResource.url;
+        return getCkanItemResourceUrl(this.ckanItemReference);
     }
     get name() {
-        if (this.ckanResource === undefined)
-            return undefined;
-        if (this.ckanItemReference.useResourceName)
-            return this.ckanResource.name;
-        // via @steve9164
-        /** Switched the order [check `useCombinationNameWhereMultipleResources`
-         * first ] that these are checked so the default is checked last. Otherwise
-         * setting useCombinationNameWhereMultipleResources without setting
-         * useDatasetNameAndFormatWhereMultipleResources to false doesn't do
-         * anything */
-        if (this.ckanDataset) {
-            if (this.ckanItemReference.useCombinationNameWhereMultipleResources &&
-                this.ckanDataset.resources.length > 1) {
-                return this.ckanDataset.title + " - " + this.ckanResource.name;
-            }
-            if (this.ckanItemReference.useDatasetNameAndFormatWhereMultipleResources &&
-                this.ckanDataset.resources.length > 1) {
-                return this.ckanDataset.title + " - " + this.ckanResource.format;
-            }
-            return this.ckanDataset.title;
-        }
-        return this.ckanResource.name;
+        return getCkanItemName(this.ckanItemReference);
     }
     get rectangle() {
         if (this.ckanDataset === undefined)
             return undefined;
         if (this.ckanDataset.extras !== undefined) {
             const out = [];
-            const bboxExtras = this.ckanDataset.extras.forEach(e => {
+            const bboxExtras = this.ckanDataset.extras.forEach((e) => {
                 if (e.key === "bbox-west-long")
                     out[0] = parseFloat(e.value);
                 if (e.key === "bbox-south-lat")
@@ -167,8 +138,7 @@ export class CkanDatasetStratum extends LoadableStratum(CkanItemReferenceTraits)
         if (this.ckanDataset.license_url !== undefined) {
             outArray.push(createStratumInstance(InfoSectionTraits, {
                 name: i18next.t("models.ckan.licence"),
-                content: `[${this.ckanDataset.license_title ||
-                    this.ckanDataset.license_url}](${this.ckanDataset.license_url})`
+                content: `[${this.ckanDataset.license_title || this.ckanDataset.license_url}](${this.ckanDataset.license_url})`
             }));
         }
         else if (this.ckanDataset.license_title !== undefined) {
@@ -206,6 +176,14 @@ export class CkanDatasetStratum extends LoadableStratum(CkanItemReferenceTraits)
         }));
         return outArray;
     }
+    /** Set isGroup = true if this turns into WMS Group (See CkanItemReference.forceLoadReference for more info) */
+    get isGroup() {
+        var _a, _b;
+        if (((_b = (_a = this.ckanItemReference._supportedFormat) === null || _a === void 0 ? void 0 : _a.definition) === null || _b === void 0 ? void 0 : _b.type) ===
+            WebMapServiceCatalogItem.type &&
+            !this.ckanItemReference.wmsLayers)
+            return true;
+    }
 }
 CkanDatasetStratum.stratumName = "ckanDataset";
 __decorate([
@@ -226,6 +204,9 @@ __decorate([
 __decorate([
     computed
 ], CkanDatasetStratum.prototype, "info", null);
+__decorate([
+    computed
+], CkanDatasetStratum.prototype, "isGroup", null);
 StratumOrder.addLoadStratum(CkanDatasetStratum.stratumName);
 export default class CkanItemReference extends UrlMixin(ReferenceMixin(CreateModel(CkanItemReferenceTraits))) {
     constructor(id, terria, sourceReference, strata) {
@@ -285,44 +266,50 @@ export default class CkanItemReference extends UrlMixin(ReferenceMixin(CreateMod
         this.strata.set(createInheritedCkanSharedTraitsStratum.stratumName, inheritedPropertiesStratum);
     }
     async forceLoadReference(previousTarget) {
-        var _a, _b, _c, _d;
+        var _a;
         await this.setCkanStrata(this);
         if (this._supportedFormat === undefined)
             return undefined;
         const type = ((_a = this._supportedFormat.definition) !== null && _a !== void 0 ? _a : {}).type;
         if (typeof type !== "string")
             return undefined;
-        const model = CatalogMemberFactory.create(type, this.uniqueId, this.terria, this);
+        let model;
+        // Special case for WMS
+        // Check for `layers` before creating model
+        // If WMS layers have been found - create WebMapServiceCatalogItem
+        // If no WMS layers are found - create WebMapServiceCatalogGroup
+        if (type === WebMapServiceCatalogItem.type) {
+            // If WMS layers have been found
+            if (this.wmsLayers) {
+                model = new WebMapServiceCatalogItem(this.uniqueId, this.terria, this);
+                model.setTrait(CommonStrata.definition, "layers", decodeURI(this.wmsLayers));
+            }
+            // if no WMS layers are found
+            else {
+                model = new WebMapServiceCatalogGroup(this.uniqueId, this.terria, this);
+            }
+        }
+        else {
+            model = CatalogMemberFactory.create(type, this.uniqueId, this.terria, this);
+        }
         if (model === undefined)
             return;
         previousTarget = model;
         await this.setCkanStrata(model);
-        const defintionStratum = this.strata.get(CommonStrata.definition);
-        if (defintionStratum) {
-            model.strata.set(CommonStrata.definition, defintionStratum);
-            model.setTrait(CommonStrata.definition, "url", undefined);
-        }
-        // Overrides for specific catalog types
-        if (model instanceof WebMapServiceCatalogItem) {
-            const params = (_b = model.uri) === null || _b === void 0 ? void 0 : _b.search(true);
-            // Mixing ?? and || because for params we don't want to use empty string params if there are non-empty string parameters
-            const layers = (_d = (_c = this._ckanResource) === null || _c === void 0 ? void 0 : _c.wms_layer) !== null && _d !== void 0 ? _d : ((params === null || params === void 0 ? void 0 : params.LAYERS) || (params === null || params === void 0 ? void 0 : params.layers) || (params === null || params === void 0 ? void 0 : params.typeName));
-            if (layers) {
-                model.setTrait(CommonStrata.definition, "layers", layers);
-            }
-        }
-        // Tried to make this sequence an updateModelFromJson but wouldn't work?
-        // updateModelFromJson(model, CommonStrata.override, {itemProperties: this.itemProperties})
-        // Also tried this other approach which works from the CkanCatalogGroup
-        // this.setItemProperties(model, this.itemProperties)
-        if (this.itemProperties !== undefined) {
-            const ipKeys = Object.keys(this.itemProperties);
-            ipKeys.forEach(p => {
-                // @ts-ignore
-                model.setTrait(CommonStrata.override, p, this.itemProperties[p]);
-            });
-        }
+        model.setTrait(CommonStrata.definition, "name", this.name);
         return model;
+    }
+    get wmsLayers() {
+        var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o;
+        const params = (_a = new URI(getCkanItemResourceUrl(this))) === null || _a === void 0 ? void 0 : _a.search(true);
+        const layersFromItemProperties = (_j = (_e = (_d = (_c = (_b = this.itemPropertiesByIds) === null || _b === void 0 ? void 0 : _b.find((itemProps) => this.uniqueId && itemProps.ids.includes(this.uniqueId))) === null || _c === void 0 ? void 0 : _c.itemProperties) === null || _d === void 0 ? void 0 : _d.layers) !== null && _e !== void 0 ? _e : (_h = (_g = (_f = this.itemPropertiesByType) === null || _f === void 0 ? void 0 : _f.find((itemProps) => itemProps.type === WebMapServiceCatalogItem.type)) === null || _g === void 0 ? void 0 : _g.itemProperties) === null || _h === void 0 ? void 0 : _h.layers) !== null && _j !== void 0 ? _j : (_k = this.itemProperties) === null || _k === void 0 ? void 0 : _k.layers;
+        // Mixing ?? and || because for params we don't want to use empty string params if there are non-empty string parameters
+        const rawLayers = (_o = (_l = (isJsonString(layersFromItemProperties)
+            ? layersFromItemProperties
+            : undefined)) !== null && _l !== void 0 ? _l : (_m = this._ckanResource) === null || _m === void 0 ? void 0 : _m.wms_layer) !== null && _o !== void 0 ? _o : ((params === null || params === void 0 ? void 0 : params.LAYERS) || (params === null || params === void 0 ? void 0 : params.layers) || (params === null || params === void 0 ? void 0 : params.typeName));
+        // Improve the robustness.
+        const cleanLayers = rawLayers === null || rawLayers === void 0 ? void 0 : rawLayers.split(",").map((layer) => layer.trim()).join(",");
+        return cleanLayers;
     }
 }
 CkanItemReference.type = "ckan-item";
@@ -335,6 +322,9 @@ __decorate([
 __decorate([
     action
 ], CkanItemReference.prototype, "setSharedStratum", null);
+__decorate([
+    computed
+], CkanItemReference.prototype, "wmsLayers", null);
 async function loadCkanDataset(ckanItem) {
     var uri = new URI(ckanItem.url)
         .segment("api/3/action/package_show")
@@ -430,5 +420,41 @@ export function resourceIsSupported(resource, format) {
         match = false;
     }
     return match;
+}
+export function getCkanItemName(item) {
+    if (!item._ckanResource)
+        return;
+    if (item.useResourceName)
+        return item._ckanResource.name;
+    // via @steve9164
+    /** Switched the order [check `useCombinationNameWhereMultipleResources`
+     * first ] that these are checked so the default is checked last. Otherwise
+     * setting useCombinationNameWhereMultipleResources without setting
+     * useDatasetNameAndFormatWhereMultipleResources to false doesn't do
+     * anything */
+    if (item._ckanDataset) {
+        if (item.useCombinationNameWhereMultipleResources &&
+            item._ckanDataset.resources.length > 1) {
+            return item._ckanDataset.title + " - " + item._ckanResource.name;
+        }
+        if (item.useDatasetNameAndFormatWhereMultipleResources &&
+            item._ckanDataset.resources.length > 1) {
+            return item._ckanDataset.title + " - " + item._ckanResource.format;
+        }
+        return item._ckanDataset.title;
+    }
+    return item._ckanResource.name;
+}
+function getCkanItemResourceUrl(item) {
+    var _a;
+    if (item._ckanResource === undefined)
+        return undefined;
+    if (item._supportedFormat !== undefined) {
+        if (((_a = item._supportedFormat.definition) !== null && _a !== void 0 ? _a : {}).type === "wms" &&
+            item._ckanResource.wms_api_url) {
+            return item._ckanResource.wms_api_url;
+        }
+    }
+    return item._ckanResource.url;
 }
 //# sourceMappingURL=CkanItemReference.js.map

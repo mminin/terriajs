@@ -23,7 +23,9 @@ export default observer(function DataCatalogItem({ item, viewState, onActionButt
     const isSelected = addedByUser(item)
         ? viewState.userDataPreviewedItem === item
         : viewState.previewedItem === item;
-    const setPreviewedItem = () => viewState.viewCatalogMember(item);
+    const setPreviewedItem = () => viewState
+        .viewCatalogMember(item)
+        .then((result) => result.raiseError(viewState.terria));
     const toggleEnable = async (event) => {
         const keepCatalogOpen = event.shiftKey || event.ctrlKey;
         await toggleItemOnMapFromCatalog(viewState, item, keepCatalogOpen, {

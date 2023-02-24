@@ -9,15 +9,14 @@ import mixTraits from "../mixTraits";
 import CatalogMemberTraits from "./CatalogMemberTraits";
 import LegendOwnerTraits from "./LegendOwnerTraits";
 import MappableTraits from "./MappableTraits";
-import RasterLayerTraits from "./RasterLayerTraits";
-export default class MapboxStyleCatalogItemTraits extends mixTraits(RasterLayerTraits, CatalogMemberTraits, MappableTraits, LegendOwnerTraits) {
+import ImageryProviderTraits from "./ImageryProviderTraits";
+export default class MapboxStyleCatalogItemTraits extends mixTraits(ImageryProviderTraits, CatalogMemberTraits, MappableTraits, LegendOwnerTraits) {
     constructor() {
         super(...arguments);
         this.url = "https://api.mapbox.com/styles/v1/";
         this.username = "mapbox";
         this.tilesize = 512;
         this.scaleFactor = false;
-        this.minimumLevel = 0;
     }
 }
 __decorate([
@@ -62,18 +61,4 @@ __decorate([
         type: "boolean"
     })
 ], MapboxStyleCatalogItemTraits.prototype, "scaleFactor", void 0);
-__decorate([
-    primitiveTrait({
-        name: "scaleFactor",
-        description: "The minimum level-of-detail supported by the imagery provider. Take care when specifying this that the number of tiles at the minimum level is small, such as four or less. A larger number is likely to result in rendering problems.",
-        type: "number"
-    })
-], MapboxStyleCatalogItemTraits.prototype, "minimumLevel", void 0);
-__decorate([
-    primitiveTrait({
-        name: "scaleFactor",
-        description: "The maximum level-of-detail supported by the imagery provider, or undefined if there is no limit.",
-        type: "number"
-    })
-], MapboxStyleCatalogItemTraits.prototype, "maximumLevel", void 0);
 //# sourceMappingURL=MapboxStyleCatalogItemTraits.js.map

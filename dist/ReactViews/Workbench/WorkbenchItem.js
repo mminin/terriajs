@@ -1,125 +1,111 @@
-"use strict";
-import classNames from "classnames";
-import createReactClass from "create-react-class";
-import { runInAction } from "mobx";
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+import { action, computed } from "mobx";
 import { observer } from "mobx-react";
-import PropTypes from "prop-types";
 import React from "react";
+//@ts-ignore
 import { sortable } from "react-anything-sortable";
 import { withTranslation } from "react-i18next";
+import styled, { withTheme } from "styled-components";
 import getPath from "../../Core/getPath";
-import CatalogMemberMixin from "../../ModelMixins/CatalogMemberMixin";
+import CatalogMemberMixin, { getName } from "../../ModelMixins/CatalogMemberMixin";
+import MappableMixin from "../../ModelMixins/MappableMixin";
 import ReferenceMixin from "../../ModelMixins/ReferenceMixin";
 import CommonStrata from "../../Models/Definition/CommonStrata";
-import { DEFAULT_PLACEMENT } from "../../Models/SelectableDimensions";
-import Box from "../../Styled/Box";
-import Icon from "../../Styled/Icon";
+import Box, { BoxSpan } from "../../Styled/Box";
+import { RawButton } from "../../Styled/Button";
+import Checkbox from "../../Styled/Checkbox/Checkbox";
+import Icon, { StyledIcon } from "../../Styled/Icon";
+import { Li } from "../../Styled/List";
+import Spacing from "../../Styled/Spacing";
+import { TextSpan } from "../../Styled/Text";
 import Loader from "../Loader";
 import PrivateIndicator from "../PrivateIndicator/PrivateIndicator";
-import ChartItemSelector from "./Controls/ChartItemSelector";
-import ColorScaleRangeSection from "./Controls/ColorScaleRangeSection";
-import DateTimeSelectorSection from "./Controls/DateTimeSelectorSection";
-import DimensionSelectorSection from "./Controls/DimensionSelectorSection";
-import FilterSection from "./Controls/FilterSection";
-import LeftRightSection from "./Controls/LeftRightSection";
-import Legend from "./Controls/Legend";
-import OpacitySection from "./Controls/OpacitySection";
-import SatelliteImageryTimeFilterSection from "./Controls/SatelliteImageryTimeFilterSection";
-import { ScaleWorkbenchInfo } from "./Controls/ScaleWorkbenchInfo";
-import ShortReport from "./Controls/ShortReport";
-import TimerSection from "./Controls/TimerSection";
-import ViewingControls from "./Controls/ViewingControls";
-import Styles from "./workbench-item.scss";
-export const WorkbenchItemRaw = observer(createReactClass({
-    displayName: "WorkbenchItem",
-    propTypes: {
-        style: PropTypes.object,
-        className: PropTypes.string,
-        onMouseDown: PropTypes.func.isRequired,
-        onTouchStart: PropTypes.func.isRequired,
-        item: PropTypes.object.isRequired,
-        viewState: PropTypes.object.isRequired,
-        setWrapperState: PropTypes.func,
-        t: PropTypes.func.isRequired
-    },
-    toggleDisplay() {
-        runInAction(() => {
-            this.props.item.setTrait(CommonStrata.user, "isOpenInWorkbench", !this.props.item.isOpenInWorkbench);
-        });
-    },
-    openModal() {
-        this.props.setWrapperState({
-            modalWindowIsOpen: true,
-            activeTab: 1,
-            previewed: this.props.item
-        });
-    },
-    toggleVisibility() {
-        runInAction(() => {
-            this.props.item.setTrait(CommonStrata.user, "show", !this.props.item.show);
-        });
-    },
-    render() {
-        const workbenchItem = this.props.item;
-        const { t } = this.props;
-        const isLoading = (CatalogMemberMixin.isMixedInto(this.props.item) &&
-            this.props.item.isLoading) ||
-            (ReferenceMixin.isMixedInto(this.props.item) &&
-                this.props.item.isLoadingReference);
-        return (React.createElement("li", { style: this.props.style, className: classNames(this.props.className, Styles.workbenchItem, {
-                [Styles.isOpen]: workbenchItem.isOpenInWorkbench
-            }), css: `
-            color: ${p => p.theme.textLight};
-            background: ${p => p.theme.darkWithOverlay};
-          ` },
-            React.createElement(Box, { fullWidth: true, justifySpaceBetween: true, padded: true },
-                React.createElement(Box, null,
-                    React.createElement(If, { condition: true || workbenchItem.supportsToggleShown },
-                        React.createElement(Box, { leftSelf: true, className: Styles.visibilityColumn, css: `
-                    padding: 3px 5px;
-                  ` },
-                            React.createElement("button", { type: "button", onClick: this.toggleVisibility, title: t("workbench.toggleVisibility"), className: Styles.btnVisibility }, workbenchItem.show ? (React.createElement(Icon, { glyph: Icon.GLYPHS.checkboxOn })) : (React.createElement(Icon, { glyph: Icon.GLYPHS.checkboxOff })))))),
-                React.createElement(Box, { className: Styles.nameColumn },
-                    React.createElement(Box, { fullWidth: true, paddedHorizontally: true },
-                        React.createElement("div", { onMouseDown: this.props.onMouseDown, onTouchStart: this.props.onTouchStart, className: Styles.draggable, title: getPath(workbenchItem, " → ") },
-                            React.createElement(If, { condition: !workbenchItem.isMappable && !isLoading },
-                                React.createElement("span", { className: Styles.iconLineChart },
-                                    React.createElement(Icon, { glyph: Icon.GLYPHS.lineChart }))),
-                            workbenchItem.name))),
-                React.createElement(Box, null,
-                    React.createElement(Box, { className: Styles.toggleColumn, alignItemsFlexStart: true },
-                        React.createElement("button", { type: "button", className: Styles.btnToggle, onClick: this.toggleDisplay, css: `
-                    display: flex;
-                    min-height: 24px;
-                    align-items: center;
-                    padding: 5px;
-                  ` },
-                            workbenchItem.isPrivate && (React.createElement(Box, { paddedHorizontally: true },
-                                React.createElement(PrivateIndicator, { inWorkbench: true }))),
-                            workbenchItem.isOpenInWorkbench ? (React.createElement(Icon, { glyph: Icon.GLYPHS.opened })) : (React.createElement(Icon, { glyph: Icon.GLYPHS.closed })))),
-                    React.createElement("div", { className: Styles.headerClearfix }))),
-            React.createElement(If, { condition: workbenchItem.isOpenInWorkbench },
-                React.createElement("div", { className: Styles.inner },
-                    React.createElement(ViewingControls, { item: workbenchItem, viewState: this.props.viewState }),
-                    React.createElement(OpacitySection, { item: workbenchItem }),
-                    React.createElement(ScaleWorkbenchInfo, { item: workbenchItem }),
-                    React.createElement(LeftRightSection, { item: workbenchItem }),
-                    React.createElement(TimerSection, { item: workbenchItem }),
-                    React.createElement(ChartItemSelector, { item: workbenchItem }),
-                    React.createElement(FilterSection, { item: workbenchItem }),
-                    React.createElement(DateTimeSelectorSection, { item: workbenchItem }),
-                    React.createElement(SatelliteImageryTimeFilterSection, { item: workbenchItem }),
-                    React.createElement(DimensionSelectorSection, { item: workbenchItem, placement: DEFAULT_PLACEMENT }),
-                    React.createElement(ColorScaleRangeSection, { item: workbenchItem, minValue: workbenchItem.colorScaleMinimum, maxValue: workbenchItem.colorScaleMaximum }),
-                    React.createElement(If, { condition: workbenchItem.shortReport ||
-                            (workbenchItem.shortReportSections &&
-                                workbenchItem.shortReportSections.length) },
-                        React.createElement(ShortReport, { item: workbenchItem })),
-                    React.createElement(Legend, { item: workbenchItem }),
-                    React.createElement(DimensionSelectorSection, { item: workbenchItem, placement: "belowLegend" }),
-                    isLoading ? (React.createElement(Box, { paddedVertically: true },
-                        React.createElement(Loader, { light: true }))) : null))));
+import WorkbenchItemControls from "./Controls/WorkbenchItemControls";
+let WorkbenchItemRaw = class WorkbenchItemRaw extends React.Component {
+    constructor(props) {
+        super(props);
     }
-}));
-export default sortable(withTranslation()(WorkbenchItemRaw));
+    toggleDisplay() {
+        if (!CatalogMemberMixin.isMixedInto(this.props.item))
+            return;
+        this.props.item.setTrait(CommonStrata.user, "isOpenInWorkbench", !this.props.item.isOpenInWorkbench);
+    }
+    toggleVisibility() {
+        if (MappableMixin.isMixedInto(this.props.item))
+            this.props.item.setTrait(CommonStrata.user, "show", !this.props.item.show);
+    }
+    /** If workbench item is CatalogMember use CatalogMemberTraits.isOpenInWorkbench
+     * Otherwise, defaults to true
+     */
+    get isOpen() {
+        if (!CatalogMemberMixin.isMixedInto(this.props.item))
+            return true;
+        return this.props.item.isOpenInWorkbench;
+    }
+    render() {
+        const { item, t } = this.props;
+        const isLoading = (CatalogMemberMixin.isMixedInto(item) && item.isLoading) ||
+            (ReferenceMixin.isMixedInto(item) && item.isLoadingReference);
+        return (React.createElement(StyledLi, { style: this.props.style, className: this.props.className },
+            React.createElement(Box, { fullWidth: true, justifySpaceBetween: true, padded: true, styledMinHeight: "38px" },
+                React.createElement(Box, { fullWidth: true },
+                    React.createElement(Box, { left: true, fullWidth: true, paddedHorizontally: true, centered: true },
+                        React.createElement(DraggableBox, { onMouseDown: this.props.onMouseDown, onTouchStart: this.props.onTouchStart, title: getPath(item, " → "), fullWidth: true },
+                            !item.isMappable && !isLoading && (React.createElement(BoxSpan, { paddedHorizontally: true, displayInlineBlock: true },
+                                React.createElement(Box, { padded: true },
+                                    React.createElement(StyledIcon, { styledHeight: "18px", light: true, glyph: Icon.GLYPHS.lineChart })))),
+                            MappableMixin.isMixedInto(item) ? (React.createElement(Box, { left: true, verticalCenter: true, css: `
+                      padding-left: 5px;
+                    ` },
+                                React.createElement(Checkbox, { id: "workbenchtoggleVisibility", isChecked: item.show, title: t("workbench.toggleVisibility"), onChange: () => this.toggleVisibility(), css: `
+                        overflow-wrap: anywhere;
+                      `, textProps: { medium: true, fullWidth: true } },
+                                    React.createElement(TextSpan, { medium: true, maxLines: !this.isOpen ? 2 : false, title: getName(item) }, getName(item))))) : (React.createElement(TextSpan, { medium: true, textLight: true, maxLines: !this.isOpen ? 2 : false, title: getName(item), css: `
+                      overflow-wrap: anywhere;
+                    ` }, getName(item)))))),
+                CatalogMemberMixin.isMixedInto(item) ? (React.createElement(Box, { centered: true, paddedHorizontally: true },
+                    React.createElement(RawButton, { onClick: () => this.toggleDisplay() },
+                        item.isPrivate && (React.createElement(BoxSpan, { paddedHorizontally: true },
+                            React.createElement(PrivateIndicator, { inWorkbench: true }))),
+                        React.createElement(BoxSpan, { padded: true }, this.isOpen ? (React.createElement(StyledIcon, { styledHeight: "8px", light: true, glyph: Icon.GLYPHS.opened })) : (React.createElement(StyledIcon, { styledHeight: "8px", light: true, glyph: Icon.GLYPHS.closed })))))) : null),
+            this.isOpen && (React.createElement(React.Fragment, null,
+                React.createElement(Spacing, { bottom: 2, css: `
+                border-top: 1px solid ${this.props.theme.dark};
+              ` }),
+                React.createElement(Box, { column: true, paddedHorizontally: 2 },
+                    React.createElement(WorkbenchItemControls, { item: this.props.item, viewState: this.props.viewState }),
+                    isLoading ? (React.createElement(Box, { paddedVertically: true },
+                        React.createElement(Loader, { light: true }))) : null),
+                React.createElement(Spacing, { bottom: 2 })))));
+    }
+};
+WorkbenchItemRaw.displayName = "WorkbenchItem";
+__decorate([
+    action.bound
+], WorkbenchItemRaw.prototype, "toggleDisplay", null);
+__decorate([
+    action.bound
+], WorkbenchItemRaw.prototype, "toggleVisibility", null);
+__decorate([
+    computed
+], WorkbenchItemRaw.prototype, "isOpen", null);
+WorkbenchItemRaw = __decorate([
+    observer
+], WorkbenchItemRaw);
+const DraggableBox = styled(Box) `
+  cursor: move;
+`;
+const StyledLi = styled(Li) `
+  background: ${(p) => p.theme.darkWithOverlay};
+  color: ${(p) => p.theme.textLight};
+  border-radius: 4px;
+  margin-bottom: 5px;
+  width: 100%;
+`;
+export default sortable(withTranslation()(withTheme(WorkbenchItemRaw)));
 //# sourceMappingURL=WorkbenchItem.js.map

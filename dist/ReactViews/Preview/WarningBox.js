@@ -14,7 +14,7 @@ const showErrorNotification = (viewState, error) => {
     });
     viewState.terria.raiseErrorToUser(error, undefined, true);
 };
-const WarningBox = props => {
+const WarningBox = (props) => {
     var _a, _b, _c, _d, _e, _f;
     // We only show FeedbankLink if the error message doesn't include the <feedbacklink> custom component (so we don't get duplicates)
     const includesFeedbackLink = (_a = props.error) === null || _a === void 0 ? void 0 : _a.highestImportanceError.message.includes(`<${FeedbackLinkCustomComponent.componentName}`);

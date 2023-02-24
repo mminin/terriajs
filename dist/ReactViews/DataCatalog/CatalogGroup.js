@@ -11,7 +11,7 @@ import Styles from "./data-catalog-group.scss";
 import Box from "../../Styled/Box";
 import Text from "../../Styled/Text";
 const CatalogGroupButton = styled.button `
-  ${props => `
+  ${(props) => `
     &:hover,
     &:focus {
       color: ${props.theme.textLight};

@@ -1,39 +1,26 @@
-import React from "react";
-import createReactClass from "create-react-class";
-import PropTypes from "prop-types";
+import { action } from "mobx";
 import { observer } from "mobx-react";
+import React from "react";
+import { useViewState } from "../StandardUserInterface/ViewStateContext";
 import ModalPopup from "./ModalPopup";
 import Tabs from "./Tabs";
-import { runInAction } from "mobx";
-const ExplorerWindow = observer(createReactClass({
-    displayName: "ExplorerWindow",
-    propTypes: {
-        terria: PropTypes.object.isRequired,
-        viewState: PropTypes.object.isRequired
-    },
-    onClose() {
-        this.props.viewState.closeCatalog();
-        this.props.viewState.switchMobileView("nowViewing");
-    },
-    onStartAnimatingIn() {
-        runInAction(() => {
-            this.props.viewState.explorerPanelAnimating = true;
-        });
-    },
-    onDoneAnimatingIn() {
-        runInAction(() => {
-            this.props.viewState.explorerPanelAnimating = false;
-        });
-    },
-    isVisible() {
-        return (!this.props.viewState.useSmallScreenInterface &&
-            !this.props.viewState.hideMapUi &&
-            this.props.viewState.explorerPanelIsVisible);
-    },
-    render() {
-        return (React.createElement(ModalPopup, { viewState: this.props.viewState, isVisible: this.isVisible(), isTopElement: this.props.viewState.topElement === "AddData", onClose: this.onClose, onStartAnimatingIn: this.onStartAnimatingIn, onDoneAnimatingIn: this.onDoneAnimatingIn },
-            React.createElement(Tabs, { terria: this.props.terria, viewState: this.props.viewState })));
-    }
-}));
-module.exports = ExplorerWindow;
+export const ExplorerWindowElementName = "AddData";
+export default observer(function ExplorerWindow() {
+    const viewState = useViewState();
+    const onClose = action(() => {
+        viewState.closeCatalog();
+        viewState.switchMobileView("nowViewing");
+    });
+    const onStartAnimatingIn = action(() => {
+        viewState.explorerPanelAnimating = true;
+    });
+    const onDoneAnimatingIn = action(() => {
+        viewState.explorerPanelAnimating = false;
+    });
+    const isVisible = !viewState.useSmallScreenInterface &&
+        !viewState.hideMapUi &&
+        viewState.explorerPanelIsVisible;
+    return (React.createElement(ModalPopup, { viewState: viewState, isVisible: isVisible, isTopElement: viewState.topElement === ExplorerWindowElementName, onClose: onClose, onStartAnimatingIn: onStartAnimatingIn, onDoneAnimatingIn: onDoneAnimatingIn },
+        React.createElement(Tabs, { terria: viewState.terria, viewState: viewState })));
+});
 //# sourceMappingURL=ExplorerWindow.js.map

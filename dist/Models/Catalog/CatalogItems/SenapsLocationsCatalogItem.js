@@ -95,7 +95,7 @@ export class SenapsLocationsStratum extends LoadableStratum(SenapsLocationsCatal
     {{/streamIds}}</ul>
     <br/>
     <chart
-      id='{{id}}'
+      identifier='{{id}}'
       title='{{id}}'
       sources='${proxiedBaseUrl}/observations?streamid={{#terria.urlEncodeComponent}}{{streamIds}}{{/terria.urlEncodeComponent}}&limit=1440&media=csv&csvheader=false&sort=descending,${proxiedBaseUrl}/observations?streamid={{#terria.urlEncodeComponent}}{{streamIds}}{{/terria.urlEncodeComponent}}&limit=7200&media=csv&csvheader=false&sort=descending'
       source-names='1d,5d'
@@ -136,7 +136,7 @@ class SenapsLocationsCatalogItem extends MappableMixin(UrlMixin(CatalogMemberMix
         return i18next.t("models.senaps.name");
     }
     forceLoadMapItems() {
-        return SenapsLocationsStratum.load(this).then(stratum => {
+        return SenapsLocationsStratum.load(this).then((stratum) => {
             if (stratum === undefined)
                 return;
             runInAction(() => {
@@ -150,7 +150,7 @@ class SenapsLocationsCatalogItem extends MappableMixin(UrlMixin(CatalogMemberMix
     }
     get mapItems() {
         if (isDefined(this.geoJsonItem)) {
-            return this.geoJsonItem.mapItems.map(mapItem => {
+            return this.geoJsonItem.mapItems.map((mapItem) => {
                 mapItem.show = this.show;
                 return mapItem;
             });

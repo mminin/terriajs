@@ -10,9 +10,7 @@ import parseCustomMarkdownToReact from "../Custom/parseCustomMarkdownToReact";
 let InfoParameterEditor = class InfoParameterEditor extends React.Component {
     render() {
         return (React.createElement("div", null, this.props.parameter.value &&
-            parseCustomMarkdownToReact(this.props.parameter.value, {
-                parameter: this.props.parameter
-            })));
+            parseCustomMarkdownToReact(this.props.parameter.value)));
     }
 };
 InfoParameterEditor = __decorate([

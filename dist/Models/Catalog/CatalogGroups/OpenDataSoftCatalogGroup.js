@@ -8,7 +8,6 @@ import { ApiClient, fromCatalog } from "@opendatasoft/api-client";
 import i18next from "i18next";
 import { action, computed, runInAction } from "mobx";
 import URI from "urijs";
-import filterOutUndefined from "../../../Core/filterOutUndefined";
 import isDefined from "../../../Core/isDefined";
 import runLater from "../../../Core/runLater";
 import CatalogMemberMixin from "../../../ModelMixins/CatalogMemberMixin";
@@ -37,29 +36,42 @@ export class OpenDataSoftCatalogStratum extends LoadableStratum(OpenDataSoftCata
         const client = new ApiClient({
             domain: catalogGroup.url
         });
-        let datasets;
+        let datasets = [];
         let facets;
         // If no facetFilters, try to get some facets
         if (catalogGroup.facetFilters &&
             catalogGroup.facetFilters.length === 0 &&
             !catalogGroup.flatten) {
-            facets = (_a = (await client.get(fromCatalog().facets())).facets) === null || _a === void 0 ? void 0 : _a.filter(f => isValidFacet(f));
+            facets = (_a = (await client.get(fromCatalog().facets())).facets) === null || _a === void 0 ? void 0 : _a.filter((f) => isValidFacet(f));
         }
         // If no facets (or we have facetFiles) - get datasets
         if (!facets || facets.length === 0) {
+            // We can only fetch datasets in batch of 100
+            let offset = 0;
+            let totalDatasets;
+            const limit = 100;
             let q = fromCatalog()
                 .datasets()
-                .limit(100)
+                .limit(limit)
                 .orderBy("title asc")
                 // Filter dataset with 'geo' or 'timeserie' features.
                 // Possible values: calendar, geo, image, apiproxy, timeserie, and aggregate
                 .where(`features = "geo" OR features = "timeserie"`);
             // If facet filters, use them to filter datasets
             if (catalogGroup.facetFilters && catalogGroup.facetFilters.length > 0) {
-                q = q.refine(catalogGroup.facetFilters.map(f => `${f.name}:${f.value}`).join(","));
+                q = q.refine(catalogGroup.facetFilters.map((f) => `${f.name}:${f.value}`).join(","));
             }
-            const catalog = await client.get(q);
-            datasets = filterOutUndefined((_c = (_b = catalog.datasets) === null || _b === void 0 ? void 0 : _b.map(d => d.dataset).filter(d => isValidDataset(d))) !== null && _c !== void 0 ? _c : []);
+            while (!isDefined(totalDatasets) || offset < totalDatasets) {
+                q = q.offset(offset);
+                const catalog = await client.get(q);
+                totalDatasets = (_b = catalog.total_count) !== null && _b !== void 0 ? _b : 0;
+                (_c = catalog.datasets) === null || _c === void 0 ? void 0 : _c.forEach((response) => {
+                    if (isValidDataset(response.dataset)) {
+                        datasets.push(response.dataset);
+                    }
+                });
+                offset += limit;
+            }
         }
         return new OpenDataSoftCatalogStratum(catalogGroup, undefined, facets !== null && facets !== void 0 ? facets : [], datasets !== null && datasets !== void 0 ? datasets : []);
     }
@@ -68,13 +80,13 @@ export class OpenDataSoftCatalogStratum extends LoadableStratum(OpenDataSoftCata
     }
     get members() {
         return [
-            ...this.facets.map(f => this.getFacetId(f)),
-            ...this.datasets.map(d => this.getDatasetId(d))
+            ...this.facets.map((f) => this.getFacetId(f)),
+            ...this.datasets.map((d) => this.getDatasetId(d))
         ];
     }
     createMembers() {
-        this.facets.forEach(facet => this.createGroupFromFacet(facet));
-        this.datasets.forEach(dataset => this.createMemberFromDataset(dataset));
+        this.facets.forEach((facet) => this.createGroupFromFacet(facet));
+        this.datasets.forEach((dataset) => this.createMemberFromDataset(dataset));
     }
     /** Turn facet into OpenDataSoftCatalogGroup */
     createGroupFromFacet(facet) {
@@ -93,17 +105,16 @@ export class OpenDataSoftCatalogStratum extends LoadableStratum(OpenDataSoftCata
             groupModel = existingGroupModel;
         }
         // Replace the stratum inherited from the parent group.
-        const stratum = CommonStrata.underride;
-        groupModel.strata.delete(stratum);
-        groupModel.setTrait(stratum, "name", `${facet.name}${facet.count ? ` (${(_a = facet.count) !== null && _a !== void 0 ? _a : 0})` : ""}`);
-        groupModel.setTrait(stratum, "url", this.catalogGroup.url);
+        groupModel.strata.delete(CommonStrata.definition);
+        groupModel.setTrait(CommonStrata.definition, "name", `${facet.name}${facet.count ? ` (${(_a = facet.count) !== null && _a !== void 0 ? _a : 0})` : ""}`);
+        groupModel.setTrait(CommonStrata.definition, "url", this.catalogGroup.url);
         // Set OpenDataSoftDatasetStratum so it doesn't have to be loaded gain
         groupModel.strata.delete(OpenDataSoftCatalogStratum.stratumName);
         // If no more facets, set facetFilter
         if (!facet.facets ||
             !Array.isArray(facet.facets) ||
             facet.facets.length === 0) {
-            groupModel.setTrait(stratum, "facetFilters", [
+            groupModel.setTrait(CommonStrata.definition, "facetFilters", [
                 createStratumInstance(RefineTraits, {
                     name: this.facetName,
                     value: facet.name
@@ -133,13 +144,12 @@ export class OpenDataSoftCatalogStratum extends LoadableStratum(OpenDataSoftCata
             itemModel = existingItemModel;
         }
         // Replace the stratum inherited from the parent group.
-        const stratum = CommonStrata.underride;
-        itemModel.strata.delete(stratum);
-        itemModel.setTrait(stratum, "datasetId", dataset.dataset_id);
-        itemModel.setTrait(stratum, "url", this.catalogGroup.url);
-        itemModel.setTrait(stratum, "name", (_c = (_b = (_a = dataset.metas) === null || _a === void 0 ? void 0 : _a.default) === null || _b === void 0 ? void 0 : _b.title) !== null && _c !== void 0 ? _c : dataset.dataset_id);
-        itemModel.setTrait(stratum, "description", (_f = (_e = (_d = dataset.metas) === null || _d === void 0 ? void 0 : _d.default) === null || _e === void 0 ? void 0 : _e.description) !== null && _f !== void 0 ? _f : undefined);
-        itemModel.setTrait(stratum, "metadataUrls", [
+        itemModel.strata.delete(CommonStrata.definition);
+        itemModel.setTrait(CommonStrata.definition, "datasetId", dataset.dataset_id);
+        itemModel.setTrait(CommonStrata.definition, "url", this.catalogGroup.url);
+        itemModel.setTrait(CommonStrata.definition, "name", (_c = (_b = (_a = dataset.metas) === null || _a === void 0 ? void 0 : _a.default) === null || _b === void 0 ? void 0 : _b.title) !== null && _c !== void 0 ? _c : dataset.dataset_id);
+        itemModel.setTrait(CommonStrata.definition, "description", (_f = (_e = (_d = dataset.metas) === null || _d === void 0 ? void 0 : _d.default) === null || _e === void 0 ? void 0 : _e.description) !== null && _f !== void 0 ? _f : undefined);
+        itemModel.setTrait(CommonStrata.definition, "metadataUrls", [
             createStratumInstance(MetadataUrlTraits, {
                 title: i18next.t("models.openDataSoft.viewDatasetPage"),
                 url: `${this.catalogGroup.url}/explore/dataset/${dataset.dataset_id}/information/`

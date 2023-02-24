@@ -27,7 +27,7 @@ const TerriaErrorBox = (props) => {
           p {
             margin: 5px 0px;
           }
-        ` }, parseCustomMarkdownToReact(props.error.message, {
+        `, textLight: true }, parseCustomMarkdownToReact(props.error.message, {
             viewState: props.viewState,
             terria: props.viewState.terria
         })),
@@ -47,20 +47,26 @@ export const terriaErrorNotification = (error) => (viewState) => {
             ? error.originalError
             : [error.originalError];
     }
-    // We only show FeedbankLink if the error message doesn't include the <feedbacklink> custom component (so we don't get duplicates)
+    // We only show FeedbackLink if the error message doesn't include the <feedbacklink> custom component (so we don't get duplicates)
     const includesFeedbackLink = error.highestImportanceError.message.includes(`<${FeedbackLinkCustomComponent.componentName}`);
     return (React.createElement(React.Fragment, null,
         React.createElement(Text, { css: `
-          p {
-            margin: 5px 0px;
-          }
-        ` }, parseCustomMarkdownToReact(error.highestImportanceError.message, {
+            p {
+              margin: 5px 0px;
+            }
+            // Fix feedback button color
+            button {
+              color: ${(p) => p.theme.textLight};
+            }
+          `, textLight: true }, parseCustomMarkdownToReact(error.highestImportanceError.message, {
             viewState: viewState,
             terria: viewState.terria
         })),
         detailedErrors ? (React.createElement(React.Fragment, null,
             React.createElement(Spacing, { bottom: 2 }),
-            React.createElement(Collapsible, { btnRight: true, title: i18next.t("models.raiseError.developerDetails"), titleTextProps: { large: true }, bodyBoxProps: { padded: true }, isOpen: error.showDetails, onToggle: show => () => runInAction(() => (error.showDetails = show)) },
+            React.createElement(Collapsible, { btnRight: true, title: i18next.t("models.raiseError.developerDetails"), titleTextProps: { large: true }, bodyBoxProps: { padded: true }, isOpen: error.showDetails, onToggle: (show) => {
+                    runInAction(() => (error.showDetails = show));
+                } },
                 React.createElement(ErrorsBox, { errors: detailedErrors, viewState: viewState })))) : null,
         !includesFeedbackLink ? (React.createElement(FeedbackLink, { viewState: viewState })) : null));
 };

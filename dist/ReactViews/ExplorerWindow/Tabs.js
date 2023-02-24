@@ -20,17 +20,22 @@ const Tabs = observer(createReactClass({
         t: PropTypes.func.isRequired
     },
     async onFileAddFinished(files) {
-        const file = files.find(f => MappableMixin.isMixedInto(f));
+        const file = files.find((f) => MappableMixin.isMixedInto(f));
         if (file) {
             const result = await this.props.viewState.viewCatalogMember(file);
             if (result.error) {
                 result.raiseError(this.props.terria);
             }
             else {
-                this.props.terria.currentViewer.zoomTo(file, 1);
+                if (!file.disableZoomTo) {
+                    this.props.terria.currentViewer.zoomTo(file, 1);
+                }
             }
         }
         this.props.viewState.myDataIsUploadView = false;
+    },
+    async onUrlAddFinished() {
+        this.props.viewState.openAddData();
     },
     getTabs() {
         const { t } = this.props;
@@ -42,11 +47,11 @@ const Tabs = observer(createReactClass({
             title: "my-data",
             name: t("addData.myData"),
             category: "my-data",
-            panel: (React.createElement(MyDataTab, { terria: this.props.terria, viewState: this.props.viewState, onFileAddFinished: files => this.onFileAddFinished(files) }))
+            panel: (React.createElement(MyDataTab, { terria: this.props.terria, viewState: this.props.viewState, onFileAddFinished: (files) => this.onFileAddFinished(files), onUrlAddFinished: this.onUrlAddFinished }))
         };
         if (this.props.terria.configParameters.tabbedCatalog) {
             return [].concat(this.props.terria.catalog.group.memberModels
-                .filter(member => member !== this.props.terria.catalog.userAddedDataGroup)
+                .filter((member) => member !== this.props.terria.catalog.userAddedDataGroup)
                 .map((member, i) => ({
                 name: member.nameInCatalog,
                 title: `data-catalog-${member.name}`,
@@ -73,10 +78,12 @@ const Tabs = observer(createReactClass({
             if (this.props.terria.configParameters.tabbedCatalog) {
                 this.props.viewState.activeTabIdInCategory = idInCategory;
                 if (category === "data-catalog") {
-                    const member = this.props.terria.catalog.group.memberModels.filter(m => m.uniqueId === idInCategory)[0];
+                    const member = this.props.terria.catalog.group.memberModels.filter((m) => m.uniqueId === idInCategory)[0];
                     // If member was found and member can be opened, open it (causes CkanCatalogGroups to fetch etc.)
                     if (defined(member)) {
-                        this.props.viewState.viewCatalogMember(member);
+                        this.props.viewState
+                            .viewCatalogMember(member)
+                            .then((result) => result.raiseError(this.props.viewState.terria));
                     }
                 }
             }
@@ -84,13 +91,13 @@ const Tabs = observer(createReactClass({
     },
     render() {
         const tabs = this.getTabs();
-        const sameCategory = tabs.filter(t => t.category === this.props.viewState.activeTabCategory);
-        const currentTab = sameCategory.filter(t => t.idInCategory === this.props.viewState.activeTabIdInCategory)[0] ||
+        const sameCategory = tabs.filter((t) => t.category === this.props.viewState.activeTabCategory);
+        const currentTab = sameCategory.filter((t) => t.idInCategory === this.props.viewState.activeTabIdInCategory)[0] ||
             sameCategory[0] ||
             tabs[0];
         return (React.createElement("div", { className: Styles.tabs },
             React.createElement("ul", { className: Styles.tabList, role: "tablist", css: `
-              background-color: ${p => p.theme.colorPrimary};
+              background-color: ${(p) => p.theme.colorPrimary};
             ` },
                 React.createElement(For, { each: "item", index: "i", of: tabs },
                     React.createElement("li", { key: i, id: "tablist--" + item.title, className: Styles.tabListItem, role: "tab", "aria-controls": "panel--" + item.title, "aria-selected": item === currentTab },
@@ -102,7 +109,7 @@ const Tabs = observer(createReactClass({
     }
 }));
 const ButtonTab = styled.button `
-  ${props => `
+  ${(props) => `
     background: transparent;
     color: ${props.theme.textLight};
     &:hover,
@@ -118,5 +125,5 @@ const ButtonTab = styled.button `
 
   `}
 `;
-module.exports = withTranslation()(Tabs);
+export default withTranslation()(Tabs);
 //# sourceMappingURL=Tabs.js.map

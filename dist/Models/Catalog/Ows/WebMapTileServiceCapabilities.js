@@ -49,14 +49,14 @@ export default class WebMapTileServiceCapabilities {
         if (this.layers === undefined) {
             return undefined;
         }
-        let match = this.layers.find(layer => layer.Identifier === name || layer.Title === name);
+        let match = this.layers.find((layer) => layer.Identifier === name || layer.Title === name);
         if (!match) {
             const colonIndex = name.indexOf(":");
             if (colonIndex >= 0) {
                 // This looks like a namespaced name. Such names will (usually?) show up in GetCapabilities
                 // as just their name without the namespace qualifier.
                 const nameWithoutNamespace = name.substring(colonIndex + 1);
-                match = this.layers.find(layer => layer.Identifier === nameWithoutNamespace ||
+                match = this.layers.find((layer) => layer.Identifier === nameWithoutNamespace ||
                     layer.Title === nameWithoutNamespace);
             }
         }
@@ -66,7 +66,7 @@ export default class WebMapTileServiceCapabilities {
         if (this.tileMatrixSets === undefined) {
             return undefined;
         }
-        return this.tileMatrixSets.find(tileMatrixSet => tileMatrixSet.Identifier === set);
+        return this.tileMatrixSets.find((tileMatrixSet) => tileMatrixSet.Identifier === set);
     }
 }
 WebMapTileServiceCapabilities.fromUrl = createTransformer((url) => {

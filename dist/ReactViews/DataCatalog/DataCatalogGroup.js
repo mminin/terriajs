@@ -47,7 +47,7 @@ const DataCatalogGroup = observer(createReactClass({
                 isOpen: !this.state.isOpen
             });
         }
-        this.props.viewState.viewCatalogMember(this.props.group, !this.props.group.isOpen);
+        (await this.props.viewState.viewCatalogMember(this.props.group, !this.props.group.isOpen)).raiseError(this.props.viewState.terria);
     },
     isSelected() {
         return addedByUser(this.props.group)

@@ -146,7 +146,7 @@ export default class IndexedItemSearchProvider extends ItemSearchProvider {
         const idSets = await search;
         const matchingIds = intersectSets(idSets);
         // Map the IDs to data and build the search result.
-        const results = [...matchingIds].map(id => this.buildResult(this.lookupDataForId(data, id), id));
+        const results = [...matchingIds].map((id) => this.buildResult(this.lookupDataForId(data, id), id));
         return results;
     }
     searchParameter(parameter, value) {
@@ -228,6 +228,6 @@ export function intersectSets(sets) {
         return new Set();
     return sets
         .sort((a, b) => a.size - b.size)
-        .reduce((a, b) => new Set([...a].filter(x => b.has(x))));
+        .reduce((a, b) => new Set([...a].filter((x) => b.has(x))));
 }
 //# sourceMappingURL=IndexedItemSearchProvider.js.map

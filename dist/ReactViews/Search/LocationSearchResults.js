@@ -21,7 +21,7 @@ import { BoxSpan } from "../../Styled/Box";
 import Text, { TextSpan } from "../../Styled/Text";
 import { RawButton } from "../../Styled/Button";
 const RawButtonAndHighlight = styled(RawButton) `
-  ${p => `
+  ${(p) => `
   &:hover, &:focus {
     background-color: ${p.theme.greyLighter};
     ${StyledIcon} {
@@ -78,8 +78,7 @@ const LocationSearchResults = observer(createReactClass({
         const search = this.props.search;
         const { isOpen, isExpanded } = this.state;
         const searchProvider = search.searchProvider;
-        const locationSearchBoundingBox = this.props.terria.configParameters
-            .locationSearchBoundingBox;
+        const locationSearchBoundingBox = this.props.terria.configParameters.locationSearchBoundingBox;
         const validResults = isDefined(locationSearchBoundingBox)
             ? search.results.filter(function (r) {
                 return (r.location.longitude > locationSearchBoundingBox[0] &&
@@ -107,7 +106,7 @@ const LocationSearchResults = observer(createReactClass({
                 React.createElement("ul", { className: Styles.items }, results.map((result, i) => (React.createElement(SearchResult, { key: i, clickAction: this.props.onLocationClick.bind(null, result), name: result.name, icon: "location2", searchResultTheme: this.props.theme, locationSearchText: this.props.locationSearchText, isLastResult: results.length === i + 1 })))),
                 isOpen && validResults.length > MAX_RESULTS_BEFORE_TRUNCATING && (React.createElement(BoxSpan, { paddedRatio: 2, paddedVertically: 3, left: true, justifySpaceBetween: true },
                     React.createElement(RawButton, { onClick: this.toggleExpand },
-                        React.createElement(Text, { small: true, isLink: true }, this.renderResultsFooter())))))));
+                        React.createElement(TextSpan, { small: true, isLink: true }, this.renderResultsFooter())))))));
     }
 }));
 module.exports = withTranslation()(LocationSearchResults);

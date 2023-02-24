@@ -49,7 +49,7 @@ export class ModelReferenceTrait extends Trait {
                     ? this.modelParentId
                         ? this.modelParentId
                         : "/"
-                    : model.uniqueId, stratumName, jsonValue, {}).catchError(error => errors.push(error));
+                    : model.uniqueId, stratumName, jsonValue, {}).catchError((error) => errors.push(error));
                 result = (_a = newModel === null || newModel === void 0 ? void 0 : newModel.uniqueId) !== null && _a !== void 0 ? _a : createStubCatalogItem(model.terria).uniqueId;
             }
         }

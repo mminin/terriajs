@@ -22,15 +22,14 @@ import Icon, { StyledIcon } from "../../../../Styled/Icon";
 import GyroscopeGuidance from "../../../GyroscopeGuidance/GyroscopeGuidance";
 import { withTerriaRef } from "../../../HOCs/withTerriaRef";
 import FadeIn from "../../../Transitions/FadeIn/FadeIn";
-const CameraFlightPath = require("terriajs-cesium/Source/Scene/CameraFlightPath")
-    .default;
+const CameraFlightPath = require("terriajs-cesium/Source/Scene/CameraFlightPath").default;
 export const COMPASS_LOCAL_PROPERTY_KEY = "CompassHelpPrompted";
 const StyledCompass = styled.div `
   display: none;
   position: relative;
-  width: ${props => props.theme.compassWidth}px;
-  height: ${props => props.theme.compassWidth}px;
-  @media (min-width: ${props => props.theme.sm}px) {
+  width: ${(props) => props.theme.compassWidth}px;
+  height: ${(props) => props.theme.compassWidth}px;
+  @media (min-width: ${(props) => props.theme.sm}px) {
     display: block;
   }
 `;
@@ -65,30 +64,30 @@ const getCompassScaleRatio = (compassWidth) => (Number(compassWidth) + 10) / Num
  *
  **/
 const StyledCompassOuterRing = styled.div `
-  ${props => props.theme.centerWithoutFlex()}
+  ${(props) => props.theme.centerWithoutFlex()}
   // override the transform provided in centerWithoutFlex()
   transform: translate(-50%,-50%) scale(0.9999);
-  z-index: ${props => (props.active ? "2" : "1")};
+  z-index: ${(props) => (props.active ? "2" : "1")};
   width: 100%;
-  ${props => props.active &&
+  ${(props) => props.active &&
     `transform: translate(-50%,-50%) scale(${getCompassScaleRatio(props.theme.compassWidth)});`};
   transition: transform 0.3s;
 `;
 const StyledCompassInnerRing = styled.div `
-  ${props => props.theme.verticalAlign()}
+  ${(props) => props.theme.verticalAlign()}
 
-  width: ${props => Number(props.theme.compassWidth) - Number(props.theme.ringWidth) - 10}px;
-  height: ${props => Number(props.theme.compassWidth) - Number(props.theme.ringWidth) - 10}px;
+  width: ${(props) => Number(props.theme.compassWidth) - Number(props.theme.ringWidth) - 10}px;
+  height: ${(props) => Number(props.theme.compassWidth) - Number(props.theme.ringWidth) - 10}px;
   margin: 0 auto;
   padding: 4px;
   box-sizing: border-box;
 `;
 const StyledCompassRotationMarker = styled.div `
-  ${props => props.theme.centerWithoutFlex()}
+  ${(props) => props.theme.centerWithoutFlex()}
   z-index: 3;
   cursor: pointer;
-  width: ${props => Number(props.theme.compassWidth) + Number(props.theme.ringWidth) - 4}px;
-  height: ${props => Number(props.theme.compassWidth) + Number(props.theme.ringWidth) - 4}px;
+  width: ${(props) => Number(props.theme.compassWidth) + Number(props.theme.ringWidth) - 4}px;
+  height: ${(props) => Number(props.theme.compassWidth) + Number(props.theme.ringWidth) - 4}px;
   border-radius: 50%;
   background-repeat: no-repeat;
   background-size: contain;
@@ -121,7 +120,8 @@ class Compass extends React.Component {
         return this.props.terria.cesium;
     }
     cesiumLoaded() {
-        this._unsubscribeFromViewerChange = this.props.terria.mainViewer.afterViewerChanged.addEventListener(() => viewerChange(this));
+        this._unsubscribeFromViewerChange =
+            this.props.terria.mainViewer.afterViewerChanged.addEventListener(() => viewerChange(this));
         viewerChange(this);
     }
     componentWillUnmount() {
@@ -168,7 +168,9 @@ class Compass extends React.Component {
         windowPosition.x = scene.canvas.clientWidth / 2;
         windowPosition.y = scene.canvas.clientHeight / 2;
         const ray = camera.getPickRay(windowPosition, pickRayScratch);
-        const center = scene.globe.pick(ray, scene, centerScratch);
+        const center = isDefined(ray)
+            ? scene.globe.pick(ray, scene, centerScratch)
+            : undefined;
         if (!isDefined(center)) {
             // Globe is barely visible, so reset to home view.
             this.props.terria.currentViewer.zoomTo(this.props.terria.mainViewer.homeCamera, 1.5);
@@ -278,7 +280,9 @@ function rotate(viewModel, compassElement, cursorVector) {
     windowPosition.x = scene.canvas.clientWidth / 2;
     windowPosition.y = scene.canvas.clientHeight / 2;
     const ray = camera.getPickRay(windowPosition, pickRayScratch);
-    const viewCenter = scene.globe.pick(ray, scene, centerScratch);
+    const viewCenter = isDefined(ray)
+        ? scene.globe.pick(ray, scene, centerScratch)
+        : undefined;
     if (!isDefined(viewCenter)) {
         viewModel.rotateFrame = Transforms.eastNorthUpToFixedFrame(camera.positionWC, Ellipsoid.WGS84, newTransformScratch);
         viewModel.rotateIsLook = true;
@@ -344,7 +348,9 @@ function orbit(viewModel, compassElement, cursorVector) {
     windowPosition.x = scene.canvas.clientWidth / 2;
     windowPosition.y = scene.canvas.clientHeight / 2;
     const ray = camera.getPickRay(windowPosition, pickRayScratch);
-    const center = scene.globe.pick(ray, scene, centerScratch);
+    const center = isDefined(ray)
+        ? scene.globe.pick(ray, scene, centerScratch)
+        : undefined;
     if (!isDefined(center)) {
         viewModel.orbitFrame = Transforms.eastNorthUpToFixedFrame(camera.positionWC, Ellipsoid.WGS84, newTransformScratch);
         viewModel.orbitIsLook = true;
@@ -420,7 +426,7 @@ function orbit(viewModel, compassElement, cursorVector) {
     updateAngleAndOpacity(cursorVector, compassElement.getBoundingClientRect().width);
 }
 function subscribeToAnimationFrame(viewModel) {
-    viewModel._unsubscribeFromAnimationFrame = (id => () => cancelAnimationFrame(id))(requestAnimationFrame(() => {
+    viewModel._unsubscribeFromAnimationFrame = ((id) => () => cancelAnimationFrame(id))(requestAnimationFrame(() => {
         if (isDefined(viewModel.orbitAnimationFrameFunction)) {
             viewModel.orbitAnimationFrameFunction();
         }
@@ -434,13 +440,14 @@ function viewerChange(viewModel) {
                 viewModel._unsubscribeFromPostRender();
                 viewModel._unsubscribeFromPostRender = undefined;
             }
-            viewModel._unsubscribeFromPostRender = viewModel.props.terria.cesium.scene.postRender.addEventListener(function () {
-                runInAction(() => {
-                    viewModel.setState({
-                        heading: viewModel.props.terria.cesium.scene.camera.heading
+            viewModel._unsubscribeFromPostRender =
+                viewModel.props.terria.cesium.scene.postRender.addEventListener(function () {
+                    runInAction(() => {
+                        viewModel.setState({
+                            heading: viewModel.props.terria.cesium.scene.camera.heading
+                        });
                     });
                 });
-            });
         }
         else {
             if (viewModel._unsubscribeFromPostRender) {

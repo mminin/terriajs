@@ -35,16 +35,16 @@ export const removeListStyles = () => `
   padding: 0;
   margin: 0;
 `;
-export const borderRadiusTop = radius => `
+export const borderRadiusTop = (radius) => `
   border-radius: ${radius}px ${radius}px 0 0;
 `;
-export const borderRadiusRight = radius => `
+export const borderRadiusRight = (radius) => `
   border-radius: 0 ${radius}px ${radius}px 0;
 `;
-export const borderRadiusBottom = radius => `
+export const borderRadiusBottom = (radius) => `
 border-radius: 0 0 ${radius}px ${radius}px;
 `;
-export const borderRadiusLeft = radius => `
+export const borderRadiusLeft = (radius) => `
   border-radius: ${radius}px 0 0 ${radius}px;
 `;
 export const addBasicHoverStyles = () => `
@@ -57,7 +57,7 @@ export const addBasicHoverStyles = () => `
  * unfortunately this means more classnames outputted, but gives us consistency
  * in the meantime.
  *  */
-export const addTerriaPrimaryBtnStyles = props => `
+export const addTerriaPrimaryBtnStyles = (props) => `
   background: ${props.theme.colorPrimary};
   color: ${props.theme.textLight};
   svg {
@@ -70,7 +70,7 @@ export const addTerriaPrimaryBtnStyles = props => `
     background: ${props.theme.colorPrimary};
   }
 `;
-export const addTerriaSecondaryBtnStyles = props => `
+export const addTerriaSecondaryBtnStyles = (props) => `
   color: ${props.theme.colorPrimary};
   // Don't override border here on secondary, as it's set specifically on certain buttons e.g. story cancel button
 
@@ -81,7 +81,7 @@ export const addTerriaSecondaryBtnStyles = props => `
   }
   ${addBasicHoverStyles()}
 `;
-export const addTerriaTertiaryBtnStyles = props => `
+export const addTerriaTertiaryBtnStyles = (props) => `
   color: ${props.theme.modalText};
   background: ${props.theme.modalBg};
   border: 2px solid ${props.theme.modalText};
@@ -92,7 +92,7 @@ export const addTerriaTertiaryBtnStyles = props => `
     color: ${props.theme.colorPrimary};
   }
 `;
-export const addTerriaMapBtnStyles = props => `
+export const addTerriaMapBtnStyles = (props) => `
   color: ${props.theme.textLight};
   background-color: ${props.theme.dark};
   &:hover,
@@ -111,7 +111,7 @@ export const addTerriaMapBtnStyles = props => `
     }
   }
 `;
-export const addTerriaLightBtnStyles = props => `
+export const addTerriaLightBtnStyles = (props) => `
   color: ${props.theme.textLight};
   svg {
     fill: ${props.theme.textLight};
@@ -121,6 +121,22 @@ export const addTerriaLightBtnStyles = props => `
       fill: ${props.theme.colorPrimary};
     }
   }
+`;
+export const addTerriaScrollbarStyles = (props) => `
+    -webkit-overflow-scrolling: touch;
+
+    &::-webkit-scrollbar {
+      width: 10px; /* for vertical scrollbars */
+      height: 8px; /* for horizontal scrollbars */
+    }
+
+    &::-webkit-scrollbar-track {
+      background-color: rgba(136, 136, 136, 0.1);
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background-color: rgba(136, 136, 136, 0.6);
+    }
 `;
 export default {
     verticalAlign,
@@ -136,6 +152,7 @@ export default {
     addTerriaSecondaryBtnStyles,
     addTerriaTertiaryBtnStyles,
     addTerriaMapBtnStyles,
-    addTerriaLightBtnStyles
+    addTerriaLightBtnStyles,
+    addTerriaScrollbarStyles
 };
 //# sourceMappingURL=mixins.js.map

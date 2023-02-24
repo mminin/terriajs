@@ -11,14 +11,17 @@ import JulianDate from "terriajs-cesium/Source/Core/JulianDate";
 import TimeInterval from "terriajs-cesium/Source/Core/TimeInterval";
 import filterOutUndefined from "../Core/filterOutUndefined";
 import isDefined from "../Core/isDefined";
-import ConstantColorMap from "../Map/ConstantColorMap";
-import ConstantPointSizeMap from "../Map/ConstantPointSizeMap";
-import DiscreteColorMap from "../Map/DiscreteColorMap";
-import EnumColorMap from "../Map/EnumColorMap";
-import ScalePointSizeMap from "../Map/ScalePointSizeMap";
+import { isJsonNumber } from "../Core/Json";
+import ConstantColorMap from "../Map/ColorMap/ConstantColorMap";
+import DiscreteColorMap from "../Map/ColorMap/DiscreteColorMap";
+import EnumColorMap from "../Map/ColorMap/EnumColorMap";
+import ConstantPointSizeMap from "../Map/SizeMap/ConstantPointSizeMap";
+import ScalePointSizeMap from "../Map/SizeMap/ScalePointSizeMap";
+import CommonStrata from "../Models/Definition/CommonStrata";
 import createCombinedModel from "../Models/Definition/createCombinedModel";
 import TableColorMap from "./TableColorMap";
 import TableColumnType from "./TableColumnType";
+import TableStyleMap from "./TableStyleMap";
 const DEFAULT_FINAL_DURATION_SECONDS = 3600 * 24 - 1; // one day less a second, if there is only one date.
 /**
  * A style controlling how tabular data is displayed.
@@ -26,8 +29,8 @@ const DEFAULT_FINAL_DURATION_SECONDS = 3600 * 24 - 1; // one day less a second, 
 export default class TableStyle {
     /**
      *
-     * @param tableModel TableMixin catalog memeber
-     * @param styleNumber Index of column in tablemodel (if undefined, then default style will be used)
+     * @param tableModel TableMixin catalog member
+     * @param styleNumber Index of styleTraits in tableModel (if undefined, then default style will be used)
      */
     constructor(tableModel, styleNumber) {
         this.tableModel = tableModel;
@@ -48,17 +51,20 @@ export default class TableStyle {
             this.colorColumn,
             this.pointSizeColumn,
             ...((_a = this.idColumns) !== null && _a !== void 0 ? _a : [])
-        ]).every(col => col.ready);
+        ]).every((col) => col.ready);
     }
     /**
      * Gets the ID of the style.
      */
     get id() {
-        return this.styleTraits.id || "Style" + this.styleNumber;
+        var _a;
+        return ((_a = this.styleTraits.id) !== null && _a !== void 0 ? _a : (isDefined(this.styleNumber)
+            ? "Style" + this.styleNumber
+            : "Default Style"));
     }
     get title() {
         var _a, _b, _c;
-        return ((_c = (_a = this.styleTraits.title) !== null && _a !== void 0 ? _a : (_b = this.tableModel.tableColumns.find(col => col.name === this.id)) === null || _b === void 0 ? void 0 : _b.title) !== null && _c !== void 0 ? _c : this.id);
+        return ((_c = (_a = this.styleTraits.title) !== null && _a !== void 0 ? _a : (_b = this.tableModel.tableColumns.find((col) => col.name === this.id)) === null || _b === void 0 ? void 0 : _b.title) !== null && _c !== void 0 ? _c : this.id);
     }
     /** Hide style from "Display Variable" selector if number of colors (EnumColorMap or DiscreteColorMap) is less than 2. As a ColorMap with a single color isn't super useful. */
     get hidden() {
@@ -84,6 +90,24 @@ export default class TableStyle {
         else {
             return this.tableModel.defaultStyle;
         }
+    }
+    /** Is style "custom" - that is - has the style been created/modified by the user (either directly, or indirectly through a share link).
+     */
+    get isCustom() {
+        var _a, _b, _c, _d, _e, _f;
+        const colorTraits = this.colorTraits.strata.get(CommonStrata.user);
+        const pointSizeTraits = this.pointSizeTraits.strata.get(CommonStrata.user);
+        const styleTraits = this.styleTraits.strata.get(CommonStrata.user);
+        return (((_b = ((_a = colorTraits === null || colorTraits === void 0 ? void 0 : colorTraits.binColors) !== null && _a !== void 0 ? _a : [])) === null || _b === void 0 ? void 0 : _b.length) > 0 ||
+            ((_d = ((_c = colorTraits === null || colorTraits === void 0 ? void 0 : colorTraits.binMaximums) !== null && _c !== void 0 ? _c : [])) === null || _d === void 0 ? void 0 : _d.length) > 0 ||
+            ((_f = ((_e = colorTraits === null || colorTraits === void 0 ? void 0 : colorTraits.enumColors) !== null && _e !== void 0 ? _e : [])) === null || _f === void 0 ? void 0 : _f.length) > 0 ||
+            isDefined(colorTraits === null || colorTraits === void 0 ? void 0 : colorTraits.numberOfBins) ||
+            isDefined(colorTraits === null || colorTraits === void 0 ? void 0 : colorTraits.minimumValue) ||
+            isDefined(colorTraits === null || colorTraits === void 0 ? void 0 : colorTraits.maximumValue) ||
+            isDefined(colorTraits === null || colorTraits === void 0 ? void 0 : colorTraits.regionColor) ||
+            isDefined(colorTraits === null || colorTraits === void 0 ? void 0 : colorTraits.nullColor) ||
+            isDefined(colorTraits === null || colorTraits === void 0 ? void 0 : colorTraits.outlierColor) ||
+            pointSizeTraits || (styleTraits === null || styleTraits === void 0 ? void 0 : styleTraits.point) || (styleTraits === null || styleTraits === void 0 ? void 0 : styleTraits.outline) || (styleTraits === null || styleTraits === void 0 ? void 0 : styleTraits.label) || (styleTraits === null || styleTraits === void 0 ? void 0 : styleTraits.trail));
     }
     /**
      * Gets the {@link TableColorStyleTraits} from the {@link #styleTraits}.
@@ -113,6 +137,51 @@ export default class TableStyle {
     get timeTraits() {
         return this.styleTraits.time;
     }
+    /** Compute rectangle for point (lat/long) based table styles */
+    get rectangle() {
+        if (this.isPoints()) {
+            const bounds = [Infinity, Infinity, -Infinity, -Infinity];
+            if (this.longitudeColumn && this.latitudeColumn) {
+                for (let i = 0; i < this.longitudeColumn.values.length; i++) {
+                    const long = this.longitudeColumn.valuesAsNumbers.values[i];
+                    const lat = this.latitudeColumn.valuesAsNumbers.values[i];
+                    if (isJsonNumber(long) && isJsonNumber(lat)) {
+                        if (bounds[0] > long) {
+                            bounds[0] = long;
+                        }
+                        if (bounds[1] > lat) {
+                            bounds[1] = lat;
+                        }
+                        if (bounds[2] < long) {
+                            bounds[2] = long;
+                        }
+                        if (bounds[3] < lat) {
+                            bounds[3] = lat;
+                        }
+                    }
+                }
+            }
+            // If bbox has no width or height - add crude buffer of .2 degrees
+            if (bounds[0] === bounds[2]) {
+                bounds[0] -= 0.1;
+                bounds[2] += 0.1;
+            }
+            if (bounds[1] === bounds[3]) {
+                bounds[1] -= 0.1;
+                bounds[3] += 0.1;
+            }
+            if (bounds[0] !== Infinity &&
+                bounds[1] !== Infinity &&
+                bounds[2] !== -Infinity &&
+                bounds[3] !== -Infinity)
+                return {
+                    west: bounds[0],
+                    south: bounds[1],
+                    east: bounds[2],
+                    north: bounds[3]
+                };
+        }
+    }
     /**
      * Gets the longitude column for this style, if any.
      */
@@ -139,7 +208,7 @@ export default class TableStyle {
      */
     get idColumns() {
         const idColumns = filterOutUndefined(this.timeTraits.idColumns
-            ? this.timeTraits.idColumns.map(name => this.resolveColumn(name))
+            ? this.timeTraits.idColumns.map((name) => this.resolveColumn(name))
             : []);
         return idColumns.length > 0 ? idColumns : undefined;
     }
@@ -173,7 +242,9 @@ export default class TableStyle {
      * Gets the scale column for this style, if any.
      */
     get pointSizeColumn() {
-        return this.resolveColumn(this.pointSizeTraits.pointSizeColumn);
+        const col = this.resolveColumn(this.pointSizeTraits.pointSizeColumn);
+        if ((col === null || col === void 0 ? void 0 : col.type) === TableColumnType.scalar)
+            return col;
     }
     /**
      * Determines if this style is visualized as points on a map.
@@ -219,6 +290,18 @@ export default class TableStyle {
     get colorMap() {
         return this.tableColorMap.colorMap;
     }
+    get pointStyleMap() {
+        return new TableStyleMap(this.tableModel, this.styleTraits, "point");
+    }
+    get outlineStyleMap() {
+        return new TableStyleMap(this.tableModel, this.styleTraits, "outline");
+    }
+    get trailStyleMap() {
+        return new TableStyleMap(this.tableModel, this.styleTraits, "trail");
+    }
+    get labelStyleMap() {
+        return new TableStyleMap(this.tableModel, this.styleTraits, "label");
+    }
     get pointSizeMap() {
         const pointSizeColumn = this.pointSizeColumn;
         const pointSizeTraits = this.pointSizeTraits;
@@ -263,10 +346,10 @@ export default class TableStyle {
         var _a, _b;
         if (this.timeIntervals) {
             // Find first non-null time interval
-            const firstInterval = (_a = this.timeIntervals) === null || _a === void 0 ? void 0 : _a.find(t => t);
+            const firstInterval = (_a = this.timeIntervals) === null || _a === void 0 ? void 0 : _a.find((t) => t);
             if (firstInterval) {
                 // Does there exist an interval which is different from firstInterval (that is to say, does there exist at least two unique intervals)
-                return !!((_b = this.timeIntervals) === null || _b === void 0 ? void 0 : _b.find(t => t &&
+                return !!((_b = this.timeIntervals) === null || _b === void 0 ? void 0 : _b.find((t) => t &&
                     (!firstInterval.start.equals(t.start) ||
                         !firstInterval.stop.equals(t.stop))));
             }
@@ -297,7 +380,7 @@ export default class TableStyle {
             if (this.timeTraits.spreadStartTime) {
                 // Find row ID with earliest date in this rowGroup
                 const firstRowId = rowIds
-                    .filter(id => filteredStartDates[id])
+                    .filter((id) => filteredStartDates[id])
                     .sort((idA, idB) => JulianDate.compare(filteredStartDates[idA], filteredStartDates[idB]))[0];
                 // Set it to earliest date in the entire column
                 if (isDefined(firstRowId))
@@ -335,9 +418,9 @@ export default class TableStyle {
         // cannot be found.
         for (let i = 0; i < this.rowGroups.length; i++) {
             const rowIds = this.rowGroups[i][1];
-            const sortedStartDates = sortedUniqueDates(rowIds.map(id => timeColumn.valuesAsJulianDates.values[id]));
+            const sortedStartDates = sortedUniqueDates(rowIds.map((id) => timeColumn.valuesAsJulianDates.values[id]));
             const finalDuration = (_a = estimateFinalDurationSeconds(sortedStartDates)) !== null && _a !== void 0 ? _a : DEFAULT_FINAL_DURATION_SECONDS;
-            const startDatesForGroup = rowIds.map(id => startDates[id]);
+            const startDatesForGroup = rowIds.map((id) => startDates[id]);
             const finishDatesForGroup = this.calculateFinishDatesFromStartDates(startDatesForGroup, finalDuration);
             for (let j = 0; j < finishDatesForGroup.length; j++) {
                 finishDates[rowIds[j]] = finishDatesForGroup[j];
@@ -361,8 +444,8 @@ export default class TableStyle {
         if (!groupByCols)
             groupByCols = [];
         const tableRowIds = this.tableModel.rowIds;
-        return (Object.entries(groupBy(tableRowIds, rowId => groupByCols
-            .map(col => {
+        return (Object.entries(groupBy(tableRowIds, (rowId) => groupByCols
+            .map((col) => {
             // If using region column as ID - only use valid regions
             if (col.type === TableColumnType.region) {
                 return col.valuesAsRegions.regionIds[rowId];
@@ -371,7 +454,39 @@ export default class TableStyle {
         })
             .join("-")))
             // Filter out bad IDs
-            .filter(value => value[0] !== ""));
+            .filter((value) => value[0] !== ""));
+    }
+    get numberFormatOptions() {
+        var _a, _b, _c, _d;
+        const colorColumn = this.colorColumn;
+        if ((_a = colorColumn === null || colorColumn === void 0 ? void 0 : colorColumn.traits) === null || _a === void 0 ? void 0 : _a.format)
+            return (_b = colorColumn === null || colorColumn === void 0 ? void 0 : colorColumn.traits) === null || _b === void 0 ? void 0 : _b.format;
+        let min = (_c = this.tableColorMap.minimumValue) !== null && _c !== void 0 ? _c : colorColumn === null || colorColumn === void 0 ? void 0 : colorColumn.valuesAsNumbers.minimum;
+        let max = (_d = this.tableColorMap.maximumValue) !== null && _d !== void 0 ? _d : colorColumn === null || colorColumn === void 0 ? void 0 : colorColumn.valuesAsNumbers.maximum;
+        if (colorColumn &&
+            colorColumn.type === TableColumnType.scalar &&
+            isDefined(min) &&
+            isDefined(max)) {
+            if (max - min === 0)
+                return;
+            // We want to show fraction digits depending on how small difference is between min and max.
+            // This also takes into consideration the default number of legend items - 7
+            // So we add an extra digit
+            // For example:
+            // - if difference is 10 - we want to show one fraction digit
+            // - if difference is 1 - we want to show two fraction digits
+            // - if difference is 0.1 - we want to show three fraction digits
+            // log_10(20/x) achieves this (where x is difference between min and max)
+            // https://www.wolframalpha.com/input/?i=log_10%2820%2Fx%29
+            // We use 20 here instead of 10 to give us a more conservative value (that is, we may show an extra fraction digit even if it is not needed)
+            // So when x >= 20 - we will not show any fraction digits
+            // Clamp values between 0 and 5
+            let fractionDigits = Math.max(0, Math.min(5, Math.ceil(Math.log10(20 / Math.abs(max - min)))));
+            return {
+                maximumFractionDigits: fractionDigits,
+                minimumFractionDigits: fractionDigits
+            };
+        }
     }
     /**
      * Computes an and end date for each given start date. The end date for a
@@ -414,7 +529,7 @@ export default class TableStyle {
         if (name === undefined) {
             return undefined;
         }
-        return this.tableModel.tableColumns.find(column => column.name === name);
+        return this.tableModel.tableColumns.find((column) => column.name === name);
     }
 }
 __decorate([
@@ -434,6 +549,9 @@ __decorate([
 ], TableStyle.prototype, "styleTraits", null);
 __decorate([
     computed
+], TableStyle.prototype, "isCustom", null);
+__decorate([
+    computed
 ], TableStyle.prototype, "colorTraits", null);
 __decorate([
     computed
@@ -444,6 +562,9 @@ __decorate([
 __decorate([
     computed
 ], TableStyle.prototype, "timeTraits", null);
+__decorate([
+    computed
+], TableStyle.prototype, "rectangle", null);
 __decorate([
     computed
 ], TableStyle.prototype, "longitudeColumn", null);
@@ -482,6 +603,18 @@ __decorate([
 ], TableStyle.prototype, "colorMap", null);
 __decorate([
     computed
+], TableStyle.prototype, "pointStyleMap", null);
+__decorate([
+    computed
+], TableStyle.prototype, "outlineStyleMap", null);
+__decorate([
+    computed
+], TableStyle.prototype, "trailStyleMap", null);
+__decorate([
+    computed
+], TableStyle.prototype, "labelStyleMap", null);
+__decorate([
+    computed
 ], TableStyle.prototype, "pointSizeMap", null);
 __decorate([
     computed
@@ -498,6 +631,9 @@ __decorate([
 __decorate([
     computed
 ], TableStyle.prototype, "rowGroups", null);
+__decorate([
+    computed
+], TableStyle.prototype, "numberFormatOptions", null);
 /**
  * Returns an array of sorted unique dates
  */

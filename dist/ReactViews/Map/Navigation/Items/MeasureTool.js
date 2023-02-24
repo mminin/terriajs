@@ -1,24 +1,17 @@
 "use strict";
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
 import i18next from "i18next";
-import { action, observable } from "mobx";
 import React from "react";
 import Cartesian3 from "terriajs-cesium/Source/Core/Cartesian3";
 import Ellipsoid from "terriajs-cesium/Source/Core/Ellipsoid";
 import EllipsoidGeodesic from "terriajs-cesium/Source/Core/EllipsoidGeodesic";
+import EllipsoidTangentPlane from "terriajs-cesium/Source/Core/EllipsoidTangentPlane";
 import CesiumMath from "terriajs-cesium/Source/Core/Math";
+import PolygonGeometryLibrary from "terriajs-cesium/Source/Core/PolygonGeometryLibrary";
 import PolygonHierarchy from "terriajs-cesium/Source/Core/PolygonHierarchy";
 import VertexFormat from "terriajs-cesium/Source/Core/VertexFormat";
 import UserDrawing from "../../../../Models/UserDrawing";
 import { GLYPHS } from "../../../../Styled/Icon";
 import MapNavigationItemController from "../../../../ViewModels/MapNavigation/MapNavigationItemController";
-const EllipsoidTangentPlane = require("terriajs-cesium/Source/Core/EllipsoidTangentPlane");
-const PolygonGeometryLibrary = require("terriajs-cesium/Source/Core/PolygonGeometryLibrary");
 export default class MeasureTool extends MapNavigationItemController {
     constructor(props) {
         super();
@@ -34,16 +27,15 @@ export default class MeasureTool extends MapNavigationItemController {
             }
             return message;
         };
-        const t = i18next.t.bind(i18next);
         this.terria = props.terria;
         this.userDrawing = new UserDrawing({
             terria: props.terria,
-            messageHeader: i18next.t("measure.measureTool"),
+            messageHeader: () => i18next.t("measure.measureTool"),
             allowPolygon: false,
-            onPointClicked: this.onPointClicked,
-            onPointMoved: this.onPointMoved,
-            onCleanUp: this.onCleanUp,
-            onMakeDialogMessage: this.onMakeDialogMessage
+            onPointClicked: this.onPointClicked.bind(this),
+            onPointMoved: this.onPointMoved.bind(this),
+            onCleanUp: this.onCleanUp.bind(this),
+            onMakeDialogMessage: this.onMakeDialogMessage.bind(this)
         });
         this.onClose = props.onClose;
     }
@@ -184,28 +176,4 @@ export default class MeasureTool extends MapNavigationItemController {
 }
 MeasureTool.id = "measure-tool";
 MeasureTool.displayName = "MeasureTool";
-__decorate([
-    observable
-], MeasureTool.prototype, "totalDistanceMetres", void 0);
-__decorate([
-    observable
-], MeasureTool.prototype, "totalAreaMetresSquared", void 0);
-__decorate([
-    observable
-], MeasureTool.prototype, "userDrawing", void 0);
-__decorate([
-    action
-], MeasureTool.prototype, "updateDistance", null);
-__decorate([
-    action
-], MeasureTool.prototype, "updateArea", null);
-__decorate([
-    action.bound
-], MeasureTool.prototype, "onCleanUp", null);
-__decorate([
-    action.bound
-], MeasureTool.prototype, "onPointClicked", null);
-__decorate([
-    action.bound
-], MeasureTool.prototype, "onPointMoved", null);
 //# sourceMappingURL=MeasureTool.js.map

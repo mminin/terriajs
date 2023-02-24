@@ -11,17 +11,18 @@ import primitiveArrayTrait from "../Decorators/primitiveArrayTrait";
 import primitiveTrait from "../Decorators/primitiveTrait";
 import mixTraits from "../mixTraits";
 import ModelTraits from "../ModelTraits";
-import OpacityTraits from "./OpacityTraits";
 import CatalogMemberTraits from "./CatalogMemberTraits";
 import ClippingPlanesTraits from "./ClippingPlanesTraits";
-import FeatureInfoTraits from "./FeatureInfoTraits";
 import HighlightColorTraits from "./HighlightColorTraits";
 import LegendOwnerTraits from "./LegendOwnerTraits";
 import MappableTraits from "./MappableTraits";
+import OpacityTraits from "./OpacityTraits";
 import PlaceEditorTraits from "./PlaceEditorTraits";
 import ShadowTraits from "./ShadowTraits";
+import SplitterTraits from "./SplitterTraits";
 import TransformationTraits from "./TransformationTraits";
 import UrlTraits from "./UrlTraits";
+import FeaturePickingTraits from "./FeaturePickingTraits";
 export class FilterTraits extends ModelTraits {
 }
 __decorate([
@@ -105,7 +106,7 @@ __decorate([
         description: "Point cloud shading parameters"
     })
 ], OptionsTraits.prototype, "pointCloudShading", void 0);
-export default class Cesium3DTilesTraits extends mixTraits(HighlightColorTraits, PlaceEditorTraits, TransformationTraits, FeatureInfoTraits, MappableTraits, UrlTraits, CatalogMemberTraits, ShadowTraits, OpacityTraits, LegendOwnerTraits, ShadowTraits, ClippingPlanesTraits) {
+export default class Cesium3DTilesTraits extends mixTraits(HighlightColorTraits, PlaceEditorTraits, TransformationTraits, FeaturePickingTraits, MappableTraits, UrlTraits, CatalogMemberTraits, ShadowTraits, OpacityTraits, LegendOwnerTraits, ShadowTraits, ClippingPlanesTraits, SplitterTraits) {
     constructor() {
         super(...arguments);
         this.colorBlendMode = "MIX";

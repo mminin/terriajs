@@ -36,7 +36,7 @@ import { useTranslation } from "react-i18next";
 import Button from "../../Styled/Button";
 import Box from "../../Styled/Box";
 import { Category, GuideAction } from "../../Core/AnalyticEvents/analyticEvents";
-const GuideProgress = props => {
+const GuideProgress = (props) => {
     // doesn't work for IE11
     // const countArray = Array.from(Array(props.maxStepCount).keys()).map(e => e++);
     const countArray = [];
@@ -44,7 +44,7 @@ const GuideProgress = props => {
         countArray.push(i);
     }
     const currentStep = props.currentStep;
-    return (React.createElement("div", { className: Styles.indicatorWrapper }, countArray.map(count => {
+    return (React.createElement("div", { className: Styles.indicatorWrapper }, countArray.map((count) => {
         return (React.createElement("div", { key: count, className: classNames(Styles.indicator, {
                 [Styles.indicatorEnabled]: count < currentStep
             }) }));
@@ -93,7 +93,7 @@ export const GuidePure = ({ terria, guideKey, hasIntroSlide = false, guideData, 
         }
     };
     const { t } = useTranslation();
-    const handleSetShowGuide = bool => {
+    const handleSetShowGuide = (bool) => {
         analyticsSetShowGuide(bool, currentGuideIndex, guideKey, terria, {
             setCalledFromInside: true
         });

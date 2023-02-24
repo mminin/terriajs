@@ -4,9 +4,11 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
-import { action, computed, runInAction } from "mobx";
+import { action, computed, isObservableArray, runInAction, toJS } from "mobx";
+import Mustache from "mustache";
 import AsyncLoader from "../Core/AsyncLoader";
 import isDefined from "../Core/isDefined";
+import { isJsonObject, isJsonString } from "../Core/Json";
 import hasTraits from "../Models/Definition/hasTraits";
 import updateModelFromJson from "../Models/Definition/updateModelFromJson";
 import CatalogMemberReferenceTraits from "../Traits/TraitsClasses/CatalogMemberReferenceTraits";
@@ -92,13 +94,13 @@ function CatalogMemberMixin(Base) {
             });
         }
         get hasDescription() {
-            return ((this.description !== undefined && this.description.length > 0) ||
-                (this.info !== undefined &&
-                    this.info.some(info => descriptionRegex.test(info.name || ""))));
+            return ((isJsonString(this.description) && this.description.length > 0) ||
+                (isObservableArray(this.info) &&
+                    this.info.some((info) => descriptionRegex.test(info.name || ""))));
         }
         get infoAsObject() {
             const infoObject = {};
-            this.info.forEach(infoItem => {
+            this.info.forEach((infoItem) => {
                 if (infoItem.name !== undefined && infoItem.name.length > 0) {
                     const infoNameNoSpaces = infoItem.name.replace(/ /g, "");
                     if (isDefined(infoItem.content) &&
@@ -118,7 +120,7 @@ function CatalogMemberMixin(Base) {
                 return this.info;
             }
             else {
-                return this.info.filter(infoItem => {
+                return this.info.filter((infoItem) => {
                     if (infoItem.name === undefined)
                         return true;
                     return sourceInfoItemNames.indexOf(infoItem.name) === -1;
@@ -130,7 +132,7 @@ function CatalogMemberMixin(Base) {
          */
         get selectableDimensions() {
             var _a;
-            return ((_a = this.modelDimensions.map(dim => ({
+            return ((_a = this.modelDimensions.map((dim) => ({
                 id: dim.id,
                 name: dim.name,
                 selectedId: dim.selectedId,
@@ -140,12 +142,22 @@ function CatalogMemberMixin(Base) {
                 setDimensionValue: (stratumId, selectedId) => {
                     var _a;
                     runInAction(() => dim.setTrait(stratumId, "selectedId", selectedId));
-                    const value = (_a = dim.options.find(o => o.id === selectedId)) === null || _a === void 0 ? void 0 : _a.value;
+                    const value = (_a = dim.options.find((o) => o.id === selectedId)) === null || _a === void 0 ? void 0 : _a.value;
                     if (isDefined(value)) {
-                        updateModelFromJson(this, stratumId, value).raiseError(this.terria, `Failed to update catalog item ${getName(this)}`);
+                        const result = updateModelFromJson(this, stratumId, mustacheNestedJsonObject(toJS(value), this));
+                        result.raiseError(this.terria, `Failed to update catalog item ${getName(this)}`);
+                        // If no error then call loadMapItems
+                        if (!result.error && MappableMixin.isMixedInto(this)) {
+                            this.loadMapItems().then((loadMapItemsResult) => {
+                                loadMapItemsResult.raiseError(this.terria);
+                            });
+                        }
                     }
                 }
             }))) !== null && _a !== void 0 ? _a : []);
+        }
+        get viewingControls() {
+            return [];
         }
         dispose() {
             super.dispose();
@@ -179,6 +191,9 @@ function CatalogMemberMixin(Base) {
     __decorate([
         computed
     ], CatalogMemberMixin.prototype, "selectableDimensions", null);
+    __decorate([
+        computed
+    ], CatalogMemberMixin.prototype, "viewingControls", null);
     return CatalogMemberMixin;
 }
 const descriptionRegex = /description/i;
@@ -196,4 +211,19 @@ export const getName = action((model) => {
         ? model.name
         : undefined)) !== null && _b !== void 0 ? _b : model === null || model === void 0 ? void 0 : model.uniqueId) !== null && _c !== void 0 ? _c : "Unknown model");
 });
+/** Recursively apply mustache template to all nested string properties in a JSON Object */
+function mustacheNestedJsonObject(obj, view) {
+    return Object.entries(obj).reduce((acc, [key, value]) => {
+        if (isJsonString(value)) {
+            acc[key] = Mustache.render(value, view);
+        }
+        else if (isJsonObject(value, false)) {
+            acc[key] = mustacheNestedJsonObject(value, view);
+        }
+        else {
+            acc[key] = value;
+        }
+        return acc;
+    }, {});
+}
 //# sourceMappingURL=CatalogMemberMixin.js.map

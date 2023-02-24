@@ -100,7 +100,7 @@ export default class Result {
      *
      */
     static combine(results, errorOverrides) {
-        return new Result(results.map(r => r.value), TerriaError.combine(results.map(r => r.error), errorOverrides));
+        return new Result(results.map((r) => r.value), TerriaError.combine(results.map((r) => r.error), errorOverrides));
     }
     get error() {
         return this._error;

@@ -72,19 +72,19 @@ export class ObjectArrayTrait extends Trait {
         // For example:
         // - In "definition" stratum, we set the objectArray to: [{item:"one", value:"a"}, {item:"two", value:"b"}]
         // - The in "user" stratum, we remove the {item:"two", value:"b"} element
-        // - Then the corrent model will only have {item:"one", value:"a"}
+        // - Then the correct model will only have {item:"one", value:"a"}
         // For more info see objectArrayTraitSpec.ts # allows strata to remove elements
         const idsInCorrectOrder = this.getIdsAcrossStrata(StratumOrder.sortBottomToTop(model.strata), true);
         const idsWithCorrectRemovals = this.getIdsAcrossStrata(StratumOrder.sortTopToBottom(model.strata));
         // Correct ids are:
         // - Ids ordered by strata bottom to top combined with
         // - Ids removed by strata top to bottom
-        const ids = Array.from(idsInCorrectOrder).filter(id => idsWithCorrectRemovals.has(id));
+        const ids = Array.from(idsInCorrectOrder).filter((id) => idsWithCorrectRemovals.has(id));
         // Create a model instance for each unique ID. Note that `createObject` is
         // memoized so we'll get the same model for the same ID each time,
         // at least when we're in a reactive context.
         const result = [];
-        ids.forEach(value => {
+        ids.forEach((value) => {
             result.push(this.createObject(model, value));
         });
         return result;
@@ -98,10 +98,10 @@ export class ObjectArrayTrait extends Trait {
             }));
         }
         const errors = [];
-        const resultArray = jsonValue.map(jsonElement => {
+        const resultArray = jsonValue.map((jsonElement) => {
             const ResultType = this.type;
             const result = createStratumInstance(ResultType);
-            Object.keys(jsonElement).forEach(propertyName => {
+            Object.keys(jsonElement).forEach((propertyName) => {
                 const trait = ResultType.traits[propertyName];
                 if (trait === undefined) {
                     errors.push(new TerriaError({
@@ -128,7 +128,7 @@ export class ObjectArrayTrait extends Trait {
         if (value === undefined) {
             return undefined;
         }
-        return value.map(element => saveStratumToJson(this.type.traits, element));
+        return value.map((element) => saveStratumToJson(this.type.traits, element));
     }
     isSameType(trait) {
         return (trait instanceof ObjectArrayTrait &&

@@ -1,4 +1,4 @@
-import { runInAction } from "mobx";
+import { action, runInAction } from "mobx";
 import React from "react";
 import createGuid from "terriajs-cesium/Source/Core/createGuid";
 import DeveloperError from "terriajs-cesium/Source/Core/DeveloperError";
@@ -104,7 +104,7 @@ export default class ChartCustomComponent extends CustomComponent {
         return node.name === this.name;
     }
     processChart(context, node, children, index) {
-        var _a;
+        var _a, _b;
         if (node.attribs === undefined ||
             !context.terria ||
             !context.feature ||
@@ -118,6 +118,12 @@ export default class ChartCustomComponent extends CustomComponent {
         const body = typeof child === "string" ? child : undefined;
         const chartElements = [];
         this.chartItemId = (_a = this.chartItemId) !== null && _a !== void 0 ? _a : createGuid();
+        // If downloads not specified but we have a body string, convert it to a downloadable data URI.
+        if (attrs.downloads === undefined &&
+            body &&
+            this.constructDownloadUrlFromBody !== undefined) {
+            attrs.downloads = [(_b = this.constructDownloadUrlFromBody) === null || _b === void 0 ? void 0 : _b.call(this, body)];
+        }
         if (!attrs.hideButtons) {
             // Build expand/download buttons
             const sourceItems = (attrs.downloads || attrs.sources || [""]).map((source, i) => {
@@ -133,7 +139,7 @@ export default class ChartCustomComponent extends CustomComponent {
                 const itemOrPromise = this.constructShareableCatalogItem
                     ? this.constructShareableCatalogItem(id, context, undefined)
                     : this.constructCatalogItem(id, context, undefined);
-                return Promise.resolve(itemOrPromise).then(item => {
+                return Promise.resolve(itemOrPromise).then(action((item) => {
                     var _a;
                     if (item) {
                         this.setTraitsFromParent(item, context.catalogItem);
@@ -145,7 +151,7 @@ export default class ChartCustomComponent extends CustomComponent {
                         }
                     }
                     return item;
-                });
+                }));
             });
             chartElements.push(React.createElement(ChartExpandAndDownloadButtons, {
                 key: "button",
@@ -254,7 +260,7 @@ export default class ChartCustomComponent extends CustomComponent {
         const sourceNames = splitStringIfDefined(nodeAttrs["source-names"]);
         const downloads = splitStringIfDefined(nodeAttrs.downloads) || sources;
         const downloadNames = splitStringIfDefined(nodeAttrs["download-names"]) || sourceNames;
-        const columnTitles = filterOutUndefined((nodeAttrs["column-titles"] || "").split(",").map(s => {
+        const columnTitles = filterOutUndefined((nodeAttrs["column-titles"] || "").split(",").map((s) => {
             const [a, b] = rsplit2(s, ":");
             if (a && b) {
                 return { name: a, title: b };
@@ -264,7 +270,7 @@ export default class ChartCustomComponent extends CustomComponent {
                 return title;
             }
         }));
-        const columnUnits = filterOutUndefined((nodeAttrs["column-units"] || "").split(",").map(s => {
+        const columnUnits = filterOutUndefined((nodeAttrs["column-units"] || "").split(",").map((s) => {
             const [a, b] = rsplit2(s, ":");
             if (a && b) {
                 return { name: a, units: b };

@@ -120,10 +120,8 @@ const Splitter = observer(createReactClass({
         window.removeEventListener("resize", this.forceRefresh);
     },
     getPosition() {
-        const canvasWidth = this.props.terria.currentViewer.getContainer()
-            .clientWidth;
-        const canvasHeight = this.props.terria.currentViewer.getContainer()
-            .clientHeight;
+        const canvasWidth = this.props.terria.currentViewer.getContainer().clientWidth;
+        const canvasHeight = this.props.terria.currentViewer.getContainer().clientHeight;
         return {
             x: this.props.terria.splitPosition * canvasWidth,
             y: this.props.terria.splitPositionVertical * canvasHeight
@@ -156,7 +154,7 @@ const Splitter = observer(createReactClass({
         return (React.createElement("div", null,
             React.createElement("div", { className: Styles.dividerWrapper },
                 React.createElement("div", { className: Styles.divider, style: dividerStyle })),
-            React.createElement("button", { className: Styles.thumb, style: thumbStyle, onClick: e => e.preventDefault(), onMouseDown: this.startDrag, onTouchStart: this.startDrag, title: t("splitterTool.title") },
+            React.createElement("button", { className: Styles.thumb, style: thumbStyle, onClick: (e) => e.preventDefault(), onMouseDown: this.startDrag, onTouchStart: this.startDrag, title: t("splitterTool.title") },
                 React.createElement(StyledIcon, { glyph: GLYPHS.splitter }))));
     }
 }));

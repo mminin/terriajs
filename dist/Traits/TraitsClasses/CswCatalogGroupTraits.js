@@ -4,7 +4,6 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
-import anyTrait from "../Decorators/anyTrait";
 import CatalogMemberTraits from "./CatalogMemberTraits";
 import GetCapabilitiesTraits from "./GetCapabilitiesTraits";
 import GroupTraits from "./GroupTraits";
@@ -26,8 +25,8 @@ __decorate([
 __decorate([
     primitiveTrait({
         type: "string",
-        name: "Hierarchy Seperator",
-        description: "Hierarchy Seperator."
+        name: "Hierarchy Separator",
+        description: "Hierarchy Separator."
     })
 ], DomainSpecTraits.prototype, "hierarchySeparator", void 0);
 __decorate([
@@ -60,12 +59,6 @@ __decorate([
         description: "True to flatten the layers into a single list; false to use the layer hierarchy."
     })
 ], CswCatalogGroupTraits.prototype, "flatten", void 0);
-__decorate([
-    anyTrait({
-        name: "Item Properties",
-        description: "Sets traits on records"
-    })
-], CswCatalogGroupTraits.prototype, "itemProperties", void 0);
 __decorate([
     objectTrait({
         type: DomainSpecTraits,

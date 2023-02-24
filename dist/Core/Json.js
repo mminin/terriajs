@@ -3,7 +3,7 @@ export function isJsonObject(value, deep = true) {
         typeof value === "object" &&
         value !== null &&
         !Array.isArray(value) &&
-        (!deep || Object.values(value).every(v => isJsonValue(v, true))));
+        (!deep || Object.values(value).every((v) => isJsonValue(v, true))));
 }
 export function isJsonBoolean(value) {
     return typeof value === "boolean";
@@ -25,13 +25,16 @@ export function isJsonValue(value, deep = true) {
 }
 export function isJsonArray(value, deep = true) {
     return (Array.isArray(value) &&
-        (!deep || value.every(child => isJsonValue(child, true))));
+        (!deep || value.every((child) => isJsonValue(child, true))));
+}
+export function isJsonObjectArray(value, deep = true) {
+    return (Array.isArray(value) && value.every((child) => isJsonObject(child, deep)));
 }
 export function isJsonStringArray(value) {
-    return Array.isArray(value) && value.every(child => isJsonString(child));
+    return Array.isArray(value) && value.every((child) => isJsonString(child));
 }
 export function isJsonNumberArray(value) {
-    return Array.isArray(value) && value.every(child => isJsonNumber(child));
+    return Array.isArray(value) && value.every((child) => isJsonNumber(child));
 }
 export function assertObject(value, name) {
     if (isJsonObject(value))

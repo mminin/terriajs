@@ -50,7 +50,7 @@ export class PrimitiveArrayTrait extends Trait {
         if (!Array.isArray(jsonValue)) {
             return false;
         }
-        return jsonValue.every(item => typeof item === this.type);
+        return jsonValue.every((item) => typeof item === this.type);
     }
 }
 //# sourceMappingURL=primitiveArrayTrait.js.map

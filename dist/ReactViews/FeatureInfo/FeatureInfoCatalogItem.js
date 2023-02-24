@@ -1,73 +1,40 @@
-import defined from "terriajs-cesium/Source/Core/defined";
-import FeatureInfoSection from "./FeatureInfoSection";
-import React from "react";
-import createReactClass from "create-react-class";
-import PropTypes from "prop-types";
-import { withTranslation } from "react-i18next";
-import Styles from "./feature-info-catalog-item.scss";
 import { observer } from "mobx-react";
-// Any Catalog in a feature-info-panel
-const FeatureInfoCatalogItem = observer(createReactClass({
-    displayName: "FeatureInfoCatalogItem",
-    propTypes: {
-        features: PropTypes.array,
-        catalogItem: PropTypes.object,
-        terria: PropTypes.object.isRequired,
-        viewState: PropTypes.object.isRequired,
-        onToggleOpen: PropTypes.func.isRequired,
-        printView: PropTypes.bool,
-        t: PropTypes.func.isRequired
-    },
-    render() {
-        const { t } = this.props;
-        const features = this.props.features;
-        const catalogItem = this.props.catalogItem;
-        const terria = this.props.terria;
-        let featureInfoSections = null;
-        let featureInfoTemplate;
-        let totalFeaturesCount = 0;
-        let hiddenNumber;
-        let maximumShownFeatureInfos = terria.configParameters.defaultMaximumShownFeatureInfos;
-        if (defined(features)) {
-            // Display no more than defined number of feature infos
-            totalFeaturesCount = features.length;
-            if (defined(catalogItem)) {
-                if (catalogItem.maximumShownFeatureInfos) {
-                    maximumShownFeatureInfos = catalogItem.maximumShownFeatureInfos;
-                }
-                featureInfoTemplate = catalogItem.featureInfoTemplate;
-            }
-            hiddenNumber = totalFeaturesCount - maximumShownFeatureInfos; // A positive hiddenNumber => some are hidden; negative means none are.
-            featureInfoSections = features
-                .slice(0, maximumShownFeatureInfos)
-                .map((feature, i) => {
-                return (React.createElement(FeatureInfoSection, { key: i, viewState: this.props.viewState, catalogItem: catalogItem, feature: feature, position: terria.pickedFeatures && terria.pickedFeatures.pickPosition, template: featureInfoTemplate, isOpen: feature === terria.selectedFeature || this.props.printView, onClickHeader: this.props.onToggleOpen, printView: this.props.printView }));
-            });
-        }
-        return (React.createElement("li", { className: Styles.group },
-            React.createElement("ul", { className: Styles.sections },
-                React.createElement(If, { condition: hiddenNumber === 1 },
-                    React.createElement("li", { className: Styles.messageItem },
-                        React.createElement("strong", null, t("featureInfo.catalogItem.moreThanMax", {
-                            maximum: maximumShownFeatureInfos,
-                            catalogItemName: catalogItem.name
-                        })),
-                        React.createElement("br", null),
-                        t("featureInfo.catalogItem.featureInfoShown", {
-                            maximum: maximumShownFeatureInfos
-                        }))),
-                React.createElement(If, { condition: hiddenNumber > 1 },
-                    React.createElement("li", { className: Styles.messageItem },
-                        React.createElement("strong", null, t("featureInfo.catalogItem.featuresFound", {
-                            featCount: totalFeaturesCount,
-                            catalogItemName: catalogItem.name
-                        })),
-                        React.createElement("br", null),
-                        t("featureInfo.catalogItem.featureInfoShown", {
-                            maximum: maximumShownFeatureInfos
-                        }))),
-                featureInfoSections)));
-    }
-}));
-module.exports = withTranslation()(FeatureInfoCatalogItem);
+import React from "react";
+import { useTranslation } from "react-i18next";
+import { getName } from "../../ModelMixins/CatalogMemberMixin";
+import Styles from "./feature-info-catalog-item.scss";
+import FeatureInfoSection from "./FeatureInfoSection";
+export default observer((props) => {
+    var _a;
+    const { t } = useTranslation();
+    const features = props.features;
+    const catalogItem = props.catalogItem;
+    const terria = props.viewState.terria;
+    const maximumShownFeatureInfos = (_a = catalogItem.maximumShownFeatureInfos) !== null && _a !== void 0 ? _a : terria.configParameters.defaultMaximumShownFeatureInfos;
+    const hiddenNumber = features.length - maximumShownFeatureInfos; // A positive hiddenNumber => some are hidden; negative means none are.
+    return (React.createElement("li", null,
+        React.createElement("ul", { className: Styles.sections },
+            hiddenNumber === 1 ? (React.createElement("li", { className: Styles.messageItem },
+                React.createElement("strong", null, t("featureInfo.catalogItem.moreThanMax", {
+                    maximum: maximumShownFeatureInfos,
+                    catalogItemName: getName(catalogItem)
+                })),
+                React.createElement("br", null),
+                t("featureInfo.catalogItem.featureInfoShown", {
+                    maximum: maximumShownFeatureInfos
+                }))) : null,
+            hiddenNumber > 1 ? (React.createElement("li", { className: Styles.messageItem },
+                React.createElement("strong", null, t("featureInfo.catalogItem.featuresFound", {
+                    featCount: features.length,
+                    catalogItemName: getName(catalogItem)
+                })),
+                React.createElement("br", null),
+                t("featureInfo.catalogItem.featureInfoShown", {
+                    maximum: maximumShownFeatureInfos
+                }))) : null,
+            features.slice(0, maximumShownFeatureInfos).map((feature, i) => {
+                var _a;
+                return (React.createElement(FeatureInfoSection, { key: i, catalogItem: catalogItem, feature: feature, position: (_a = terria.pickedFeatures) === null || _a === void 0 ? void 0 : _a.pickPosition, isOpen: !!(feature === terria.selectedFeature || props.printView), onClickHeader: props.onToggleOpen, printView: props.printView }));
+            }))));
+});
 //# sourceMappingURL=FeatureInfoCatalogItem.js.map

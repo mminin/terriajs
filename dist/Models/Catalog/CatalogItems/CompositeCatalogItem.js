@@ -35,7 +35,7 @@ export default class CompositeCatalogItem extends MappableMixin(CatalogMemberMix
         if (members === undefined) {
             return [];
         }
-        return filterOutUndefined(members.map(id => ModelReference.isRemoved(id)
+        return filterOutUndefined(members.map((id) => ModelReference.isRemoved(id)
             ? undefined
             : this.terria.getModelById(BaseModel, id)));
     }
@@ -49,11 +49,11 @@ export default class CompositeCatalogItem extends MappableMixin(CatalogMemberMix
         const members = this.memberModels.filter(MappableMixin.isMixedInto);
         // Avoid calling loadX functions in a computed context
         await Promise.resolve();
-        Result.combine(await Promise.all(members.map(model => model.loadMapItems())), "Failed to load composite catalog items mapItems").throwIfError();
+        Result.combine(await Promise.all(members.map((model) => model.loadMapItems())), "Failed to load composite catalog items mapItems").throwIfError();
     }
     syncVisibilityToMembers() {
         const { show } = this;
-        this.memberModels.forEach(model => {
+        this.memberModels.forEach((model) => {
             runInAction(() => {
                 model.setTrait(CommonStrata.underride, "show", show);
             });
@@ -61,7 +61,7 @@ export default class CompositeCatalogItem extends MappableMixin(CatalogMemberMix
     }
     get mapItems() {
         const result = [];
-        this.memberModels.filter(MappableMixin.isMixedInto).forEach(model => {
+        this.memberModels.filter(MappableMixin.isMixedInto).forEach((model) => {
             result.push(...model.mapItems);
         });
         return result;

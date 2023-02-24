@@ -15,7 +15,7 @@ function createColorForIdTransformer() {
         const nextColor = leastUsedColor();
         useColor(nextColor);
         return nextColor;
-    }, color => (color ? freeColor(color) : undefined));
+    }, (color) => (color ? freeColor(color) : undefined));
 }
 function leastUsedColor() {
     // Sort colors by usage count and return the least used color.

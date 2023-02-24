@@ -8,17 +8,17 @@ import { observer } from "mobx-react";
 import PropTypes from "prop-types";
 import React from "react";
 import { withTranslation } from "react-i18next";
-import { withTheme } from "styled-components";
-import Box from "../Styled/Box";
-import Text from "../Styled/Text";
-import Spacing from "../Styled/Spacing";
 // if we must use a placeholder image,
 // do not bundle in the full res `wwwroot/images/bing-aerial-labels-wide.png`
 // image as it's a 1.4mb png
 // import bingAerialBackground from "../../wwwroot/images/bing-aerial-labels-wide-low-quality.jpg";
-import styled from "styled-components";
-import parseCustomMarkdownToReact from "./Custom/parseCustomMarkdownToReact";
+import styled, { withTheme } from "styled-components";
+import Box from "../Styled/Box";
 import Button from "../Styled/Button";
+import Spacing from "../Styled/Spacing";
+import Text from "../Styled/Text";
+import parseCustomMarkdownToReact from "./Custom/parseCustomMarkdownToReact";
+import { withViewState } from "./StandardUserInterface/ViewStateContext";
 import FadeIn from "./Transitions/FadeIn/FadeIn";
 const TopElementBox = styled(Box) `
   z-index: 99999;
@@ -41,7 +41,7 @@ const DisclaimerButton = styled(Button).attrs({
     },
     rounded: true
 }) `
-  width: ${props => (props.fullWidth ? "100%" : "280px")};
+  width: ${(props) => (props.fullWidth ? "100%" : "280px")};
 `;
 let Disclaimer = class Disclaimer extends React.Component {
     constructor(props) {
@@ -65,8 +65,7 @@ let Disclaimer = class Disclaimer extends React.Component {
         const disclaimerConfirm = (disclaimer === null || disclaimer === void 0 ? void 0 : disclaimer.confirmText) || "Ok";
         const disclaimerDeny = (disclaimer === null || disclaimer === void 0 ? void 0 : disclaimer.denyText) || "Cancel";
         const disclaimerMessage = (disclaimer === null || disclaimer === void 0 ? void 0 : disclaimer.message) || "Disclaimer text goes here";
-        const useSmallScreenInterface = this.props.viewState
-            .useSmallScreenInterface;
+        const useSmallScreenInterface = this.props.viewState.useSmallScreenInterface;
         const renderDenyButton = !!(disclaimer === null || disclaimer === void 0 ? void 0 : disclaimer.denyAction);
         return disclaimer ? (React.createElement(FadeIn, { isVisible: this.props.viewState.disclaimerVisible },
             React.createElement(TopElementBox, { position: "absolute", fullWidth: true, fullHeight: true, centered: true },
@@ -81,13 +80,13 @@ let Disclaimer = class Disclaimer extends React.Component {
                     // styledWidth={"110%"}
                     // styledHeight={"110%"}
                     fullWidth: true, fullHeight: true, position: "absolute" }),
-                React.createElement(Box, { displayInlineBlock: true, left: true, styledWidth: useSmallScreenInterface ? "100%" : "613px", paddedRatio: 4, css: `
+                React.createElement(Box, { displayInlineBlock: true, left: true, styledWidth: useSmallScreenInterface ? "100%" : "613px", paddedRatio: 4, scroll: true, css: `
               max-height: 100%;
               overflow: auto;
             ` },
                     React.createElement(Text, { styledFontSize: "18px", styledLineHeight: "24px", bold: true, textLight: true }, disclaimerTitle),
                     React.createElement(Spacing, { bottom: 4 }),
-                    React.createElement(Text, { styledLineHeight: "18px", textLight: true, css: props => `
+                    React.createElement(Text, { styledLineHeight: "18px", textLight: true, css: (props) => `
                 // not sure of the ideal way to deal with this
                 a {
                   font-weight: 600;
@@ -115,5 +114,5 @@ Disclaimer.propTypes = {
 Disclaimer = __decorate([
     observer
 ], Disclaimer);
-export default withTranslation()(withTheme(Disclaimer));
+export default withTranslation()(withViewState(withTheme(Disclaimer)));
 //# sourceMappingURL=Disclaimer.js.map

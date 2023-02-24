@@ -2,9 +2,9 @@ import { createTransformer } from "mobx-utils";
 import defined from "terriajs-cesium/Source/Core/defined";
 import isDefined from "../../../Core/isDefined";
 import loadXML from "../../../Core/loadXML";
-import makeRealPromise from "../../../Core/makeRealPromise";
 import TerriaError from "../../../Core/TerriaError";
 import xml2json from "../../../ThirdParty/xml2json";
+import { isJsonString } from "../../../Core/Json";
 export function getRectangleFromLayer(layer) {
     var bbox = layer.WGS84BoundingBox;
     if (bbox) {
@@ -95,11 +95,47 @@ function getOutputTypes(json) {
     }
     return Array.isArray(outputTypes) ? outputTypes : [outputTypes];
 }
+/**
+ * Get the coordinate systems (srsName) supported by the WFS service for each layer.
+ * @param json
+ * returns an object with an array of srsNames for each layer. The first element is the defaultSRS as specified by the WFS service.
+ * TODO: For catalog items that specify which layer we are interested in, why build the array describing the srsNames for all the other layers too?
+ */
+function getSrsNames(json) {
+    var _a, _b;
+    let layers = (_a = json.FeatureTypeList) === null || _a === void 0 ? void 0 : _a.FeatureType;
+    let srsNamesByLayer = [];
+    if (Array.isArray(layers)) {
+        srsNamesByLayer = layers.map(buildSrsNameObject);
+    }
+    else {
+        srsNamesByLayer.push(buildSrsNameObject((_b = json.FeatureTypeList) === null || _b === void 0 ? void 0 : _b.FeatureType));
+    }
+    return srsNamesByLayer;
+}
+/**
+ * Helper function to build individual objects describing the allowable srsNames for each layer in the WFS
+ * @param layer
+ */
+function buildSrsNameObject(layer) {
+    let srsNames = [];
+    if (isJsonString(layer.DefaultSRS))
+        srsNames.push(layer.DefaultSRS);
+    if (Array.isArray(layer.OtherSRS))
+        layer.OtherSRS.forEach((item) => {
+            if (isJsonString(item))
+                srsNames.push(item);
+        });
+    else if (isJsonString(layer.OtherSRS))
+        srsNames.push(layer.OtherSRS);
+    return { layerName: layer.Name, srsArray: srsNames };
+}
 export default class WebFeatureServiceCapabilities {
     constructor(xml, json) {
         this.service = getService(json);
         this.outputTypes = getOutputTypes(json);
         this.featureTypes = getFeatureTypes(json);
+        this.srsNames = getSrsNames(json);
     }
     /**
      * Finds the layer in GetCapabilities corresponding to a given layer name. Names are
@@ -113,25 +149,25 @@ export default class WebFeatureServiceCapabilities {
      */
     findLayer(name) {
         // Look for an exact match on the name.
-        let match = this.featureTypes.find(ft => ft.Name === name);
+        let match = this.featureTypes.find((ft) => ft.Name === name);
         if (!match) {
             const colonIndex = name.indexOf(":");
             if (colonIndex >= 0) {
                 // This looks like a namespaced name.  Such names will (usually?) show up in GetCapabilities
                 // as just their name without the namespace qualifier.
                 const nameWithoutNamespace = name.substring(colonIndex + 1);
-                match = this.featureTypes.find(ft => ft.Name === nameWithoutNamespace);
+                match = this.featureTypes.find((ft) => ft.Name === nameWithoutNamespace);
             }
         }
         if (!match) {
             // Try matching by title.
-            match = this.featureTypes.find(ft => ft.Title === name);
+            match = this.featureTypes.find((ft) => ft.Title === name);
         }
         return match;
     }
 }
 WebFeatureServiceCapabilities.fromUrl = createTransformer((url) => {
-    return makeRealPromise(loadXML(url)).then(function (capabilitiesXml) {
+    return loadXML(url).then(function (capabilitiesXml) {
         const json = xml2json(capabilitiesXml);
         if (!defined(json.ServiceIdentification)) {
             throw new TerriaError({

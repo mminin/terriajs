@@ -8,7 +8,7 @@ import Box from "../../../Styled/Box";
 import Button from "../../../Styled/Button";
 import parseCustomMarkdownToReact from "../../Custom/parseCustomMarkdownToReact";
 import MapEffects from "./MapEffects";
-const SearchResults = props => {
+const SearchResults = (props) => {
     const { item, results } = props;
     const [currentMapEffect, setCurrentMapEffect] = useState({
         is: "highlightAll"
@@ -48,12 +48,12 @@ const SearchResults = props => {
                 } }))))),
         React.createElement(MapEffects, { effect: currentMapEffect, item: item, results: results })));
 };
-export const Result = observer(props => {
+export const Result = observer((props) => {
     const { result, template, isEven, isSelected, style } = props;
     const content = template
         ? parseCustomMarkdownToReact(Mustache.render(template, result.properties))
         : result.id;
-    const onClick = e => {
+    const onClick = (e) => {
         try {
             props.onClick(result);
         }
@@ -68,19 +68,19 @@ const ClickableItem = styled.a `
   box-sizing: border-box;
   padding: 5px 10px;
   cursor: pointer;
-  ${p => `background-color: ${p.isSelected
+  ${(p) => `background-color: ${p.isSelected
     ? p.theme.toolPrimaryColor
     : p.isEven
         ? p.theme.dark
         : p.theme.darkLighter};`}
 `;
 const List = styled.div `
-  ${p => `height: ${p.height}`};
+  ${(p) => `height: ${p.height}`};
   width: 100%;
   overflow: auto;
 `;
 const ListInner = styled.div `
-  ${p => `height: ${p.height}`};
+  ${(p) => `height: ${p.height}`};
   width: 100%;
   position: relative;
 `;
@@ -114,7 +114,7 @@ const ActionMenu = styled.div `
   display: flex;
   justify-content: flex-end;
   padding: 0.5em;
-  background-color: ${p => p.theme.charcoalGrey};
+  background-color: ${(p) => p.theme.charcoalGrey};
 
   border-top-left-radius: 5px;
   border-top-right-radius: 5px;

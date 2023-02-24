@@ -9,7 +9,6 @@ import { action, computed, observable, toJS } from "mobx";
 import JulianDate from "terriajs-cesium/Source/Core/JulianDate";
 import CzmlDataSource from "terriajs-cesium/Source/DataSources/CzmlDataSource";
 import isDefined from "../../../Core/isDefined";
-import makeRealPromise from "../../../Core/makeRealPromise";
 import readJson from "../../../Core/readJson";
 import TerriaError, { networkRequestError } from "../../../Core/TerriaError";
 import AutoRefreshingMixin from "../../../ModelMixins/AutoRefreshingMixin";
@@ -106,14 +105,14 @@ export default class CzmlCatalogItem extends AutoRefreshingMixin(MappableMixin(U
                 message: i18next.t("models.czml.unableToLoadItemMessage")
             });
         }
-        return makeRealPromise(CzmlDataSource.load(loadableData, {
+        return CzmlDataSource.load(loadableData, {
             credit: attribution
-        }))
-            .then(action(czmlDataSource => {
+        })
+            .then(action((czmlDataSource) => {
             this._dataSource = czmlDataSource;
             this.strata.set(CzmlTimeVaryingStratum.stratumName, new CzmlTimeVaryingStratum(this));
         }))
-            .catch(e => {
+            .catch((e) => {
             if (e instanceof TerriaError) {
                 throw e;
             }

@@ -11,6 +11,7 @@ import RegionTypeParameterEditor from "./RegionTypeParameterEditor";
 import RegionDataParameterEditor from "./RegionDataParameterEditor";
 import BooleanParameterEditor from "./BooleanParameterEditor";
 import BooleanParameterGroupEditor from "./BooleanParameterGroupEditor";
+import DateParameterEditor from "./DateParameterEditor";
 import DateTimeParameterEditor from "./DateTimeParameterEditor";
 import EnumerationParameterEditor from "./EnumerationParameterEditor";
 import GenericParameterEditor from "./GenericParameterEditor";
@@ -118,6 +119,16 @@ ParameterEditor.parameterTypeConverters = [
                 return (React.createElement("div", null,
                     parameterEditor.renderLabel(),
                     React.createElement(EnumerationParameterEditor, { previewed: parameterEditor.props.previewed, viewState: parameterEditor.props.viewState, parameter: parameterEditor.props.parameter, parameterViewModel: parameterEditor.props.parameterViewModel })));
+            }
+        }
+    },
+    {
+        id: "date",
+        parameterTypeToDiv: function DateParameterToDiv(type, parameterEditor) {
+            if (type === this.id) {
+                return (React.createElement("div", null,
+                    parameterEditor.renderLabel(),
+                    React.createElement(DateParameterEditor, { previewed: parameterEditor.props.previewed, parameter: parameterEditor.props.parameter, parameterViewModel: parameterEditor.props.parameterViewModel })));
             }
         }
     },

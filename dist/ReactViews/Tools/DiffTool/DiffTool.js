@@ -14,10 +14,10 @@ import styled, { useTheme, withTheme } from "styled-components";
 import Cartographic from "terriajs-cesium/Source/Core/Cartographic";
 import createGuid from "terriajs-cesium/Source/Core/createGuid";
 import CesiumMath from "terriajs-cesium/Source/Core/Math";
-import ImagerySplitDirection from "terriajs-cesium/Source/Scene/ImagerySplitDirection";
+import SplitDirection from "terriajs-cesium/Source/Scene/SplitDirection";
 import filterOutUndefined from "../../../Core/filterOutUndefined";
 import isDefined from "../../../Core/isDefined";
-import prettifyCoordinates from "../../../Map/prettifyCoordinates";
+import prettifyCoordinates from "../../../Map/Vector/prettifyCoordinates";
 import DiffableMixin from "../../../ModelMixins/DiffableMixin";
 import MappableMixin, { ImageryParts } from "../../../ModelMixins/MappableMixin";
 import CommonStrata from "../../../Models/Definition/CommonStrata";
@@ -29,7 +29,7 @@ import Button, { RawButton } from "../../../Styled/Button";
 import Select from "../../../Styled/Select";
 import Spacing from "../../../Styled/Spacing";
 import Text, { TextSpan } from "../../../Styled/Text";
-import RasterLayerTraits from "../../../Traits/TraitsClasses/RasterLayerTraits";
+import ImageryProviderTraits from "../../../Traits/TraitsClasses/ImageryProviderTraits";
 import { parseCustomMarkdownToReactWithOptions } from "../../Custom/parseCustomMarkdownToReact";
 import { GLYPHS, StyledIcon } from "../../../Styled/Icon";
 import Loader from "../../Loader";
@@ -47,8 +47,8 @@ let DiffTool = class DiffTool extends React.Component {
     async createSplitterItems() {
         try {
             const [leftItem, rightItem] = await Promise.all([
-                createSplitItem(this.sourceItem, ImagerySplitDirection.LEFT),
-                createSplitItem(this.sourceItem, ImagerySplitDirection.RIGHT)
+                createSplitItem(this.sourceItem, SplitDirection.LEFT),
+                createSplitItem(this.sourceItem, SplitDirection.RIGHT)
             ]);
             runInAction(() => {
                 this.leftItem = leftItem;
@@ -77,6 +77,7 @@ let DiffTool = class DiffTool extends React.Component {
         viewState.setIsMapFullScreen(true);
         this.sourceItem.setTrait(CommonStrata.user, "show", false);
         terria.mapNavigationModel.show(CLOSE_TOOL_ID);
+        terria.elements.set("timeline", { visible: false });
         const closeTool = terria.mapNavigationModel.findItem(CLOSE_TOOL_ID);
         if (closeTool) {
             closeTool.controller.activate();
@@ -93,6 +94,7 @@ let DiffTool = class DiffTool extends React.Component {
         viewState.setIsMapFullScreen(originalSettings.isMapFullScreen);
         this.sourceItem.setTrait(CommonStrata.user, "show", true);
         terria.mapNavigationModel.hide(CLOSE_TOOL_ID);
+        terria.elements.set("timeline", { visible: true });
         const closeTool = terria.mapNavigationModel.findItem(CLOSE_TOOL_ID);
         if (closeTool) {
             closeTool.controller.deactivate();
@@ -195,7 +197,7 @@ let Main = class Main extends React.Component {
         }
     }
     get diffableItemsInWorkbench() {
-        return this.props.terria.workbench.items.filter(item => DiffableMixin.isMixedInto(item) && item.canDiffImages);
+        return this.props.terria.workbench.items.filter((item) => DiffableMixin.isMixedInto(item) && item.canDiffImages);
     }
     get previewStyle() {
         var _a, _b;
@@ -205,7 +207,7 @@ let Main = class Main extends React.Component {
         return this.diffItem.diffStyleId;
     }
     get availableDiffStyles() {
-        return filterOutUndefined(this.diffItem.availableDiffStyles.map(diffStyleId => { var _a, _b, _c; return (_c = (_b = (_a = this.diffItem.styleSelectableDimensions) === null || _a === void 0 ? void 0 : _a[0]) === null || _b === void 0 ? void 0 : _b.options) === null || _c === void 0 ? void 0 : _c.find(style => style.id === diffStyleId); }));
+        return filterOutUndefined(this.diffItem.availableDiffStyles.map((diffStyleId) => { var _a, _b, _c; return (_c = (_b = (_a = this.diffItem.styleSelectableDimensions) === null || _a === void 0 ? void 0 : _a[0]) === null || _b === void 0 ? void 0 : _b.options) === null || _c === void 0 ? void 0 : _c.find((style) => style.id === diffStyleId); }));
     }
     get leftDate() {
         return this.props.leftItem.currentDiscreteJulianDate;
@@ -233,7 +235,7 @@ let Main = class Main extends React.Component {
         hasOpacity(model) && model.setTrait(CommonStrata.user, "opacity", 0);
     }
     changeSourceItem(e) {
-        const newSourceItem = this.diffableItemsInWorkbench.find(item => item.uniqueId === e.target.value);
+        const newSourceItem = this.diffableItemsInWorkbench.find((item) => item.uniqueId === e.target.value);
         if (newSourceItem)
             this.props.changeSourceItem(newSourceItem);
     }
@@ -251,7 +253,7 @@ let Main = class Main extends React.Component {
     }
     onUserPickLocation(pickedFeatures, pickedLocation) {
         const { leftItem, rightItem, t } = this.props;
-        const feature = pickedFeatures.features.find(f => doesFeatureBelongToItem(f, leftItem) ||
+        const feature = pickedFeatures.features.find((f) => doesFeatureBelongToItem(f, leftItem) ||
             doesFeatureBelongToItem(f, rightItem));
         if (feature) {
             leftItem.setTimeFilterFeature(feature, pickedFeatures.providerCoords);
@@ -293,8 +295,8 @@ let Main = class Main extends React.Component {
         terria.overlays.add(this.props.rightItem);
         terria.workbench.remove(this.diffItem);
         this.props.terria.showSplitter = true;
-        this.props.leftItem.setTrait(CommonStrata.user, "splitDirection", ImagerySplitDirection.LEFT);
-        this.props.rightItem.setTrait(CommonStrata.user, "splitDirection", ImagerySplitDirection.RIGHT);
+        this.props.leftItem.setTrait(CommonStrata.user, "splitDirection", SplitDirection.LEFT);
+        this.props.rightItem.setTrait(CommonStrata.user, "splitDirection", SplitDirection.RIGHT);
     }
     async setLocationFromActiveSearch() {
         // Look for any existing marker like from a search result and filter
@@ -302,14 +304,14 @@ let Main = class Main extends React.Component {
         const markerLocation = getMarkerLocation(this.props.terria);
         const sourceItem = this.props.sourceItem;
         if (markerLocation && MappableMixin.isMixedInto(sourceItem)) {
-            const part = sourceItem.mapItems.find(p => ImageryParts.is(p));
+            const part = sourceItem.mapItems.find((p) => ImageryParts.is(p));
             const imageryProvider = part && ImageryParts.is(part) && part.imageryProvider;
             if (imageryProvider) {
                 const promises = [
                     setTimeFilterFromLocation(this.props.leftItem, markerLocation, imageryProvider),
                     setTimeFilterFromLocation(this.props.rightItem, markerLocation, imageryProvider)
                 ];
-                const someSuccessful = (await Promise.all(promises)).some(ok => ok);
+                const someSuccessful = (await Promise.all(promises)).some((ok) => ok);
                 if (someSuccessful) {
                     runInAction(() => (this.location = markerLocation));
                 }
@@ -397,19 +399,19 @@ let Main = class Main extends React.Component {
                         React.createElement(Spacing, { bottom: 4 }),
                         React.createElement(Selector, { viewState: viewState, value: sourceItem.uniqueId, onChange: this.changeSourceItem, label: t("diffTool.labels.sourceDataset") },
                             React.createElement("option", { disabled: true }, "Select source item"),
-                            this.diffableItemsInWorkbench.map(item => (React.createElement("option", { key: item.uniqueId, value: item.uniqueId }, item.name)))))),
+                            this.diffableItemsInWorkbench.map((item) => (React.createElement("option", { key: item.uniqueId, value: item.uniqueId }, item.name)))))),
                     !isShowingDiff && (React.createElement(React.Fragment, null,
                         React.createElement(Spacing, { bottom: 4 }),
                         React.createElement(Selector, { viewState: viewState, spacingBottom: true, value: this.previewStyle, onChange: this.changePreviewStyle, label: t("diffTool.labels.previewStyle") },
                             React.createElement("option", { disabled: true, value: "" }, t("diffTool.choosePreview")), (_c = (_b = (_a = this.diffItem.styleSelectableDimensions) === null || _a === void 0 ? void 0 : _a[0]) === null || _b === void 0 ? void 0 : _b.options) === null || _c === void 0 ? void 0 :
-                            _c.map(style => (React.createElement("option", { key: style.id, value: style.id }, style.name)))),
+                            _c.map((style) => (React.createElement("option", { key: style.id, value: style.id }, style.name)))),
                         this.previewLegendUrl && (React.createElement(React.Fragment, null,
                             React.createElement(Spacing, { bottom: 2 }),
                             React.createElement(LegendImage, { width: "100%", src: this.previewLegendUrl }))))),
                     React.createElement(Spacing, { bottom: 2 }),
                     React.createElement(Selector, { viewState: viewState, value: this.diffStyle || "", onChange: this.changeDiffStyle, label: t("diffTool.labels.differenceOutput") },
                         React.createElement("option", { disabled: true, value: "" }, t("diffTool.chooseDifference")),
-                        this.availableDiffStyles.map(style => (React.createElement("option", { key: style.id, value: style.id }, style.name)))),
+                        this.availableDiffStyles.map((style) => (React.createElement("option", { key: style.id, value: style.id }, style.name)))),
                     isShowingDiff && this.diffLegendUrl && (React.createElement(React.Fragment, null,
                         React.createElement(LegendImage, { width: "100%", src: this.diffLegendUrl }),
                         React.createElement(Spacing, { bottom: 4 }))),
@@ -434,7 +436,7 @@ let Main = class Main extends React.Component {
                 React.createElement(Box, { centered: true, fullWidth: true, flexWrap: true, backgroundColor: theme.dark },
                     React.createElement(DatePicker, { heading: t("diffTool.labels.dateComparisonA"), item: this.props.leftItem, externalOpenButton: this.openLeftDatePickerButton, onDateSet: () => this.showItem(this.props.leftItem) }),
                     React.createElement(AreaFilterSelection, { t: t, location: this.location, isPickingNewLocation: this._isPickingNewLocation }),
-                    React.createElement(DatePicker, { heading: t("diffTool.labels.dateComparisonB"), item: this.props.rightItem, externalOpenButton: this.openRightDatePickerButton, onDateSet: () => this.showItem(this.props.rightItem) })), document.getElementById("TJS-BottomDockPortalForTool"))));
+                    React.createElement(DatePicker, { heading: t("diffTool.labels.dateComparisonB"), item: this.props.rightItem, externalOpenButton: this.openRightDatePickerButton, onDateSet: () => this.showItem(this.props.rightItem) })), document.getElementById("TJS-BottomDockLastPortal"))));
     }
 };
 __decorate([
@@ -521,7 +523,7 @@ Main = __decorate([
 const DiffAccordionToggle = styled(Box) `
   ${({ theme }) => theme.borderRadiusTop(theme.radius40Button)}
 `;
-const DiffAccordion = props => {
+const DiffAccordion = (props) => {
     const [showChildren, setShowChildren] = useState(true);
     const { t, viewState } = props;
     const theme = useTheme();
@@ -536,10 +538,10 @@ const DiffAccordion = props => {
                     styledFontSize: "17px", styledLineHeight: "30px" }, t("diffTool.title"))),
             React.createElement(Box, { centered: true, css: "margin-right:-5px;" },
                 React.createElement(RawButton, { onClick: () => viewState.closeTool() },
-                    React.createElement(Text, { textLight: true, small: true, semiBold: true, uppercase: true }, t("diffTool.exit"))),
+                    React.createElement(TextSpan, { textLight: true, small: true, semiBold: true, uppercase: true }, t("diffTool.exit"))),
                 React.createElement(Spacing, { right: 4 }),
                 React.createElement(RawButton, { onClick: () => setShowChildren(!showChildren) },
-                    React.createElement(Box, { paddedRatio: 1, centered: true },
+                    React.createElement(BoxSpan, { paddedRatio: 1, centered: true },
                         React.createElement(StyledIcon, { styledWidth: "12px", light: true, glyph: showChildren ? GLYPHS.opened : GLYPHS.closed }))))),
         showChildren && props.children));
 };
@@ -552,8 +554,8 @@ const DiffAccordionWrapper = styled(Box).attrs({
   top: 70px;
   left: 0px;
   min-height: 220px;
-  // background: ${p => p.theme.dark};
-  margin-left: ${props => props.isMapFullScreen ? 16 : parseInt(props.theme.workbenchWidth) + 40}px;
+  // background: ${(p) => p.theme.dark};
+  margin-left: ${(props) => props.isMapFullScreen ? 16 : parseInt(props.theme.workbenchWidth) + 40}px;
   transition: margin-left 0.25s;
 `;
 const MainPanel = styled(Box).attrs({
@@ -562,7 +564,7 @@ const MainPanel = styled(Box).attrs({
     paddedRatio: 2
 }) `
   ${({ theme }) => theme.borderRadiusBottom(theme.radius40Button)}
-  background-color: ${p => p.theme.darkWithOverlay};
+  background-color: ${(p) => p.theme.darkWithOverlay};
 `;
 const BackButton = styled(Button).attrs({
     secondary: true
@@ -620,7 +622,7 @@ const LocationAndDatesDisplayBox = styled(Box).attrs({
     column: true,
     charcoalGreyBg: true
 }) `
-  color: ${p => p.theme.textLight};
+  color: ${(p) => p.theme.textLight};
   padding: 15px;
   > ${Box}:first-child {
     margin-bottom: 13px;
@@ -636,9 +638,9 @@ const LegendImage = function (props) {
         // Show the legend only if it loads successfully, so we start out hidden
         style: { display: "none", marginTop: "4px" }, 
         // @ts-ignore
-        onLoad: e => (e.target.style.display = "block"), 
+        onLoad: (e) => (e.target.style.display = "block"), 
         // @ts-ignore
-        onError: e => (e.target.style.display = "none") })));
+        onError: (e) => (e.target.style.display = "none") })));
 };
 async function createSplitItem(sourceItem, splitDirection) {
     const terria = sourceItem.terria;
@@ -665,7 +667,7 @@ async function createSplitItem(sourceItem, splitDirection) {
         }
         setDefaultDiffStyle(newItem);
         // Set the default style to true color style if it exists
-        const trueColor = (_c = (_b = (_a = newItem.styleSelectableDimensions) === null || _a === void 0 ? void 0 : _a[0]) === null || _b === void 0 ? void 0 : _b.options) === null || _c === void 0 ? void 0 : _c.find(style => isDefined(style.name) && style.name.search(/true/i) >= 0);
+        const trueColor = (_c = (_b = (_a = newItem.styleSelectableDimensions) === null || _a === void 0 ? void 0 : _a[0]) === null || _b === void 0 ? void 0 : _b.options) === null || _c === void 0 ? void 0 : _c.find((style) => isDefined(style.name) && style.name.search(/true/i) >= 0);
         if (trueColor === null || trueColor === void 0 ? void 0 : trueColor.id) {
             (_e = (_d = newItem.styleSelectableDimensions) === null || _d === void 0 ? void 0 : _d[0]) === null || _e === void 0 ? void 0 : _e.setDimensionValue(CommonStrata.user, trueColor.id);
         }
@@ -680,7 +682,7 @@ function setDefaultDiffStyle(item) {
     if (item.diffStyleId !== undefined) {
         return;
     }
-    const availableStyles = filterOutUndefined(item.availableDiffStyles.map(diffStyleId => { var _a, _b, _c; return (_c = (_b = (_a = item.styleSelectableDimensions) === null || _a === void 0 ? void 0 : _a[0]) === null || _b === void 0 ? void 0 : _b.options) === null || _c === void 0 ? void 0 : _c.find(style => style.id === diffStyleId); }));
+    const availableStyles = filterOutUndefined(item.availableDiffStyles.map((diffStyleId) => { var _a, _b, _c; return (_c = (_b = (_a = item.styleSelectableDimensions) === null || _a === void 0 ? void 0 : _a[0]) === null || _b === void 0 ? void 0 : _b.options) === null || _c === void 0 ? void 0 : _c.find((style) => style.id === diffStyleId); }));
     if (availableStyles.length === 1) {
         item.setTrait(CommonStrata.user, "diffStyleId", availableStyles[0].id);
     }
@@ -699,7 +701,7 @@ function doesFeatureBelongToItem(feature, item) {
     const imageryProvider = (_a = feature.imageryLayer) === null || _a === void 0 ? void 0 : _a.imageryProvider;
     if (imageryProvider === undefined)
         return false;
-    return (item.mapItems.find(m => ImageryParts.is(m) && m.imageryProvider === imageryProvider) !== undefined);
+    return (item.mapItems.find((m) => ImageryParts.is(m) && m.imageryProvider === imageryProvider) !== undefined);
 }
 function setTimeFilterFromLocation(item, location, im) {
     const carto = new Cartographic(CesiumMath.toRadians(location.longitude), CesiumMath.toRadians(location.latitude));
@@ -720,7 +722,7 @@ function setTimeFilterFromLocation(item, location, im) {
     });
 }
 function hasOpacity(model) {
-    return hasTraits(model, RasterLayerTraits, "opacity");
+    return hasTraits(model, ImageryProviderTraits, "opacity");
 }
 export default hoistStatics(withTranslation()(withTheme(DiffTool)), DiffTool);
 //# sourceMappingURL=DiffTool.js.map

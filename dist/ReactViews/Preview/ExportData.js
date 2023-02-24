@@ -28,7 +28,7 @@ export async function exportData(item) {
  */
 let ExportData = class ExportData extends React.Component {
     exportDataClicked(item) {
-        exportData(item).catch(e => {
+        exportData(item).catch((e) => {
             this.props.item.terria.raiseErrorToUser(e);
         });
     }

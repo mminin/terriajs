@@ -1,0 +1,13 @@
+{
+  "extends": "standard",
+  "globals": {
+    "fetch": true
+  },
+  "rules": {
+    "indent": ["error", 4],
+    "padded-blocks": ["error", { "classes": "always" }],
+    "space-before-function-paren": 0,
+    "semi": 0,
+    "prefer-arrow-callback": 0
+  },
+}

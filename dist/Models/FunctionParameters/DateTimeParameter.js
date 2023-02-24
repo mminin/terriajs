@@ -3,6 +3,7 @@ export default class DateTimeParameter extends FunctionParameter {
     constructor() {
         super(...arguments);
         this.type = "dateTime";
+        this.variant = "complex";
     }
     /**
      * Process value so that it can be used in an URL.

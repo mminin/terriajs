@@ -17,7 +17,6 @@ export var SearchAction;
     SearchAction["bing"] = "Bing";
     SearchAction["catalog"] = "Catalog";
     SearchAction["gazetteer"] = "Gazetteer";
-    SearchAction["gnaf"] = "gnaf";
     SearchAction["nominatim"] = "nominatim";
 })(SearchAction || (SearchAction = {}));
 export var LaunchAction;
@@ -51,7 +50,10 @@ export var DataSourceAction;
     DataSourceAction["removeFromCatalogue"] = "Remove from catalogue";
     DataSourceAction["addFromPreviewButton"] = "Add from preview button";
     DataSourceAction["removeFromPreviewButton"] = "Remove from preview button";
+    DataSourceAction["removeFromWorkbench"] = "Remove from workbench";
     DataSourceAction["removeAllFromWorkbench"] = "Remove all from workbench";
+    DataSourceAction["addFromDragAndDrop"] = "Add from Drag and Drop";
+    DataSourceAction["addFromShareOrInit"] = "Add from share or init source";
 })(DataSourceAction || (DataSourceAction = {}));
 export var DatatabAction;
 (function (DatatabAction) {

@@ -1,4 +1,3 @@
-"use strict";
 import createReactClass from "create-react-class";
 import { runInAction } from "mobx";
 import { observer } from "mobx-react";
@@ -39,5 +38,5 @@ const FilterSection = observer(createReactClass({
             React.createElement(Range, { value: values, allowCross: false, min: filter.minimumValue, max: filter.maximumValue, onChange: this.change.bind(this, filter) })));
     }
 }));
-module.exports = FilterSection;
+export default FilterSection;
 //# sourceMappingURL=FilterSection.js.map

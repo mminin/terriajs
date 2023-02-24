@@ -10,11 +10,11 @@ import objectTrait from "../Decorators/objectTrait";
 import primitiveTrait from "../Decorators/primitiveTrait";
 import mixTraits from "../mixTraits";
 import ModelTraits from "../ModelTraits";
-import FeatureInfoTraits from "./FeatureInfoTraits";
-import StyleTraits from "./StyleTraits";
-import TableTraits from "./TableTraits";
-import UrlTraits from "./UrlTraits";
+import FeatureInfoUrlTemplateTraits from "./FeatureInfoTraits";
 import LegendOwnerTraits from "./LegendOwnerTraits";
+import StyleTraits from "./StyleTraits";
+import TableTraits from "./Table/TableTraits";
+import UrlTraits from "./UrlTraits";
 export class PerPropertyGeoJsonStyleTraits extends ModelTraits {
     constructor() {
         super(...arguments);
@@ -41,12 +41,11 @@ __decorate([
         description: "True if properties should be matched in a case sensitive fashion"
     })
 ], PerPropertyGeoJsonStyleTraits.prototype, "caseSensitive", void 0);
-export class GeoJsonTraits extends mixTraits(LegendOwnerTraits, TableTraits, FeatureInfoTraits, UrlTraits) {
+export class GeoJsonTraits extends mixTraits(FeatureInfoUrlTemplateTraits, LegendOwnerTraits, TableTraits, UrlTraits) {
     constructor() {
         super(...arguments);
         /** Override TableTraits which aren't applicable to GeoJsonTraits */
         this.enableManualRegionMapping = false;
-        this.disableTableStyle = false;
         this.clampToGround = true;
         this.perPropertyStyles = [];
     }
@@ -59,19 +58,19 @@ __decorate([
     })
 ], GeoJsonTraits.prototype, "enableManualRegionMapping", void 0);
 __decorate([
+    primitiveTrait({
+        name: "Use outline color for line features",
+        description: "If enabled, TableOutlineStyleTraits will be used to color Line Features, otherwise TableColorStyleTraits will be used.",
+        type: "boolean"
+    })
+], GeoJsonTraits.prototype, "useOutlineColorForLineFeatures", void 0);
+__decorate([
     objectTrait({
         type: StyleTraits,
         name: "Style",
-        description: "Styling rules that follow [simplestyle-spec](https://github.com/mapbox/simplestyle-spec). If using geojson-vt/TableStyleTraits, then this style will be used as the default style (which will be overriden by TableStyleTraits). To disable TableStyleTraits, see `disableTableStyle`."
+        description: "Styling rules that follow [simplestyle-spec](https://github.com/mapbox/simplestyle-spec). If defined, then `forceCesiumPrimitives` will be true. For styling MVT/protomaps - see `TableStyleTraits`"
     })
 ], GeoJsonTraits.prototype, "style", void 0);
-__decorate([
-    primitiveTrait({
-        type: "boolean",
-        name: "Disable table style",
-        description: "If true, all table styling will be disabled. This only applies to geojson-vt/protomaps (see `forceCesiumPrimitives`). It disabled, `style` rules will be used instead"
-    })
-], GeoJsonTraits.prototype, "disableTableStyle", void 0);
 __decorate([
     primitiveTrait({
         type: "boolean",
@@ -83,9 +82,15 @@ __decorate([
     primitiveTrait({
         type: "boolean",
         name: "Force cesium primitives",
-        description: "Force rendering GeoJSON features as Cesium primitives. This will be true if you are using `perPropertyStyles`, `timeProperty`, `heightProperty` or `czmlTemplate`. If undefined, geojson-vt/protomaps will be used"
+        description: "Force rendering GeoJSON features as Cesium primitives. This will be true if you are using `style`, `perPropertyStyles`, `timeProperty`, `heightProperty` or `czmlTemplate`. If undefined, geojson-vt/protomaps will be used. This will be set to true if simplestyle-spec properties are detected in over 50% of GeoJSON features, or if any MultiPoint features are found "
     })
 ], GeoJsonTraits.prototype, "forceCesiumPrimitives", void 0);
+__decorate([
+    anyTrait({
+        name: "Feature filter (by properties)",
+        description: "Filter GeoJSON features by properties. If the properties of a feature match `filterByProperties`, then show that feature. All other features are hidden"
+    })
+], GeoJsonTraits.prototype, "filterByProperties", void 0);
 __decorate([
     objectArrayTrait({
         name: "Per property styles",
@@ -111,7 +116,13 @@ __decorate([
 __decorate([
     anyTrait({
         name: "CZML template",
-        description: `CZML template to be used to replace each GeoJSON **Point** feature. Feature coordinates and properties will automatically be applied to CZML packet, so they can be used as references. If this is defined, \`clampToGround\`, \`style\`, \`perPropertyStyles\`, \`timeProperty\` and \`heightProperty\` will be ignored.
+        description: `CZML template to be used to replace each GeoJSON **Point** and **Polygon/MultiPolygon** feature. Feature coordinates and properties will automatically be applied to CZML packet, so they can be used as references.
+
+    Polygon/MultiPolygon features only support the \`polygon\` CZML packet.
+
+    Point features support all packets except ones which require a \`PositionsList\` (eg \`polygon\`, \`polyline\`, ...)
+
+    If this is defined, \`clampToGround\`, \`style\`, \`perPropertyStyles\`, \`timeProperty\` and \`heightProperty\` will be ignored.
 
     For example - this will render a cylinder for every point (and use the length and radius feature properties)
       \`\`\`json
@@ -135,7 +146,12 @@ __decorate([
           }
         }
       }
-      \`\`\``
+      \`\`\`
+
+    For more info see Cesium's CZML docs https://github.com/AnalyticalGraphicsInc/czml-writer/wiki/CZML-Guide
+
+    The following custom properties are supported:
+    - \`heightOffset: number\` to offset height values (in m)`
     })
 ], GeoJsonTraits.prototype, "czmlTemplate", void 0);
 //# sourceMappingURL=GeoJsonTraits.js.map

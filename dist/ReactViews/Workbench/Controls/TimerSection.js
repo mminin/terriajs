@@ -1,4 +1,3 @@
-"use strict";
 import React from "react";
 import PropTypes from "prop-types";
 import { observer } from "mobx-react";
@@ -27,7 +26,7 @@ const TimerSection = observer(createReactClass({
     },
     getCountdownDuration() {
         // How many seconds until our next update?
-        return Math.floor((this.props.item.nextScheduledUpdateTime.getTime() -
+        return Math.round((this.props.item.nextScheduledUpdateTime.getTime() -
             new Date().getTime()) /
             1000);
     },
@@ -58,7 +57,7 @@ const TimerSection = observer(createReactClass({
     getCountdownString() {
         const date = new Date(null);
         date.setSeconds(this.state.secondsLeft);
-        const addLeadingZeroIfRequired = numString => numString.length < 2 ? "0" + numString : numString;
+        const addLeadingZeroIfRequired = (numString) => numString.length < 2 ? "0" + numString : numString;
         const minutes = addLeadingZeroIfRequired(date.getMinutes().toString());
         const seconds = addLeadingZeroIfRequired(date.getSeconds().toString());
         return `00:${minutes}:${seconds}`;
@@ -98,5 +97,5 @@ const TimerSection = observer(createReactClass({
                     }))))));
     }
 }));
-module.exports = withTranslation()(TimerSection);
+export default withTranslation()(TimerSection);
 //# sourceMappingURL=TimerSection.js.map

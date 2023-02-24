@@ -39,10 +39,8 @@ export default class WebMapServiceCapabilities {
         const allLayers = this.allLayers;
         const rootLayers = this.rootLayers;
         const topLevelNamedLayers = this.topLevelNamedLayers;
-        const layersByName = this
-            .layersByName;
-        const layersByTitle = this
-            .layersByTitle;
+        const layersByName = this.layersByName;
+        const layersByTitle = this.layersByTitle;
         function traverseLayer(layer, isTopLevel = false, parent) {
             allLayers.push(layer);
             if (layer.Name) {
@@ -74,7 +72,7 @@ export default class WebMapServiceCapabilities {
             else {
                 rootLayers.push(layerElements);
             }
-            rootLayers.forEach(layer => traverseLayer(layer, true));
+            rootLayers.forEach((layer) => traverseLayer(layer, true));
         }
     }
     get Service() {

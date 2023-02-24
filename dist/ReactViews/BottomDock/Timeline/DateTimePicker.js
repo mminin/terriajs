@@ -37,8 +37,8 @@ const monthNames = [
     "Dec"
 ];
 const GridItem = styled.span `
-  background: ${p => p.theme.overlay};
-  ${p => p.active &&
+  background: ${(p) => p.theme.overlay};
+  ${(p) => p.active &&
     `
     & {
       background: ${p.theme.colorPrimary};
@@ -56,7 +56,7 @@ const GridRowInner = styled.span `
     height: 10px;
     width: 2px;
     margin-top: 1px;
-    margin-right: ${p => p.marginRight}px;
+    margin-right: ${(p) => p.marginRight}px;
   }
 `;
 const Grid = styled.div `
@@ -77,7 +77,7 @@ const GridHeading = styled.div `
 `;
 export const GridRow = styled.div `
   :hover {
-    background: ${p => p.theme.overlay};
+    background: ${(p) => p.theme.overlay};
     cursor: pointer;
   }
 `;
@@ -131,26 +131,26 @@ let DateTimePicker = class DateTimePicker extends React.Component {
         let defaultMonth;
         let defaultDay;
         let defaultGranularity = "century";
-        if (datesObject.indice.length === 1) {
+        if (datesObject.index.length === 1) {
             // only one century
-            const soleCentury = datesObject.indice[0];
+            const soleCentury = datesObject.index[0];
             const dataFromThisCentury = datesObject[soleCentury];
             defaultCentury = soleCentury;
-            if (dataFromThisCentury.indice.length === 1) {
+            if (dataFromThisCentury.index.length === 1) {
                 // only one year, check if this year has only one month
-                const soleYear = dataFromThisCentury.indice[0];
+                const soleYear = dataFromThisCentury.index[0];
                 const dataFromThisYear = dataFromThisCentury[soleYear];
                 defaultYear = soleYear;
                 defaultGranularity = "year";
-                if (dataFromThisYear.indice.length === 1) {
+                if (dataFromThisYear.index.length === 1) {
                     // only one month data from this one year, need to check day then
-                    const soleMonth = dataFromThisYear.indice[0];
+                    const soleMonth = dataFromThisYear.index[0];
                     const dataFromThisMonth = dataFromThisYear[soleMonth];
                     defaultMonth = soleMonth;
                     defaultGranularity = "month";
-                    if (dataFromThisMonth.indice.length === 1) {
+                    if (dataFromThisMonth.index.length === 1) {
                         // only one day has data
-                        defaultDay = dataFromThisMonth.indice[0];
+                        defaultDay = dataFromThisMonth.index[0];
                     }
                 }
             }
@@ -202,11 +202,11 @@ let DateTimePicker = class DateTimePicker extends React.Component {
         }
     }
     renderCenturyGrid(datesObject) {
-        const centuries = datesObject.indice;
+        const centuries = datesObject.index;
         if (datesObject.dates && datesObject.dates.length >= 12) {
             return (React.createElement(Grid, null,
                 React.createElement(GridHeading, null, "Select a century"),
-                centuries.map(c => (React.createElement(DateButton, { key: c, css: `
+                centuries.map((c) => (React.createElement(DateButton, { key: c, css: `
                 display: inline-block;
                 width: 40%;
               `, onClick: () => runInAction(() => (this.currentDateIndice.century = c)) },
@@ -219,18 +219,18 @@ let DateTimePicker = class DateTimePicker extends React.Component {
     }
     renderYearGrid(datesObject) {
         if (datesObject.dates && datesObject.dates.length > 12) {
-            const years = datesObject.indice;
+            const years = datesObject.index;
             const monthOfYear = Array.apply(null, { length: 12 }).map(Number.call, Number);
             return (React.createElement(Grid, null,
                 React.createElement(GridHeading, null, "Select a year"),
-                React.createElement(GridBody, null, years.map(y => (React.createElement(GridRow, { key: y, onClick: () => runInAction(() => {
+                React.createElement(GridBody, null, years.map((y) => (React.createElement(GridRow, { key: y, onClick: () => runInAction(() => {
                         this.currentDateIndice.year = y;
                         this.currentDateIndice.month = undefined;
                         this.currentDateIndice.day = undefined;
                         this.currentDateIndice.time = undefined;
                     }) },
                     React.createElement(GridLabel, null, y),
-                    React.createElement(GridRowInner, { marginRight: "11" }, monthOfYear.map(m => (React.createElement(GridItem
+                    React.createElement(GridRowInner, { marginRight: "11" }, monthOfYear.map((m) => (React.createElement(GridItem
                     // className={datesObject[y][m] ? Styles.activeGrid : ""}
                     , { 
                         // className={datesObject[y][m] ? Styles.activeGrid : ""}
@@ -270,7 +270,7 @@ let DateTimePicker = class DateTimePicker extends React.Component {
                             this.currentDateIndice.time = undefined;
                         }) },
                     React.createElement(GridLabel, null, m),
-                    React.createElement(GridRowInner, { marginRight: "3" }, daysInMonth(i + 1, year).map(d => (React.createElement(GridItem, { active: isDefined(datesObject[year][i]) &&
+                    React.createElement(GridRowInner, { marginRight: "3" }, daysInMonth(i + 1, year).map((d) => (React.createElement(GridItem, { active: isDefined(datesObject[year][i]) &&
                             isDefined(datesObject[year][i][d + 1]), key: d }))))))))));
         }
         else {
@@ -286,8 +286,8 @@ let DateTimePicker = class DateTimePicker extends React.Component {
         if (dayObject.dates.length > 31) {
             // Create one date object per day, using an arbitrary time. This does it via Object.keys and moment().
             const days = datesObject[this.currentDateIndice.year][this.currentDateIndice.month]
-                .indice;
-            const daysToDisplay = days.map(d => moment()
+                .index;
+            const daysToDisplay = days.map((d) => moment()
                 .date(d)
                 .month(this.currentDateIndice.month)
                 .year(this.currentDateIndice.year));
@@ -333,7 +333,7 @@ let DateTimePicker = class DateTimePicker extends React.Component {
         if (isDefined(items)) {
             return (React.createElement(Grid, null,
                 React.createElement(GridHeading, null, "Select a time"),
-                React.createElement(GridBody, null, items.map(item => (React.createElement(DateButton, { key: formatDateTime(item), onClick: () => {
+                React.createElement(GridBody, null, items.map((item) => (React.createElement(DateButton, { key: formatDateTime(item), onClick: () => {
                         this.closePicker(item);
                         this.props.onChange(item);
                     } }, isDefined(this.props.dateFormat)
@@ -347,7 +347,7 @@ let DateTimePicker = class DateTimePicker extends React.Component {
             !isDefined(this.currentDateIndice.day)) {
             return null;
         }
-        const timeOptions = datesObject[this.currentDateIndice.year][this.currentDateIndice.month][this.currentDateIndice.day].dates.map(m => ({
+        const timeOptions = datesObject[this.currentDateIndice.year][this.currentDateIndice.month][this.currentDateIndice.day].dates.map((m) => ({
             value: m,
             label: formatDateTime(m)
         }));
@@ -356,7 +356,7 @@ let DateTimePicker = class DateTimePicker extends React.Component {
                 React.createElement(GridHeading, null,
                     `Select an hour on ${this.currentDateIndice.day} ${monthNames[this.currentDateIndice.month + 1]} ${this.currentDateIndice.year}`,
                     " "),
-                React.createElement(GridBody, null, datesObject[this.currentDateIndice.year][this.currentDateIndice.month][this.currentDateIndice.day].indice.map(item => (React.createElement(DateButton, { key: item, onClick: () => runInAction(() => {
+                React.createElement(GridBody, null, datesObject[this.currentDateIndice.year][this.currentDateIndice.month][this.currentDateIndice.day].index.map((item) => (React.createElement(DateButton, { key: item, onClick: () => runInAction(() => {
                         this.currentDateIndice.hour = item;
                     }) },
                     React.createElement("span", null,
@@ -432,7 +432,7 @@ let DateTimePicker = class DateTimePicker extends React.Component {
             display: table-cell;
             width: 30px;
             height: 30px;
-          `, onClick: event => {
+          `, onClick: (event) => {
                     event.stopPropagation();
                 } }, this.props.isOpen && (React.createElement("div", { css: `
                 background: ${(p) => p.theme.dark};

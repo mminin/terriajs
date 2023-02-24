@@ -25,15 +25,15 @@ export class CompositeBarModel {
         return this._items;
     }
     get visibleItems() {
-        return this.items.filter(item => item.controller.visible);
+        return this.items.filter((item) => item.controller.visible);
     }
     get pinnedItems() {
-        return this.items.filter(item => item.controller.visible && item.controller.pinned);
+        return this.items.filter((item) => item.controller.visible && item.controller.pinned);
     }
     setItems(items) {
         const result = [];
         if (!this.items || this.items.length === 0) {
-            this._items = items.map(item => {
+            this._items = items.map((item) => {
                 return this.createCompositeBarItem(item);
             });
         }
@@ -170,7 +170,7 @@ export class CompositeBarModel {
         }
     }
     findItem(id) {
-        return this.items.filter(item => item.id === id)[0];
+        return this.items.filter((item) => item.id === id)[0];
     }
     createCompositeBarItem(item) {
         return item;

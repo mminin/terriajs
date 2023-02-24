@@ -11,7 +11,7 @@ import Text from "../../Styled/Text";
 const ChartDisclaimer = ({ terria }) => {
     const chartView = new ChartView(terria);
     const uniqueChartDisclaimers = [
-        ...new Set(filterOutUndefined(chartView.chartItems.map(chartItem => chartItem.showInChartPanel &&
+        ...new Set(filterOutUndefined(chartView.chartItems.map((chartItem) => chartItem.showInChartPanel &&
             hasTraits(chartItem.item, DiscretelyTimeVaryingTraits, "chartDisclaimer")
             ? chartItem.item.chartDisclaimer
             : undefined)))
@@ -25,7 +25,7 @@ const ChartDisclaimer = ({ terria }) => {
         }
       ` },
         React.createElement(Spacing, { bottom: 2 }),
-        uniqueChartDisclaimers.map(chartDisclaimer => (React.createElement(React.Fragment, { key: chartDisclaimer },
+        uniqueChartDisclaimers.map((chartDisclaimer) => (React.createElement(React.Fragment, { key: chartDisclaimer },
             React.createElement(Text, { textLight: true }, parseCustomHtmlToReact(chartDisclaimer)),
             React.createElement(Spacing, { bottom: 2 }))))));
 };

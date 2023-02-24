@@ -6,14 +6,11 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 };
 import bbox from "@turf/bbox";
 import i18next from "i18next";
-import { clone } from "lodash-es";
-import { action, computed, observable, runInAction } from "mobx";
-import ImageryLayerFeatureInfo from "terriajs-cesium/Source/Scene/ImageryLayerFeatureInfo";
-import { json_style, LineSymbolizer, PolygonSymbolizer } from "terriajs-protomaps";
-import isDefined from "../../../Core/isDefined";
+import { computed, observable, runInAction } from "mobx";
+import { GeomType, json_style, LineSymbolizer, PolygonSymbolizer } from "protomaps";
 import loadJson from "../../../Core/loadJson";
 import TerriaError from "../../../Core/TerriaError";
-import ProtomapsImageryProvider, { GeojsonSource } from "../../../Map/ProtomapsImageryProvider";
+import ProtomapsImageryProvider, { GeojsonSource } from "../../../Map/ImageryProvider/ProtomapsImageryProvider";
 import CatalogMemberMixin from "../../../ModelMixins/CatalogMemberMixin";
 import MappableMixin from "../../../ModelMixins/MappableMixin";
 import UrlMixin from "../../../ModelMixins/UrlMixin";
@@ -61,6 +58,7 @@ class MapboxVectorTileLoadableStratum extends LoadableStratum(MapboxVectorTileCa
                     createStratumInstance(LegendItemTraits, {
                         color: this.item.fillColor,
                         outlineColor: this.item.lineColor,
+                        outlineWidth: this.item.lineColor ? 1 : undefined,
                         title: this.item.name
                     })
                 ]
@@ -119,7 +117,9 @@ class MapboxVectorTileCatalogItem extends MappableMixin(UrlMixin(CatalogMemberMi
                     dataLayer: this.layer,
                     symbolizer: new PolygonSymbolizer({ fill: this.fillColor }),
                     minzoom: this.minimumZoom,
-                    maxzoom: this.maximumZoom
+                    maxzoom: this.maximumZoom,
+                    // Only apply polygon/fill symbolizer to polygon features (otherwise it will also apply to line features)
+                    filter: (z, f) => f.geomType === GeomType.Polygon
                 });
             }
             if (this.lineColor) {
@@ -154,8 +154,8 @@ class MapboxVectorTileCatalogItem extends MappableMixin(UrlMixin(CatalogMemberMi
             maximumZoom: this.maximumZoom,
             credit: this.attribution,
             paintRules: this.paintRules,
-            labelRules: this.labelRules
-            // featureInfoFunc: this.featureInfoFromFeature,
+            labelRules: this.labelRules,
+            idProperty: this.idProperty
         });
     }
     forceLoadMapItems() {
@@ -175,17 +175,6 @@ class MapboxVectorTileCatalogItem extends MappableMixin(UrlMixin(CatalogMemberMi
                     : undefined
             }
         ];
-    }
-    featureInfoFromFeature(feature) {
-        const featureInfo = new ImageryLayerFeatureInfo();
-        if (isDefined(this.nameProperty)) {
-            featureInfo.name = feature.properties[this.nameProperty];
-        }
-        featureInfo.properties = clone(feature.properties);
-        featureInfo.data = {
-            id: feature.properties[this.idProperty]
-        }; // For highlight
-        return featureInfo;
     }
 }
 MapboxVectorTileCatalogItem.type = "mvt";
@@ -207,8 +196,5 @@ __decorate([
 __decorate([
     computed
 ], MapboxVectorTileCatalogItem.prototype, "mapItems", null);
-__decorate([
-    action.bound
-], MapboxVectorTileCatalogItem.prototype, "featureInfoFromFeature", null);
 export default MapboxVectorTileCatalogItem;
 //# sourceMappingURL=MapboxVectorTileCatalogItem.js.map

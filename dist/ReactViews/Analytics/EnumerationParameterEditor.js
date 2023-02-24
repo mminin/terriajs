@@ -19,7 +19,7 @@ let EnumerationParameterEditor = class EnumerationParameterEditor extends React.
         return (React.createElement("select", { className: Styles.field, onChange: this.onChange.bind(this), value: value },
             (!isDefined(value) || !this.props.parameter.isRequired) && (React.createElement("option", { key: "__undefined__", value: "" }, "Not specified")),
             isDefined(value) &&
-                !this.props.parameter.options.find(option => option.id === value) && (React.createElement("option", { key: "__invalid__", value: value },
+                !this.props.parameter.options.find((option) => option.id === value) && (React.createElement("option", { key: "__invalid__", value: value },
                 "Invalid value (",
                 value,
                 ")")),

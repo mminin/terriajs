@@ -33,7 +33,7 @@ export default class EnumIndex {
             const promise = loadCsv(joinUrl(indexRootUrl, value.url), {
                 dynamicTyping: true,
                 header: true
-            }).then(rows => rows.map(({ dataRowId }) => dataRowId));
+            }).then((rows) => rows.map(({ dataRowId }) => dataRowId));
             value.dataRowIds = promise;
             return promise;
         });

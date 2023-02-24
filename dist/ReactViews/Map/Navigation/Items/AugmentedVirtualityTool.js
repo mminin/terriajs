@@ -40,7 +40,7 @@ export class AugmentedVirtualityController extends MapNavigationItemController {
             // exists on window by now?
             typeof DeviceMotionEvent.requestPermission === "function") {
             DeviceMotionEvent.requestPermission()
-                .then(permissionState => {
+                .then((permissionState) => {
                 if (permissionState !== "granted") {
                     console.error("couldn't get access for motion events");
                 }
@@ -51,7 +51,7 @@ export class AugmentedVirtualityController extends MapNavigationItemController {
             // exists on window by now?
             typeof DeviceOrientationEvent.requestPermission === "function") {
             DeviceOrientationEvent.requestPermission()
-                .then(permissionState => {
+                .then((permissionState) => {
                 if (permissionState !== "granted") {
                     console.error("couldn't get access for orientation events");
                 }
@@ -196,7 +196,7 @@ __decorate([
 ], AugmentedVirtualityHoverController.prototype, "visible", null);
 const StyledMapIconButton = styled(MapIconButton) `
   svg {
-    ${p => p.blink &&
+    ${(p) => p.blink &&
     `
       -webkit-animation-name: blinker;
       -webkit-animation-duration: 1s;

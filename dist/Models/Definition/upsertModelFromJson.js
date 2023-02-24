@@ -24,7 +24,7 @@ const defaultOptions = {
  * @param options
  */
 export default function upsertModelFromJson(factory, terria, parentId, stratumName, json, options = {}) {
-    if (!isJsonObject(json)) {
+    if (!isJsonObject(json, false)) {
         return Result.error("Failed to upsert model - invalid JSON");
     }
     const errors = [];
@@ -85,7 +85,7 @@ export default function upsertModelFromJson(factory, terria, parentId, stratumNa
         }
     }
     if (model)
-        updateModelFromJson(model, stratumName, json, options.replaceStratum).catchError(error => {
+        updateModelFromJson(model, stratumName, json, options.replaceStratum).catchError((error) => {
             errors.push(error);
             model.setTrait(CommonStrata.underride, "isExperiencingIssues", true);
         });

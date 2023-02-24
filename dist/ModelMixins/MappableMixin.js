@@ -18,6 +18,9 @@ export var ImageryParts;
     }
     ImageryParts.is = is;
 })(ImageryParts || (ImageryParts = {}));
+export function isPrimitive(mapItem) {
+    return "isDestroyed" in mapItem;
+}
 export function isCesium3DTileset(mapItem) {
     return "allTilesLoaded" in mapItem;
 }
@@ -104,7 +107,7 @@ function MappableMixin(Base) {
             // This function is deliberately not a computed,
             // this.terria.notificationState.addNotificationToQueue changes state
             this.initialMessageShown = true;
-            return new Promise(resolve => {
+            return new Promise((resolve) => {
                 var _a, _b;
                 this.terria.notificationState.addNotificationToQueue({
                     title: (_a = this.initialMessage.title) !== null && _a !== void 0 ? _a : i18next.t("notification.title"),

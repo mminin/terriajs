@@ -8,7 +8,7 @@ const StyledCheckboxIcon = styled(StyledIcon).attrs({
   align-self: flex-start;
   position: relative;
   fill: currentColor;
-  ${props => !props.disabled &&
+  ${(props) => !props.disabled &&
     `
     &:hover {
       opacity: 0.6;

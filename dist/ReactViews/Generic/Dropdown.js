@@ -49,10 +49,11 @@ const Dropdown = createReactClass({
         this.removeListeners();
     },
     removeListeners() {
+        var _a;
         document.body.removeEventListener("click", this.hideList);
-        this.buttonElement.removeEventListener("click", this.nativeButtonListener);
+        (_a = this.buttonElement) === null || _a === void 0 ? void 0 : _a.removeEventListener("click", this.nativeButtonListener);
         this.nativeButtonListener = undefined;
-        (this.scrollListeners || []).forEach(listenerElement => listenerElement.removeEventListener("scroll", this.hideList));
+        (this.scrollListeners || []).forEach((listenerElement) => listenerElement === null || listenerElement === void 0 ? void 0 : listenerElement.removeEventListener("scroll", this.hideList));
         this.scrollListeners = undefined;
     },
     showList() {
@@ -78,7 +79,7 @@ const Dropdown = createReactClass({
         document.body.addEventListener("click", this.hideList);
         // Unfortunately we need to add a native event listener because the native event hits document.body before
         // the react event ever gets triggered.
-        this.nativeButtonListener = event => {
+        this.nativeButtonListener = (event) => {
             event.stopPropagation();
             this.hideList();
         };
@@ -99,7 +100,7 @@ const Dropdown = createReactClass({
     render() {
         const isOpenStyle = Styles.isOpen + " " + (this.props.theme.isOpen || "");
         return (React.createElement("div", { className: classNames(Styles.dropdown, this.props.theme.dropdown) },
-            React.createElement("button", { type: "button", onClick: this.onButtonClicked, className: classNames(this.props.theme.button, Styles.btnDropdown), ref: element => {
+            React.createElement("button", { type: "button", onClick: this.onButtonClicked, className: classNames(this.props.theme.button, Styles.btnDropdown), ref: (element) => {
                     this.buttonElement = element;
                 }, disabled: this.props.disabled },
                 defined(this.props.selected)

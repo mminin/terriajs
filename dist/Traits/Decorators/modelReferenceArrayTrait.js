@@ -34,7 +34,7 @@ export class ModelReferenceArrayTrait extends Trait {
         for (let stratum of strataTopToBottom.values()) {
             const modelIdArray = stratum[this.id];
             if (modelIdArray) {
-                modelIdArray.forEach(modelId => {
+                modelIdArray.forEach((modelId) => {
                     if (ModelReference.isRemoved(modelId)) {
                         // This ID is removed in this stratum.
                         removedIds[modelId.removed] = true;
@@ -65,7 +65,7 @@ export class ModelReferenceArrayTrait extends Trait {
         }
         const errors = [];
         const result = jsonValue
-            .map(jsonElement => {
+            .map((jsonElement) => {
             var _a;
             if (typeof jsonElement === "string") {
                 return jsonElement;

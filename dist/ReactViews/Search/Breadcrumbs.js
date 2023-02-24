@@ -11,7 +11,7 @@ import { withTranslation } from "react-i18next";
 import { withTheme } from "styled-components";
 import Box from "../../Styled/Box";
 import { getParentGroups } from "../../Core/getPath";
-import Text from "../../Styled/Text";
+import Text, { TextSpan } from "../../Styled/Text";
 import Icon, { StyledIcon } from "../../Styled/Icon";
 import Spacing from "../../Styled/Spacing";
 import { RawButton } from "../../Styled/Button";
@@ -21,26 +21,26 @@ import getDereferencedIfExists from "../../Core/getDereferencedIfExists";
 import { runInAction } from "mobx";
 import CommonStrata from "../../Models/Definition/CommonStrata";
 const RawButtonAndUnderline = styled(RawButton) `
-  ${props => `
+  ${(props) => `
   &:hover, &:focus {
     text-decoration: underline ${props.theme.textDark};
   }`}
 `;
 let Breadcrumbs = class Breadcrumbs extends React.Component {
     async openInCatalog(items) {
-        items.forEach(item => {
+        items.forEach((item) => {
             runInAction(() => {
                 item.setTrait(CommonStrata.user, "isOpen", true);
             });
         });
-        await this.props.viewState.viewCatalogMember(items[0]);
+        (await this.props.viewState.viewCatalogMember(items[0])).raiseError(this.props.viewState.terria);
         this.props.viewState.changeSearchState("");
     }
     render() {
         const parentGroups = this.props.previewed
             ? getParentGroups(this.props.previewed)
             : undefined;
-        const ancestors = getAncestors(this.props.previewed).map(ancestor => getDereferencedIfExists(ancestor));
+        const ancestors = getAncestors(this.props.previewed).map((ancestor) => getDereferencedIfExists(ancestor));
         return (
         // Note: should it reset the text if a person deletes current search and starts a new search?
         React.createElement(Box, { left: true, styledMinHeight: "32px", fullWidth: true, backgroundColor: this.props.theme.greyLighter, paddedHorizontally: 2.4, paddedVertically: 1, wordBreak: "break-all" },
@@ -52,7 +52,7 @@ let Breadcrumbs = class Breadcrumbs extends React.Component {
                         React.createElement(Text, { small: true, textDark: true }, parent)),
                     React.createElement(When, { condition: i <= 1 || i >= parentGroups.length - 2 },
                         React.createElement(RawButtonAndUnderline, { type: "button", onClick: () => this.openInCatalog(ancestors.slice(i, i + 1)) },
-                            React.createElement(Text, { small: true, textDark: true }, parent))),
+                            React.createElement(TextSpan, { small: true, textDark: true }, parent))),
                     React.createElement(When, { condition: i > 1 && i < parentGroups.length - 2 },
                         React.createElement(Text, { small: true, textDark: true }, "..."))),
                 React.createElement(If, { condition: i !== parentGroups.length - 1 },

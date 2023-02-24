@@ -192,11 +192,6 @@ export default class ArcGisPortalItemReference extends AccessControlMixin(UrlMix
             model.strata.set(ArcGisPortalItemStratum.stratumName, stratum);
         });
     }
-    setItemProperties(model, itemProperties) {
-        runInAction(() => {
-            model.setTrait(CommonStrata.override, "itemProperties", itemProperties);
-        });
-    }
     async forceLoadReference(previousTarget) {
         // So when we first crawl we'll get this far
         await this.setArcgisStrata(this);
@@ -218,7 +213,7 @@ export default class ArcGisPortalItemReference extends AccessControlMixin(UrlMix
         if (this._arcgisItem !== undefined &&
             this._arcgisItem.type === "Map Service" &&
             this._arcgisItem.typeKeywords.indexOf("Tiled") > -1) {
-            const mapServerFormat = this.preparedSupportedFormats.filter(f => f.definition.type === "esri-mapServer");
+            const mapServerFormat = this.preparedSupportedFormats.filter((f) => f.definition.type === "esri-mapServer");
             if (mapServerFormat.length === 1)
                 this._supportedFormat = mapServerFormat[0];
         }
@@ -231,13 +226,6 @@ export default class ArcGisPortalItemReference extends AccessControlMixin(UrlMix
         if (defintionStratum) {
             model.strata.set(CommonStrata.definition, defintionStratum);
             model.setTrait(CommonStrata.definition, "url", undefined);
-        }
-        if (this.itemProperties !== undefined) {
-            const ipKeys = Object.keys(this.itemProperties);
-            ipKeys.forEach((p) => {
-                // @ts-ignore
-                model.setTrait(CommonStrata.override, p, this.itemProperties[p]);
-            });
         }
         return model;
     }

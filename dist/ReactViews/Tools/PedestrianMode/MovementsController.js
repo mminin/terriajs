@@ -16,7 +16,6 @@ import sampleTerrainMostDetailed from "terriajs-cesium/Source/Core/sampleTerrain
 import ScreenSpaceEventHandler from "terriajs-cesium/Source/Core/ScreenSpaceEventHandler";
 import ScreenSpaceEventType from "terriajs-cesium/Source/Core/ScreenSpaceEventType";
 import filterOutUndefined from "../../../Core/filterOutUndefined";
-import makeRealPromise from "../../../Core/makeRealPromise";
 const KeyMap = {
     KeyW: "forward",
     KeyA: "left",
@@ -226,7 +225,7 @@ export default class MovementsController {
     }
     animate() {
         if (this.activeMovements.size > 0) {
-            [...this.activeMovements].forEach(movement => this.move(movement));
+            [...this.activeMovements].forEach((movement) => this.move(movement));
             this.updateSurfaceHeightEstimate();
             this.onMove();
             if (this.activeMovements.has("down") &&
@@ -274,7 +273,8 @@ export default class MovementsController {
     setupMouseMap() {
         const eventHandler = new ScreenSpaceEventHandler(this.scene.canvas);
         const startLook = (click) => {
-            this.currentMousePosition = this.startMousePosition = click.position.clone();
+            this.currentMousePosition = this.startMousePosition =
+                click.position.clone();
             this.activeMovements.add("look");
         };
         const look = (movement) => {
@@ -325,8 +325,7 @@ export default class MovementsController {
             destroyKeyMap();
             destroyMouseMap();
             stopAnimating();
-            const screenSpaceCameraController = this.scene
-                .screenSpaceCameraController;
+            const screenSpaceCameraController = this.scene.screenSpaceCameraController;
             // screenSpaceCameraController will be undefined if the cesium map is already destroyed
             if (screenSpaceCameraController !== undefined) {
                 screenSpaceCameraController.enableTranslate = true;
@@ -351,9 +350,9 @@ async function sampleTerrainHeight(scene, position) {
     const terrainProvider = scene.terrainProvider;
     if (terrainProvider instanceof EllipsoidTerrainProvider)
         return 0;
-    const [sample] = await makeRealPromise(sampleTerrainMostDetailed(terrainProvider, [
+    const [sample] = await sampleTerrainMostDetailed(terrainProvider, [
         Cartographic.fromCartesian(position, scene.globe.ellipsoid, sampleScratch)
-    ]));
+    ]);
     return sample.height;
 }
 /**
@@ -396,7 +395,7 @@ function rotateVectorAboutAxis(vector, rotateAxis, rotateAmount) {
 // A regex matching input tag names
 const inputNodeRe = /input|textarea|select/i;
 function excludeInputEvents(handler) {
-    return ev => {
+    return (ev) => {
         var _a, _b;
         const target = ev.target;
         if (target !== null) {

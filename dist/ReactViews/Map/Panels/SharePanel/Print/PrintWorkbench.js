@@ -1,16 +1,15 @@
 import React from "react";
-import { getName } from "../../../../../ModelMixins/CatalogMemberMixin";
-import MappableMixin from "../../../../../ModelMixins/MappableMixin";
+import CatalogMemberMixin, { getName } from "../../../../../ModelMixins/CatalogMemberMixin";
 import DiscretelyTimeVaryingMixin from "../../../../../ModelMixins/DiscretelyTimeVaryingMixin";
+import MappableMixin from "../../../../../ModelMixins/MappableMixin";
+import SelectableDimensions, { DEFAULT_PLACEMENT, filterSelectableDimensions, findSelectedValueName, isGroup } from "../../../../../Models/SelectableDimensions/SelectableDimensions";
 import Legend from "../../../../Workbench/Controls/Legend";
-import SelectableDimensions, { DEFAULT_PLACEMENT, filterSelectableDimensions, findSelectedValueName } from "../../../../../Models/SelectableDimensions";
-import CatalogMemberMixin from "../../../../../ModelMixins/CatalogMemberMixin";
 const renderDisplayVariables = (catalogItem) => {
     if (SelectableDimensions.is(catalogItem)) {
-        return filterSelectableDimensions(DEFAULT_PLACEMENT)(catalogItem.selectableDimensions).map((dim, key) => (React.createElement("div", { key: key },
+        return filterSelectableDimensions(DEFAULT_PLACEMENT)(catalogItem.selectableDimensions).map((dim, key) => !isGroup(dim) ? (React.createElement("div", { key: key },
             dim.name,
             ": ",
-            findSelectedValueName(dim))));
+            findSelectedValueName(dim))) : null);
     }
     return null;
 };

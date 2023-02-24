@@ -14,7 +14,7 @@ import { DataSourceAction } from "../../Core/AnalyticEvents/analyticEvents";
 import MappableMixin from "../../ModelMixins/MappableMixin";
 import toggleItemOnMapFromCatalog, { Op as ToggleOnMapOp } from "../DataCatalog/toggleItemOnMapFromCatalog";
 import measureElement from "../HOCs/measureElement";
-import SharePanel from "../Map/Panels/SharePanel/SharePanel.jsx";
+import SharePanel from "../Map/Panels/SharePanel/SharePanel";
 import DataPreviewMap from "./DataPreviewMap";
 import Description from "./Description";
 import Styles from "./mappable-preview.scss";
@@ -58,7 +58,7 @@ let MappablePreview = class MappablePreview extends React.Component {
                 ? t("preview.removeFromMap")
                 : t("preview.addToMap")),
             React.createElement("div", { className: Styles.previewedInfo },
-                React.createElement("div", { className: Styles.titleAndShareWrapper, ref: component => (this.refToMeasure = component) },
+                React.createElement("div", { className: Styles.titleAndShareWrapper, ref: (component) => (this.refToMeasure = component) },
                     React.createElement("h3", { className: Styles.h3 }, catalogItem.name),
                     React.createElement(If, { condition: !catalogItem.hasLocalData &&
                             !this.props.viewState.useSmallScreenInterface },

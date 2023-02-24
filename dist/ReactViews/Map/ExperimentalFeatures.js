@@ -1,25 +1,27 @@
 import React from "react";
-import createReactClass from "create-react-class";
-import PropTypes from "prop-types";
-import Styles from "./experimental-features.scss";
-// The experimental features
-const ExperimentalFeatures = createReactClass({
-    displayName: "ExperimentalFeatures",
-    propTypes: {
-        terria: PropTypes.object.isRequired,
-        viewState: PropTypes.object.isRequired,
-        experimentalItems: PropTypes.arrayOf(PropTypes.element)
-    },
-    getDefaultProps() {
-        return {
-            experimentalItems: []
-        };
-    },
-    render() {
-        return (React.createElement("div", { className: Styles.experimentalFeatures },
-            React.createElement(For, { each: "item", of: this.props.experimentalItems, index: "i" },
-                React.createElement("div", { className: Styles.control, key: i }, item))));
-    }
-});
-export default ExperimentalFeatures;
+import styled from "styled-components";
+import { withViewState } from "../StandardUserInterface/ViewStateContext";
+const ControlsWrapper = styled.div `
+  position: absolute;
+  left: 25px;
+  bottom: 25px;
+  z-index: 1;
+
+  @media (min-width: ${(props) => props.theme.sm}px) {
+    top: auto;
+    bottom: 100px;
+  }
+`;
+const Control = styled.div `
+  margin: 15px 0;
+  text-align: center;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+`;
+const ExperimentalFeatures = (props) => {
+    return (React.createElement(ControlsWrapper, null, (props.experimentalItems || []).map((item, i) => (React.createElement(Control, { key: i }, item)))));
+};
+export default withViewState(ExperimentalFeatures);
 //# sourceMappingURL=ExperimentalFeatures.js.map

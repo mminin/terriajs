@@ -27,7 +27,7 @@ __decorate([
     primitiveTrait({
         type: "string",
         name: "marker-symbol",
-        description: "Marker symbol."
+        description: "Marker symbol. (only supported with Cesium Primitives)"
     })
 ], StyleTraits.prototype, "marker-symbol", void 0);
 __decorate([
@@ -41,7 +41,7 @@ __decorate([
     primitiveTrait({
         type: "string",
         name: "marker-url",
-        description: "Marker URL."
+        description: "Marker URL. (only supported with Cesium Primitives)"
     })
 ], StyleTraits.prototype, "marker-url", void 0);
 __decorate([
@@ -67,6 +67,13 @@ __decorate([
 ], StyleTraits.prototype, "stroke-width", void 0);
 __decorate([
     primitiveTrait({
+        type: "string",
+        name: "marker-stroke",
+        description: "Marker stroke color. (This is will override stroke for Point geojson-vt features) - not apart of simplestyle-spec and will not apply to cesium primitives"
+    })
+], StyleTraits.prototype, "marker-stroke", void 0);
+__decorate([
+    primitiveTrait({
         type: "number",
         name: "marker-stroke-width",
         description: "Marker stroke width. (This is will override stroke-width for Point geojson-vt features) - not apart of simplestyle-spec and will not apply to cesium primitives"
@@ -74,11 +81,25 @@ __decorate([
 ], StyleTraits.prototype, "marker-stroke-width", void 0);
 __decorate([
     primitiveTrait({
+        type: "string",
+        name: "polyline-stroke",
+        description: "Polyline stroke color. (This is will override stroke for Polyline geojson-vt features) - not apart of simplestyle-spec and will not apply to cesium primitives"
+    })
+], StyleTraits.prototype, "polyline-stroke", void 0);
+__decorate([
+    primitiveTrait({
         type: "number",
         name: "polyline-stroke-width",
         description: "Polyline stroke width. (This is will override stroke-width for Polyline geojson-vt features) - not apart of simplestyle-spec and will not apply to cesium primitives"
     })
 ], StyleTraits.prototype, "polyline-stroke-width", void 0);
+__decorate([
+    primitiveTrait({
+        type: "string",
+        name: "polygon-stroke",
+        description: "Polygon stroke color. (This is will override stroke for Polygon geojson-vt features) - not apart of simplestyle-spec and will not apply to cesium primitives"
+    })
+], StyleTraits.prototype, "polygon-stroke", void 0);
 __decorate([
     primitiveTrait({
         type: "number",

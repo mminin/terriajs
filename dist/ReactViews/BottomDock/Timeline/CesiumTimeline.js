@@ -16,7 +16,7 @@ const CesiumTimeline = createReactClass({
     },
     componentDidMount() {
         this.cesiumTimeline = new WrappedTimeline(this.timelineContainer, this.props.terria.timelineClock);
-        this.cesiumTimeline.makeLabel = time => {
+        this.cesiumTimeline.makeLabel = (time) => {
             if (defined(this.props.terria.timelineStack.top)) {
                 const layer = this.props.terria.timelineStack.top;
                 if (defined(layer.dateFormat) &&
@@ -37,7 +37,7 @@ const CesiumTimeline = createReactClass({
             }
             return formatDateTime(JulianDate.toDate(time), this.locale);
         };
-        this.cesiumTimeline.addEventListener("settime", e => {
+        this.cesiumTimeline.addEventListener("settime", (e) => {
             const clock = e.clock;
             clock.currentTime = e.timeJulian;
             clock.shouldAnimate = false;
@@ -69,7 +69,7 @@ const CesiumTimeline = createReactClass({
         return false;
     },
     render() {
-        return (React.createElement("div", { className: Styles.cesiumTimeline, ref: ref => {
+        return (React.createElement("div", { className: Styles.cesiumTimeline, ref: (ref) => {
                 this.timelineContainer = ref;
             } }));
     }

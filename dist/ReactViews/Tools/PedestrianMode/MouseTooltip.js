@@ -1,7 +1,7 @@
 import React, { createRef, useEffect } from "react";
 import styled from "styled-components";
 import Text from "../../../Styled/Text";
-const MouseTooltip = props => {
+const MouseTooltip = (props) => {
     const { scene, text } = props;
     const tooltipText = createRef();
     useEffect(function tooltipFollowMouse() {
@@ -10,9 +10,7 @@ const MouseTooltip = props => {
                 const width = tooltipText.current.clientWidth;
                 const height = tooltipText.current.clientHeight;
                 tooltipText.current.style.left = `${position.x - width / 2}px`;
-                tooltipText.current.style.top = `${position.y -
-                    height -
-                    10}px`;
+                tooltipText.current.style.top = `${position.y - height - 10}px`;
             }
         };
         setTooltipPosition({
@@ -38,7 +36,7 @@ const TooltipText = styled(Text).attrs({
   position: absolute;
   width: 200px;
   padding: 0.7em;
-  border-radius: ${p => p.theme.radiusSmall};
+  border-radius: ${(p) => p.theme.radiusSmall};
   border: 1px solid grey;
   background-color: #ffffff;
 `;

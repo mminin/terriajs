@@ -198,7 +198,7 @@ export default function createAustralianGazetteerSearchProvider(terria) {
         wfsServiceUrl: WFS_SERVICE_URL,
         searchPropertyName: SEARCH_PROPERTY_NAME,
         searchPropertyTypeName: SEARCH_PROPERTY_TYPE_NAME,
-        transformSearchText: searchText => searchText.toUpperCase(),
+        transformSearchText: (searchText) => searchText.toUpperCase(),
         name: i18next.t("viewModels.searchPlaceNames"),
         searchResultFilterFunction: searchResultFilterFunction,
         searchResultScoreFunction: searchResultScoreFunction

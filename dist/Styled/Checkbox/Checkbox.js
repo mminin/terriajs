@@ -5,7 +5,7 @@ import { SpacingSpan } from "./../Spacing";
 import CheckboxIcon from "./Elements/CheckboxIcon";
 import HiddenCheckbox from "./Elements/HiddenCheckbox";
 const Checkbox = memo(forwardRef(function Checkbox(props, ref) {
-    const { isChecked: isCheckedProp, isDisabled = false, defaultChecked = false, isIndeterminate = false, onChange: onChangeProps, title, name, value, children, textProps, ...rest } = props;
+    const { isChecked: isCheckedProp, isDisabled = false, defaultChecked = false, isIndeterminate = false, onChange: onChangeProps, title, name, value, children, textProps, className, ...rest } = props;
     const [isCheckedState, setIsCheckedState] = useState(isCheckedProp !== undefined ? isCheckedProp : defaultChecked);
     const onChange = useCallback((e) => {
         setIsCheckedState(e.target.checked);
@@ -17,7 +17,7 @@ const Checkbox = memo(forwardRef(function Checkbox(props, ref) {
     const isChecked = isCheckedProp === undefined ? isCheckedState : isCheckedProp;
     const id = useUID();
     // Add props to children
-    const childrenWithProps = React.Children.map(children, child => {
+    const childrenWithProps = React.Children.map(children, (child) => {
         // Checking isValidElement is the safe way and avoids a typescript
         // error too.
         if (React.isValidElement(child)) {
@@ -29,7 +29,7 @@ const Checkbox = memo(forwardRef(function Checkbox(props, ref) {
         }
         return child;
     });
-    return (React.createElement(TextSpan, Object.assign({ as: "label", title: title, htmlFor: `checkbox-${id}`, css: `
+    return (React.createElement(TextSpan, Object.assign({ as: "label", title: title, htmlFor: `checkbox-${id}`, className: className, css: `
           display: flex;
           flex-shrink: 0;
           align-items: center;

@@ -1,12 +1,11 @@
 import i18next from "i18next";
 import { runInAction } from "mobx";
 import URI from "urijs";
-import zoomRectangleFromPoint from "../../../Map/zoomRectangleFromPoint";
+import zoomRectangleFromPoint from "../../../Map/Vector/zoomRectangleFromPoint";
 import xml2json from "../../../ThirdParty/xml2json";
 import SearchProvider from "../../SearchProviders/SearchProvider";
 import defaultValue from "terriajs-cesium/Source/Core/defaultValue";
 import Resource from "terriajs-cesium/Source/Core/Resource";
-import makeRealPromise from "../../../Core/makeRealPromise";
 export default class WebFeatureServiceSearchProvider extends SearchProvider {
     constructor(options) {
         super();
@@ -27,7 +26,7 @@ export default class WebFeatureServiceSearchProvider extends SearchProvider {
         this._waitingForResults = true;
         const xmlPromise = resource.fetchXML();
         this.cancelRequest = resource.request.cancelFunction;
-        return makeRealPromise(xmlPromise).finally(() => {
+        return xmlPromise.finally(() => {
             this._waitingForResults = false;
         });
     }
@@ -99,7 +98,7 @@ export default class WebFeatureServiceSearchProvider extends SearchProvider {
                 }
                 let searchResults = features
                     .map(this._featureToSearchResultFunction)
-                    .map(result => {
+                    .map((result) => {
                     result.clickAction = createZoomToFunction(this, result.location);
                     return result;
                 });
@@ -111,7 +110,7 @@ export default class WebFeatureServiceSearchProvider extends SearchProvider {
                     searchResults = searchResults.sort((featureA, featureB) => featureA.name.length - featureB.name.length);
                 }
                 // Remove results that have the same name and are close to each other
-                searchResults = searchResults.filter(result => {
+                searchResults = searchResults.filter((result) => {
                     var _a, _b;
                     const hash = `${result.name},${(_a = result.location) === null || _a === void 0 ? void 0 : _a.latitude.toFixed(1)},${(_b = result.location) === null || _b === void 0 ? void 0 : _b.longitude.toFixed(1)}`;
                     if (resultSet.has(hash)) {
@@ -124,7 +123,7 @@ export default class WebFeatureServiceSearchProvider extends SearchProvider {
                 results.results.push(...searchResults);
             });
         })
-            .catch(e => {
+            .catch((e) => {
             if (results.isCanceled) {
                 // A new search has superseded this one, so ignore the result.
                 return;

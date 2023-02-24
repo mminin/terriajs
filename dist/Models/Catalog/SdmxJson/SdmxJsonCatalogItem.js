@@ -11,19 +11,18 @@ import Resource from "terriajs-cesium/Source/Core/Resource";
 import filterOutUndefined from "../../../Core/filterOutUndefined";
 import isDefined from "../../../Core/isDefined";
 import TerriaError, { TerriaErrorSeverity } from "../../../Core/TerriaError";
-import CatalogMemberMixin from "../../../ModelMixins/CatalogMemberMixin";
-import ChartableMixin from "../../../ModelMixins/ChartableMixin";
 import TableMixin from "../../../ModelMixins/TableMixin";
 import UrlMixin from "../../../ModelMixins/UrlMixin";
 import Csv from "../../../Table/Csv";
 import TableAutomaticStylesStratum from "../../../Table/TableAutomaticStylesStratum";
 import SdmxCatalogItemTraits from "../../../Traits/TraitsClasses/SdmxCatalogItemTraits";
 import CreateModel from "../../Definition/CreateModel";
-import proxyCatalogItemUrl from "../proxyCatalogItemUrl";
 import StratumOrder from "../../Definition/StratumOrder";
+import { filterEnums } from "../../SelectableDimensions/SelectableDimensions";
+import proxyCatalogItemUrl from "../proxyCatalogItemUrl";
 import { SdmxJsonDataflowStratum } from "./SdmxJsonDataflowStratum";
 import { sdmxErrorString, SdmxHttpErrorCodes } from "./SdmxJsonServerStratum";
-export default class SdmxJsonCatalogItem extends ChartableMixin(TableMixin(UrlMixin(CatalogMemberMixin(CreateModel(SdmxCatalogItemTraits))))) {
+export default class SdmxJsonCatalogItem extends TableMixin(UrlMixin(CreateModel(SdmxCatalogItemTraits))) {
     static get type() {
         return "sdmx-json";
     }
@@ -51,7 +50,7 @@ export default class SdmxJsonCatalogItem extends ChartableMixin(TableMixin(UrlMi
      * Map SdmxDimensionTraits to SelectableDimension
      */
     get sdmxSelectableDimensions() {
-        return this.dimensions.map(dim => {
+        return this.dimensions.map((dim) => {
             var _a;
             return {
                 id: dim.id,
@@ -60,10 +59,10 @@ export default class SdmxJsonCatalogItem extends ChartableMixin(TableMixin(UrlMi
                 selectedId: dim.selectedId,
                 allowUndefined: dim.allowUndefined,
                 disable: dim.disable ||
-                    ((_a = this.columns.find(col => col.name === dim.id)) === null || _a === void 0 ? void 0 : _a.type) === "region",
+                    ((_a = this.columns.find((col) => col.name === dim.id)) === null || _a === void 0 ? void 0 : _a.type) === "region",
                 setDimensionValue: async (stratumId, value) => {
                     var _a;
-                    let dimensionTraits = (_a = this.dimensions) === null || _a === void 0 ? void 0 : _a.find(sdmxDim => sdmxDim.id === dim.id);
+                    let dimensionTraits = (_a = this.dimensions) === null || _a === void 0 ? void 0 : _a.find((sdmxDim) => sdmxDim.id === dim.id);
                     if (!isDefined(dimensionTraits)) {
                         dimensionTraits = this.addObject(stratumId, "dimensions", dim.id);
                     }
@@ -75,10 +74,8 @@ export default class SdmxJsonCatalogItem extends ChartableMixin(TableMixin(UrlMi
     }
     get selectableDimensions() {
         return filterOutUndefined([
-            ...super.selectableDimensions.filter(d => { var _a; return d.id !== ((_a = this.styleDimensions) === null || _a === void 0 ? void 0 : _a.id); }),
-            ...this.sdmxSelectableDimensions,
-            this.regionColumnDimensions,
-            this.regionProviderDimensions
+            ...super.selectableDimensions.filter((d) => { var _a; return d.id !== ((_a = this.styleDimensions) === null || _a === void 0 ? void 0 : _a.id); }),
+            ...this.sdmxSelectableDimensions
         ]);
     }
     /**
@@ -97,10 +94,10 @@ export default class SdmxJsonCatalogItem extends ChartableMixin(TableMixin(UrlMi
             .sort((a, b) => (isDefined(a.position) ? a.position : this.dimensions.length) -
             (isDefined(b.position) ? b.position : this.dimensions.length))
             // If a dimension is disabled, use empty string (which is wildcard)
-            .map(dim => {
+            .map((dim) => {
             var _a;
             return !dim.disable &&
-                ((_a = this.columns.find(col => col.name === dim.id)) === null || _a === void 0 ? void 0 : _a.type) !== "region"
+                ((_a = this.columns.find((col) => col.name === dim.id)) === null || _a === void 0 ? void 0 : _a.type) !== "region"
                 ? dim.selectedId
                 : "";
         })
@@ -134,12 +131,12 @@ export default class SdmxJsonCatalogItem extends ChartableMixin(TableMixin(UrlMi
                     this.selectableDimensions.length > 0) {
                     throw new TerriaError({
                         message: i18next.t("models.sdmxCatalogItem.noResultsWithDimensions", {
-                            dimensions: this.selectableDimensions
-                                .filter(dim => { var _a; return !dim.disable && ((_a = dim.options) === null || _a === void 0 ? void 0 : _a.length) !== 1; })
-                                .map(dim => {
+                            dimensions: filterEnums(this.selectableDimensions)
+                                .filter((dim) => { var _a; return !dim.disable && ((_a = dim.options) === null || _a === void 0 ? void 0 : _a.length) !== 1; })
+                                .map((dim) => {
                                 var _a, _b, _c;
                                 // Format string into `${dimenion name} = ${dimenion selected value}
-                                return `- ${dim.name} = \`${(_c = (_b = (_a = dim.options) === null || _a === void 0 ? void 0 : _a.find(option => option.id === dim.selectedId)) === null || _b === void 0 ? void 0 : _b.name) !== null && _c !== void 0 ? _c : dim.selectedId}\``;
+                                return `- ${dim.name} = \`${(_c = (_b = (_a = dim.options) === null || _a === void 0 ? void 0 : _a.find((option) => option.id === dim.selectedId)) === null || _b === void 0 ? void 0 : _b.name) !== null && _c !== void 0 ? _c : dim.selectedId}\``;
                             })
                                 .join("\n")
                         }),

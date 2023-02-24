@@ -11,14 +11,13 @@ import CatalogMemberTraits from "./CatalogMemberTraits";
 import LayerOrderingTraits from "./LayerOrderingTraits";
 import LegendOwnerTraits from "./LegendOwnerTraits";
 import MappableTraits from "./MappableTraits";
-import RasterLayerTraits from "./RasterLayerTraits";
+import ImageryProviderTraits from "./ImageryProviderTraits";
 import UrlTraits from "./UrlTraits";
-export default class OpenStreetMapCatalogItemTraits extends mixTraits(RasterLayerTraits, LayerOrderingTraits, UrlTraits, MappableTraits, CatalogMemberTraits, LegendOwnerTraits) {
+export default class OpenStreetMapCatalogItemTraits extends mixTraits(ImageryProviderTraits, LayerOrderingTraits, UrlTraits, MappableTraits, CatalogMemberTraits, LegendOwnerTraits) {
     constructor() {
         super(...arguments);
         this.fileExtension = "png";
         this.subdomains = [];
-        this.maximumLevel = 25;
     }
 }
 __decorate([
@@ -35,11 +34,4 @@ __decorate([
         type: "string"
     })
 ], OpenStreetMapCatalogItemTraits.prototype, "subdomains", void 0);
-__decorate([
-    primitiveTrait({
-        name: "Maximum Level",
-        description: "The maximum level of details to fetch",
-        type: "number"
-    })
-], OpenStreetMapCatalogItemTraits.prototype, "maximumLevel", void 0);
 //# sourceMappingURL=OpenStreetMapCatalogItemTraits.js.map

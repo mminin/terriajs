@@ -6,7 +6,7 @@ import filterOutUndefined from "../../Core/filterOutUndefined";
 import flatten from "../../Core/flatten";
 import isDefined from "../../Core/isDefined";
 import Result from "../../Core/Result";
-import featureDataToGeoJson from "../../Map/featureDataToGeoJson";
+import featureDataToGeoJson from "../../Map/PickedFeatures/featureDataToGeoJson";
 import GeoJsonCatalogItem from "../../Models/Catalog/CatalogItems/GeoJsonCatalogItem";
 import CommonStrata from "../../Models/Definition/CommonStrata";
 import MapInteractionMode from "../../Models/MapInteractionMode";
@@ -76,14 +76,14 @@ export function selectOnMap(terria, viewState, parameter) {
                 catalogItem.setTrait(CommonStrata.user, "geoJsonData", geojson);
                 return catalogItem;
             }
-        }).filter(item => isDefined(item))) !== null && _a !== void 0 ? _a : []);
-        const result = Result.combine(await Promise.all(catalogItems.map(model => model.loadMapItems())), "Failed to load picked polygons");
+        }).filter((item) => isDefined(item))) !== null && _a !== void 0 ? _a : []);
+        const result = Result.combine(await Promise.all(catalogItems.map((model) => model.loadMapItems())), "Failed to load picked polygons");
         if (result.error) {
             terria.raiseErrorToUser(result.error, "Failed to select polygons");
             terria.mapInteractionModeStack.pop();
         }
         else {
-            const features = flatten(filterOutUndefined(catalogItems.map(item => { var _a; return (_a = item.readyData) === null || _a === void 0 ? void 0 : _a.features; }))).filter(f => f.geometry.type === "Polygon" || f.geometry.type === "MultiPolygon");
+            const features = flatten(filterOutUndefined(catalogItems.map((item) => { var _a; return (_a = item.readyData) === null || _a === void 0 ? void 0 : _a.features; }))).filter((f) => f.geometry.type === "Polygon" || f.geometry.type === "MultiPolygon");
             runInAction(() => {
                 parameter.setValue(CommonStrata.user, features);
                 terria.mapInteractionModeStack.pop();

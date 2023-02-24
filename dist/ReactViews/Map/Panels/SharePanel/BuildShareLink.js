@@ -1,19 +1,38 @@
 "use strict";
-import defined from "terriajs-cesium/Source/Core/defined";
+import { uniq } from "lodash-es";
+import { runInAction, toJS } from "mobx";
 import Ellipsoid from "terriajs-cesium/Source/Core/Ellipsoid";
 import CesiumMath from "terriajs-cesium/Source/Core/Math";
 import URI from "urijs";
-import { CHART_DATA_CATEGORY_NAME } from "../../../../Core/addedForCharts";
-import combineFilters from "../../../../Core/combineFilters";
-// import CatalogMember from "../../../../Models/CatalogMember";
 import hashEntity from "../../../../Core/hashEntity";
+import isDefined from "../../../../Core/isDefined";
+import TerriaError from "../../../../Core/TerriaError";
+import ReferenceMixin from "../../../../ModelMixins/ReferenceMixin";
 import CommonStrata from "../../../../Models/Definition/CommonStrata";
-import saveStratumToJson from "../../../../Models/Definition/saveStratumToJson";
 import { BaseModel } from "../../../../Models/Definition/Model";
-import { runInAction } from "mobx";
-const CatalogMember = {}; // TODO
-const userPropWhiteList = ["hideExplorerPanel", "activeTabId"];
+import saveStratumToJson from "../../../../Models/Definition/saveStratumToJson";
+import GlobeOrMap from "../../../../Models/GlobeOrMap";
+import HasLocalData from "../../../../Models/HasLocalData";
+import getDereferencedIfExists from "../../../../Core/getDereferencedIfExists";
+/** User properties (generated from URL hash parameters) to add to share link URL in PRODUCTION environment.
+ * If in Dev, we add all user properties.
+ */
+const userPropsToShare = ["hideExplorerPanel", "activeTabId"];
 export const SHARE_VERSION = "8.0.0";
+/** Create base share link URL - with `hashParameters` applied on top.
+ * This will copy over some `userProperties` - see `userPropsToShare`
+ */
+function buildBaseShareUrl(terria, hashParams) {
+    const uri = new URI(document.baseURI).fragment("").search("");
+    if (terria.developmentEnv) {
+        uri.addSearch(toJS(terria.userProperties));
+    }
+    else {
+        userPropsToShare.forEach((key) => uri.addSearch({ [key]: terria.userProperties.get(key) }));
+    }
+    uri.addSearch(hashParams);
+    return uri.fragment(uri.query()).query("").toString();
+}
 /**
  * Builds a share link that reflects the state of the passed Terria instance.
  *
@@ -24,18 +43,30 @@ export const SHARE_VERSION = "8.0.0";
  * @returns {String} A URI that will rebuild the current state when viewed in a browser.
  */
 export function buildShareLink(terria, viewState, options = { includeStories: true }) {
-    const uri = new URI(window.location).fragment("").search({
+    return buildBaseShareUrl(terria, {
         start: JSON.stringify(getShareData(terria, viewState, options))
     });
-    userPropWhiteList.forEach(key => uri.addSearch({ key: terria.userProperties[key] }));
-    return uri
-        .fragment(uri.query())
-        .query("")
-        .toString(); // replace ? with #
+}
+/**
+ * Like {@link buildShareLink}, but shortens the result using {@link Terria#urlShortener}.
+ *
+ * @returns {Promise<String>} A promise that will return the shortened url when complete.
+ */
+export async function buildShortShareLink(terria, viewState, options = { includeStories: true }) {
+    var _a;
+    if (!isDefined(terria.shareDataService))
+        throw TerriaError.from("Could not generate share token - `shareDataService` is `undefined`");
+    const token = await ((_a = terria.shareDataService) === null || _a === void 0 ? void 0 : _a.getShareToken(getShareData(terria, viewState, options)));
+    if (typeof token === "string") {
+        return buildBaseShareUrl(terria, {
+            share: token
+        });
+    }
+    throw TerriaError.from("Could not generate share token");
 }
 /**
  * Returns just the JSON that defines the current view.
- * @param  {Object} terria The Terria object.
+ * @param  {Terria} terria The Terria object.
  * @param  {ViewState} [viewState] Current viewState.
  * @return {Object}
  */
@@ -43,23 +74,15 @@ export function getShareData(terria, viewState, options = { includeStories: true
     return runInAction(() => {
         const { includeStories } = options;
         const initSource = {};
-        const initSources = [initSource]; // includeStories ? terria.initSources.slice() : [];
+        const initSources = [initSource];
         addStratum(terria, CommonStrata.user, initSource);
         addWorkbench(terria, initSource);
         addTimelineItems(terria, initSource);
         addViewSettings(terria, viewState, initSource);
         addFeaturePicking(terria, initSource);
-        addBaseMaps(terria, CommonStrata.definition, initSource);
         if (includeStories) {
             // info that are not needed in scene share data
             addStories(terria, initSource);
-        }
-        const oldShare = false;
-        if (oldShare === true) {
-            addUserAddedCatalog(terria, initSources);
-            addSharedMembers(terria, initSources);
-            addLocationMarker(terria, initSources);
-            addTimeline(terria, initSources);
         }
         return {
             version: SHARE_VERSION,
@@ -67,19 +90,29 @@ export function getShareData(terria, viewState, options = { includeStories: true
         };
     });
 }
+/**
+ * Serialise all model data from a given stratum except feature highlight
+ * and serialise all ancestors of any models serialised
+ * @param {Terria} terria
+ * @param {CommonStrata} stratumId
+ * @param {Object} initSource
+ */
 function addStratum(terria, stratumId, initSource) {
     initSource.stratum = stratumId;
     initSource.models = {};
-    terria.modelValues.forEach((model, id) => {
+    terria.modelValues.forEach((model) => {
+        if (model.uniqueId === GlobeOrMap.featureHighlightID)
+            return;
         const force = terria.workbench.contains(model);
         addModelStratum(terria, model, stratumId, force, initSource);
     });
     // Go through knownContainerUniqueIds and make sure they exist in models
-    Object.keys(initSource.models).forEach(modelId => {
+    Object.keys(initSource.models).forEach((modelId) => {
         const model = terria.getModelById(BaseModel, modelId);
         if (model)
-            model.completeKnownContainerUniqueIds.forEach(containerId => {
-                if (!initSource.models[containerId]) {
+            model.completeKnownContainerUniqueIds.forEach((containerId) => {
+                var _a;
+                if (!((_a = initSource.models) === null || _a === void 0 ? void 0 : _a[containerId])) {
                     const containerModel = terria.getModelById(BaseModel, containerId);
                     if (containerModel)
                         addModelStratum(terria, containerModel, stratumId, true, initSource);
@@ -87,7 +120,6 @@ function addStratum(terria, stratumId, initSource) {
             });
     });
 }
-function addBaseMaps(terria, initSource) { }
 function addWorkbench(terria, initSource) {
     initSource.workbench = terria.workbench.itemIds.filter(isShareable(terria));
 }
@@ -95,20 +127,23 @@ function addTimelineItems(terria, initSources) {
     initSources.timeline = terria.timelineStack.itemIds.filter(isShareable(terria));
 }
 function addModelStratum(terria, model, stratumId, force, initSource) {
+    var _a;
     const models = initSource.models;
     const id = model.uniqueId;
-    if (models[id] !== undefined) {
+    if (!id || !models || (models === null || models === void 0 ? void 0 : models[id]) !== undefined) {
         return;
     }
     const stratum = model.strata.get(stratumId);
-    const dereferenced = model.target;
+    const dereferenced = ReferenceMixin.isMixedInto(model)
+        ? model.target
+        : undefined;
     const dereferencedStratum = dereferenced
         ? dereferenced.strata.get(stratumId)
         : undefined;
     if (!force && stratum === undefined && dereferencedStratum === undefined) {
         return;
     }
-    if (!isShareable(terria)(model.uniqueId)) {
+    if (!isShareable(terria)(id)) {
         return;
     }
     models[id] = stratum ? saveStratumToJson(model.traits, stratum) : {};
@@ -119,8 +154,9 @@ function addModelStratum(terria, model, stratumId, force, initSource) {
         model.knownContainerUniqueIds.length > 0) {
         models[id].knownContainerUniqueIds = model.knownContainerUniqueIds.slice();
     }
-    if (models[id].members) {
-        models[id].members = models[id].members.filter(isShareable(terria));
+    const members = toJS(models[id].members);
+    if (Array.isArray(members)) {
+        models[id].members = uniq((_a = models[id].members) === null || _a === void 0 ? void 0 : _a.filter((member) => typeof member === "string" ? isShareable(terria)(member) : false));
     }
     models[id].type = model.type;
 }
@@ -132,7 +168,13 @@ function addModelStratum(terria, model, stratumId, force, initSource) {
 export function isShareable(terria) {
     return function (modelId) {
         const model = terria.getModelById(BaseModel, modelId);
-        return defined(model) && !model.hasLocalData;
+        // If this is a Reference, then use the model.target, otherwise use the model
+        const dereferenced = typeof model === undefined
+            ? model
+            : getDereferencedIfExists(terria.getModelById(BaseModel, modelId));
+        return (model &&
+            ((HasLocalData.is(dereferenced) && !dereferenced.hasLocalData) ||
+                !HasLocalData.is(dereferenced)));
     };
 }
 /**
@@ -141,116 +183,19 @@ export function isShareable(terria) {
  * @return {Boolean}
  */
 export function canShorten(terria) {
-    return ((terria.urlShortener && terria.urlShortener.isUsable) ||
-        (terria.shareDataService && terria.shareDataService.isUsable));
-}
-/**
- * Like {@link buildShareLink}, but shortens the result using {@link Terria#urlShortener}.
- *
- * @returns {Promise<String>} A promise that will return the shortened url when complete.
- */
-export function buildShortShareLink(terria, viewState, options = { includeStories: true }) {
-    const urlFromToken = token => new URI(window.location).fragment("share=" + token).toString();
-    if (defined(terria.shareDataService)) {
-        return terria.shareDataService
-            .getShareToken(getShareData(terria, viewState, options))
-            .then(urlFromToken);
-    }
-    else {
-        return terria.urlShortener
-            .shorten(buildShareLink(terria, viewState, options))
-            .then(urlFromToken);
-    } // we assume that URL shortener is defined.
-}
-/**
- * Adds user-added catalog members to the passed initSources.
- * @private
- */
-export function addUserAddedCatalog(terria, initSources) {
-    const localDataFilterRemembering = rememberRejections(CatalogMember.itemFilters.noLocalData);
-    const userAddedCatalog = terria.catalog.serializeToJson({
-        itemFilter: combineFilters([
-            localDataFilterRemembering.filter,
-            CatalogMember.itemFilters.userSuppliedOnly,
-            function (item) {
-                // Chart group should be regenerated through lib/Models/Catalog.js's 'chartDataGroup' property once charting
-                // items are loaded again, otherwise it overwrites certain properties through including unnecessarily
-                // serialised items
-                return !(item.name === CHART_DATA_CATEGORY_NAME);
-            },
-            function (item) {
-                // If the parent has a URL then this item will just load from that, so don't bother serializing it.
-                // Properties that change when an item is enabled like opacity will be included in the shared members
-                // anyway.
-                return !item.parent || !item.parent.url;
-            }
-        ])
-    });
-    // Add an init source with user-added catalog members.
-    if (userAddedCatalog.length > 0) {
-        initSources.push({
-            catalog: userAddedCatalog
-        });
-    }
-    return localDataFilterRemembering.rejections;
-}
-/**
- * Adds existing catalog members that the user has enabled or opened to the passed initSources object.
- * @private
- */
-function addSharedMembers(terria, initSources) {
-    const catalogForSharing = flattenCatalog(terria.catalog.serializeToJson({
-        itemFilter: combineFilters([
-            function (item) {
-                if (CatalogMember.itemFilters.noLocalData(item)) {
-                    return true;
-                }
-                else if (CatalogMember.itemFilters.isCsvForCharting(item)) {
-                    return true;
-                }
-                return false;
-            }
-        ]),
-        propertyFilter: combineFilters([
-            CatalogMember.propertyFilters.sharedOnly,
-            function (property, item) {
-                return property !== "name" || item.type === "csv";
-            }
-        ])
-    }))
-        .filter(function (item) {
-        return item.isEnabled || item.isOpen;
-    })
-        .reduce(function (soFar, item) {
-        soFar[item.id] = item;
-        item.id = undefined;
-        return soFar;
-    }, {});
-    // Eliminate open groups without all ancestors open
-    Object.keys(catalogForSharing).forEach(key => {
-        const item = catalogForSharing[key];
-        const isGroupWithClosedParent = item.isOpen &&
-            item.parents.some(parentId => !catalogForSharing[parentId]);
-        if (isGroupWithClosedParent) {
-            catalogForSharing[key] = undefined;
-        }
-    });
-    if (Object.keys(catalogForSharing).length > 0) {
-        initSources.push({
-            sharedCatalogMembers: catalogForSharing
-        });
-    }
+    return terria.shareDataService && terria.shareDataService.isUsable;
 }
 /**
  * Adds the details of the current view to the init sources.
  * @private
  */
-function addViewSettings(terria, viewState, initSource) {
+function addViewSettings(terria, viewState, initSource = {}) {
+    var _a;
     const viewer = terria.mainViewer;
-    const time = {
-        dayNumber: terria.timelineClock.currentTime.dayNumber,
-        secondsOfDay: terria.timelineClock.currentTime.secondsOfDay
-    };
+    // const time = {
+    //   dayNumber: terria.timelineClock.currentTime.dayNumber,
+    //   secondsOfDay: terria.timelineClock.currentTime.secondsOfDay
+    // };
     let viewerMode;
     if (terria.mainViewer.viewerMode === "cesium") {
         if (terria.mainViewer.viewerOptions.useTerrain) {
@@ -267,22 +212,22 @@ function addViewSettings(terria, viewState, initSource) {
         .getCurrentCameraView()
         .toJson();
     initSource.homeCamera = terria.mainViewer.homeCamera.toJson();
-    initSource.baseMaps = {};
-    if (viewer.baseMap !== undefined) {
-        initSource.baseMaps.defaultBaseMapId = viewer.baseMap.uniqueId;
-    }
-    if (terria.previewBaseMapId !== undefined) {
-        initSource.baseMaps.previewBaseMapId = terria.previewBaseMapId;
-    }
     initSource.viewerMode = viewerMode;
-    initSource.currentTime = time;
     initSource.showSplitter = terria.showSplitter;
     initSource.splitPosition = terria.splitPosition;
-    if (defined(viewState)) {
+    initSource.settings = {
+        baseMaximumScreenSpaceError: terria.baseMaximumScreenSpaceError,
+        useNativeResolution: terria.useNativeResolution,
+        alwaysShowTimeline: terria.timelineStack.alwaysShowingTimeline,
+        baseMapId: (_a = viewer.baseMap) === null || _a === void 0 ? void 0 : _a.uniqueId,
+        terrainSplitDirection: terria.terrainSplitDirection,
+        depthTestAgainstTerrainEnabled: terria.depthTestAgainstTerrainEnabled
+    };
+    if (isDefined(viewState)) {
         const itemIdToUse = viewState.viewingUserData()
-            ? defined(viewState.userDataPreviewedItem) &&
+            ? isDefined(viewState.userDataPreviewedItem) &&
                 viewState.userDataPreviewedItem.uniqueId
-            : defined(viewState.previewedItem) && viewState.previewedItem.uniqueId;
+            : isDefined(viewState.previewedItem) && viewState.previewedItem.uniqueId;
         // don't persist the not-visible-to-user previewed id in the case of sharing from outside the catalog
         if (viewState.explorerPanelIsVisible && itemIdToUse) {
             initSource.previewedItemId = itemIdToUse;
@@ -294,8 +239,9 @@ function addViewSettings(terria, viewState, initSource) {
  * @private
  */
 function addFeaturePicking(terria, initSource) {
-    if (defined(terria.pickedFeatures) &&
-        terria.pickedFeatures.features.length > 0) {
+    if (isDefined(terria.pickedFeatures) &&
+        terria.pickedFeatures.features.length > 0 &&
+        terria.pickedFeatures.pickPosition) {
         const positionInRadians = Ellipsoid.WGS84.cartesianToCartographic(terria.pickedFeatures.pickPosition);
         const pickedFeatures = {
             providerCoords: terria.pickedFeatures.providerCoords,
@@ -305,94 +251,29 @@ function addFeaturePicking(terria, initSource) {
                 height: positionInRadians.height
             }
         };
-        if (defined(terria.selectedFeature)) {
+        if (isDefined(terria.selectedFeature)) {
             // Sometimes features have stable ids and sometimes they're randomly generated every time, so include both
             // id and name as a fallback.
             pickedFeatures.current = {
                 name: terria.selectedFeature.name,
-                hash: hashEntity(terria.selectedFeature, terria.clock)
+                hash: hashEntity(terria.selectedFeature, terria)
             };
         }
         // Remember the ids of vector features only, the raster ones we can reconstruct from providerCoords.
         pickedFeatures.entities = terria.pickedFeatures.features
-            .filter(feature => !defined(feature.imageryLayer))
-            .map(entity => {
+            .filter((feature) => { var _a; return !isDefined((_a = feature.imageryLayer) === null || _a === void 0 ? void 0 : _a.imageryProvider); })
+            .map((entity) => {
             return {
                 name: entity.name,
-                hash: hashEntity(entity, terria.clock)
+                hash: hashEntity(entity, terria)
             };
         });
         initSource.pickedFeatures = pickedFeatures;
     }
 }
-/**
- * Add details of the location marker if it is set.
- * @private
- */
-function addLocationMarker(terria, initSources) {
-    if (defined(terria.locationMarker)) {
-        const position = terria.locationMarker.entities.values[0].position.getValue();
-        const positionDegrees = Ellipsoid.WGS84.cartesianToCartographic(position);
-        initSources.push({
-            locationMarker: {
-                name: terria.locationMarker.entities.values[0].name,
-                latitude: CesiumMath.toDegrees(positionDegrees.latitude),
-                longitude: CesiumMath.toDegrees(positionDegrees.longitude)
-            }
-        });
-    }
-}
-function addTimeline(terria, initSources) {
-    if (terria.timelineStack.topLayer) {
-        initSources.push({
-            timeline: {
-                shouldAnimate: terria.clock.shouldAnimate,
-                multiplier: terria.clock.multiplier,
-                currentTime: {
-                    dayNumber: terria.clock.currentTime.dayNumber,
-                    secondsOfDay: terria.clock.currentTime.secondsOfDay
-                }
-            }
-        });
-    }
-}
 function addStories(terria, initSource) {
-    if (defined(terria.stories)) {
+    if (isDefined(terria.stories)) {
         initSource.stories = terria.stories.slice();
     }
-}
-/**
- * Wraps around a filter function and records all items that are excluded by it. Does not modify the function passed in.
- *
- * @param filterFn The fn to wrap around
- * @returns {{filter: filter, rejections: Array}} The resulting filter function that remembers rejections, and an array
- *          array of the rejected items. As the filter function is used, the rejections array with be populated.
- */
-function rememberRejections(filterFn) {
-    const rejections = [];
-    return {
-        filter: function (item) {
-            const allowed = filterFn(item);
-            if (!allowed) {
-                rejections.push(item);
-            }
-            return allowed;
-        },
-        rejections: rejections
-    };
-}
-/**
- * Takes the hierarchy of serialized catalog members returned by {@link serializeToJson} and flattens it into an Array.
- * @returns {Array}
- */
-function flattenCatalog(items) {
-    return items.reduce(function (soFar, item) {
-        soFar.push(item);
-        if (item.items) {
-            soFar = soFar.concat(flattenCatalog(item.items));
-            item.items = undefined;
-        }
-        return soFar;
-    }, []);
 }
 //# sourceMappingURL=BuildShareLink.js.map

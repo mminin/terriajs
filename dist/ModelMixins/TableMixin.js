@@ -12,26 +12,32 @@ import CustomDataSource from "terriajs-cesium/Source/DataSources/CustomDataSourc
 import DataSource from "terriajs-cesium/Source/DataSources/DataSource";
 import getChartColorForId from "../Charts/getChartColorForId";
 import filterOutUndefined from "../Core/filterOutUndefined";
+import flatten from "../Core/flatten";
 import isDefined from "../Core/isDefined";
 import { isLatLonHeight } from "../Core/LatLonHeight";
-import makeRealPromise from "../Core/makeRealPromise";
 import TerriaError from "../Core/TerriaError";
-import ConstantColorMap from "../Map/ConstantColorMap";
-import RegionProviderList from "../Map/RegionProviderList";
+import ConstantColorMap from "../Map/ColorMap/ConstantColorMap";
+import RegionProviderList from "../Map/Region/RegionProviderList";
 import CommonStrata from "../Models/Definition/CommonStrata";
 import updateModelFromJson from "../Models/Definition/updateModelFromJson";
+import * as SelectableDimensionWorkflow from "../Models/Workflows/SelectableDimensionWorkflow";
+import TableStylingWorkflow from "../Models/Workflows/TableStylingWorkflow";
+import Icon from "../Styled/Icon";
 import createLongitudeLatitudeFeaturePerId from "../Table/createLongitudeLatitudeFeaturePerId";
 import createLongitudeLatitudeFeaturePerRow from "../Table/createLongitudeLatitudeFeaturePerRow";
 import createRegionMappedImageryProvider from "../Table/createRegionMappedImageryProvider";
 import TableColumn from "../Table/TableColumn";
 import TableColumnType from "../Table/TableColumnType";
+import { tableFeatureInfoContext } from "../Table/tableFeatureInfoContext";
+import TableFeatureInfoStratum from "../Table/TableFeatureInfoStratum";
+import { TableAutomaticLegendStratum } from "../Table/TableLegendStratum";
 import TableStyle from "../Table/TableStyle";
 import CatalogMemberMixin from "./CatalogMemberMixin";
-import ChartableMixin, { calculateDomain } from "./ChartableMixin";
+import { calculateDomain } from "./ChartableMixin";
 import DiscretelyTimeVaryingMixin from "./DiscretelyTimeVaryingMixin";
 import ExportableMixin from "./ExportableMixin";
 function TableMixin(Base) {
-    class TableMixin extends ExportableMixin(ChartableMixin(DiscretelyTimeVaryingMixin(CatalogMemberMixin(Base)))) {
+    class TableMixin extends ExportableMixin(DiscretelyTimeVaryingMixin(CatalogMemberMixin(Base))) {
         constructor(...args) {
             super(...args);
             this.createLongitudeLatitudeDataSource = createTransformer((style) => {
@@ -47,8 +53,8 @@ function TableMixin(Base) {
                 else {
                     features = createLongitudeLatitudeFeaturePerRow(style);
                 }
-                // _catalogItem property is needed for some feature picking functions (eg FeatureInfoMixin)
-                features.forEach(f => {
+                // _catalogItem property is needed for some feature picking functions (eg `featureInfoTemplate`)
+                features.forEach((f) => {
                     f._catalogItem = this;
                     dataSource.entities.add(f);
                 });
@@ -63,7 +69,19 @@ function TableMixin(Base) {
             this.getTableStyle = createTransformer((index) => {
                 return new TableStyle(this, index);
             });
+            // Create default TableStyle and set TableAutomaticLegendStratum
             this.defaultTableStyle = new TableStyle(this);
+            if (this.strata.get(TableAutomaticLegendStratum.stratumName) === undefined) {
+                runInAction(() => {
+                    this.strata.set(TableAutomaticLegendStratum.stratumName, TableAutomaticLegendStratum.load(this));
+                });
+            }
+            // Create TableFeatureInfoStratum
+            if (this.strata.get(TableFeatureInfoStratum.stratumName) === undefined) {
+                runInAction(() => {
+                    this.strata.set(TableFeatureInfoStratum.stratumName, TableFeatureInfoStratum.load(this));
+                });
+            }
         }
         get hasTableMixin() {
             return true;
@@ -81,7 +99,7 @@ function TableMixin(Base) {
                 const rowsToRemove = new Set();
                 const seenRows = new Set();
                 for (let i = 0; i < dataColumnMajor[0].length; i++) {
-                    const row = dataColumnMajor.map(col => col[i]).join();
+                    const row = dataColumnMajor.map((col) => col[i]).join();
                     if (seenRows.has(row)) {
                         // Mark row for deletion
                         rowsToRemove.add(i);
@@ -91,7 +109,7 @@ function TableMixin(Base) {
                     }
                 }
                 if (rowsToRemove.size > 0) {
-                    return dataColumnMajor.map(col => col.filter((cell, idx) => !rowsToRemove.has(idx)));
+                    return dataColumnMajor.map((col) => col.filter((cell, idx) => !rowsToRemove.has(idx)));
                 }
             }
             return dataColumnMajor;
@@ -119,32 +137,6 @@ function TableMixin(Base) {
             return this.styles.map((_, i) => this.getTableStyle(i));
         }
         /**
-         * Gets the {@link TableStyleTraits#id} of the currently-active style.
-         * Note that this is a trait so there is no guarantee that a style
-         * with this ID actually exists. If no active style is explicitly
-         * specified, the ID of the first style with a scalar color column is used.
-         * If there is no such style the id of the first style of the {@link #styles}
-         * is used.
-         */
-        get activeStyle() {
-            const value = super.activeStyle;
-            if (value !== undefined) {
-                return value;
-            }
-            else if (this.styles && this.styles.length > 0) {
-                // Find and return a style with scalar color column if it exists,
-                // otherwise just return the first available style id.
-                const styleWithScalarColorColumn = this.styles.find(s => {
-                    var _a;
-                    const colName = s.color.colorColumn;
-                    return (colName &&
-                        ((_a = this.findColumnByName(colName)) === null || _a === void 0 ? void 0 : _a.type) === TableColumnType.scalar);
-                });
-                return (styleWithScalarColorColumn === null || styleWithScalarColorColumn === void 0 ? void 0 : styleWithScalarColorColumn.id) || this.styles[0].id;
-            }
-            return undefined;
-        }
-        /**
          * Gets the active {@link TableStyle}, which is the item from {@link #tableStyles}
          * with an ID that matches {@link #activeStyle}, if any.
          */
@@ -153,7 +145,7 @@ function TableMixin(Base) {
             if (activeStyle === undefined) {
                 return this.defaultTableStyle;
             }
-            let ret = this.tableStyles.find(style => style.id === this.activeStyle);
+            let ret = this.tableStyles.find((style) => style.id === this.activeStyle);
             if (ret === undefined) {
                 return this.defaultTableStyle;
             }
@@ -164,9 +156,7 @@ function TableMixin(Base) {
         }
         get yColumns() {
             const lines = this.activeTableStyle.chartTraits.lines;
-            return filterOutUndefined(lines.map(line => line.yAxisColumn === undefined
-                ? undefined
-                : this.findColumnByName(line.yAxisColumn)));
+            return filterOutUndefined(lines.map((line) => this.findColumnByName(line.yAxisColumn)));
         }
         get _canExportData() {
             return isDefined(this.dataColumnMajor);
@@ -175,7 +165,7 @@ function TableMixin(Base) {
             if (isDefined(this.dataColumnMajor)) {
                 // I am assuming all columns have the same length -> so use first column
                 let csvString = this.dataColumnMajor[0]
-                    .map((row, rowIndex) => this.dataColumnMajor.map(col => col[rowIndex]).join(","))
+                    .map((row, rowIndex) => this.dataColumnMajor.map((col) => col[rowIndex]).join(","))
                     .join("\n");
                 // Make sure we have .csv file extension
                 let name = this.name || this.uniqueId || "data.csv";
@@ -192,16 +182,18 @@ function TableMixin(Base) {
                 message: "No data available to download."
             });
         }
-        get disableSplitter() {
-            return !isDefined(this.activeTableStyle.regionColumn);
-        }
         get disableZoomTo() {
             // Disable zoom if only showing imagery parts  (eg region mapping) and no rectangle is defined
-            if (!this.mapItems.find(m => m instanceof DataSource || m instanceof CustomDataSource) &&
+            if (!this.mapItems.find((m) => m instanceof DataSource || m instanceof CustomDataSource) &&
                 !isDefined(this.cesiumRectangle)) {
                 return true;
             }
             return super.disableZoomTo;
+        }
+        /** Is showing regions (instead of points) */
+        get showingRegions() {
+            return (this.regionMappedImageryParts &&
+                this.mapItems[0] === this.regionMappedImageryParts);
         }
         /**
          * Gets the items to show on the map.
@@ -233,13 +225,6 @@ function TableMixin(Base) {
                 return [this.regionMappedImageryParts];
             return [];
         }
-        get shortReport() {
-            return this.mapItems.length === 0 &&
-                this.chartItems.length === 0 &&
-                !this.isLoading
-                ? i18next.t("models.tableData.noData")
-                : super.shortReport;
-        }
         // regionMappedImageryParts and regionMappedImageryProvider are split up like this so that we aren't re-creating the imageryProvider if things like `opacity` and `show` change
         get regionMappedImageryParts() {
             if (!this.regionMappedImageryProvider)
@@ -248,9 +233,7 @@ function TableMixin(Base) {
                 imageryProvider: this.regionMappedImageryProvider,
                 alpha: this.opacity,
                 show: this.show,
-                clippingRectangle: this.clipToRectangle
-                    ? this.cesiumRectangle
-                    : undefined
+                clippingRectangle: this.cesiumRectangle
             };
         }
         get regionMappedImageryProvider() {
@@ -262,14 +245,14 @@ function TableMixin(Base) {
         /**
          * Try to resolve `regionType` to a region provider (this will also match against region provider aliases)
          */
-        matchRegionType(regionType) {
-            var _a;
+        matchRegionProvider(regionType) {
+            var _a, _b;
             if (!isDefined(regionType))
                 return;
-            const matchingRegionProviders = (_a = this.regionProviderList) === null || _a === void 0 ? void 0 : _a.getRegionDetails([regionType], undefined, undefined);
-            if (matchingRegionProviders && matchingRegionProviders.length > 0) {
-                return matchingRegionProviders[0].regionProvider.regionType;
-            }
+            const matchingRegionProviders = (_a = this.regionProviderLists) === null || _a === void 0 ? void 0 : _a.map((regionProviderList) => regionProviderList === null || regionProviderList === void 0 ? void 0 : regionProviderList.getRegionDetails([regionType], undefined, undefined));
+            // Return first regionProviderList with it's first match
+            // Note: a regionProviderList may have multiple matches - we could improve which one it selects
+            return (_b = matchingRegionProviders === null || matchingRegionProviders === void 0 ? void 0 : matchingRegionProviders.find((match) => match && match.length > 0)) === null || _b === void 0 ? void 0 : _b[0].regionProvider;
         }
         /**
          * Gets the items to show on a chart.
@@ -292,11 +275,9 @@ function TableMixin(Base) {
                 scale: xColumn.type === TableColumnType.time ? "time" : "linear",
                 units: xColumn.units
             };
-            return filterOutUndefined(lines.map(line => {
+            return filterOutUndefined(lines.map((line) => {
                 var _a, _b, _c;
-                const yColumn = line.yAxisColumn
-                    ? this.findColumnByName(line.yAxisColumn)
-                    : undefined;
+                const yColumn = this.findColumnByName(line.yAxisColumn);
                 if (yColumn === undefined) {
                     return undefined;
                 }
@@ -353,12 +334,27 @@ function TableMixin(Base) {
                 ...this.tableChartItems
             ]);
         }
+        get viewingControls() {
+            return filterOutUndefined([
+                ...super.viewingControls,
+                {
+                    id: TableStylingWorkflow.type,
+                    name: "Edit Style",
+                    onClick: action((viewState) => SelectableDimensionWorkflow.runWorkflow(viewState, new TableStylingWorkflow(this))),
+                    icon: { glyph: Icon.GLYPHS.layers }
+                }
+            ]);
+        }
+        get featureInfoContext() {
+            return tableFeatureInfoContext(this);
+        }
         get selectableDimensions() {
             return filterOutUndefined([
                 this.timeDisableDimension,
                 ...super.selectableDimensions,
-                this.regionColumnDimensions,
-                this.regionProviderDimensions,
+                this.enableManualRegionMapping
+                    ? this.regionMappingDimensions
+                    : undefined,
                 this.styleDimensions,
                 this.outlierFilterDimension
             ]);
@@ -371,11 +367,12 @@ function TableMixin(Base) {
                 return;
             }
             return {
+                type: "select",
                 id: "activeStyle",
                 name: "Display Variable",
                 options: this.tableStyles
-                    .filter(style => !style.hidden || this.activeStyle === style.id)
-                    .map(style => {
+                    .filter((style) => !style.hidden || this.activeStyle === style.id)
+                    .map((style) => {
                     return {
                         id: style.id,
                         name: style.title
@@ -396,26 +393,26 @@ function TableMixin(Base) {
          * {@link TableTraits#enableManualRegionMapping} must be enabled.
          */
         get regionProviderDimensions() {
-            var _a, _b, _c;
-            if (!this.enableManualRegionMapping ||
-                !Array.isArray((_a = this.regionProviderList) === null || _a === void 0 ? void 0 : _a.regionProviders) ||
+            var _a, _b, _c, _d;
+            const allRegionProviders = flatten((_b = (_a = this.regionProviderLists) === null || _a === void 0 ? void 0 : _a.map((list) => list.regionProviders)) !== null && _b !== void 0 ? _b : []);
+            if (allRegionProviders.length === 0 ||
                 !isDefined(this.activeTableStyle.regionColumn)) {
                 return;
             }
             return {
                 id: "regionMapping",
                 name: "Region Mapping",
-                options: this.regionProviderList.regionProviders.map(regionProvider => {
+                options: allRegionProviders.map((regionProvider) => {
                     return {
-                        name: regionProvider.regionType,
+                        name: regionProvider.description,
                         id: regionProvider.regionType
                     };
                 }),
                 allowUndefined: true,
-                selectedId: (_c = (_b = this.activeTableStyle.regionColumn) === null || _b === void 0 ? void 0 : _b.regionType) === null || _c === void 0 ? void 0 : _c.regionType,
+                selectedId: (_d = (_c = this.activeTableStyle.regionColumn) === null || _c === void 0 ? void 0 : _c.regionType) === null || _d === void 0 ? void 0 : _d.regionType,
                 setDimensionValue: (stratumId, regionType) => {
                     var _a;
-                    let columnTraits = (_a = this.columns) === null || _a === void 0 ? void 0 : _a.find(column => { var _a; return column.name === ((_a = this.activeTableStyle.regionColumn) === null || _a === void 0 ? void 0 : _a.name); });
+                    let columnTraits = (_a = this.columns) === null || _a === void 0 ? void 0 : _a.find((column) => { var _a; return column.name === ((_a = this.activeTableStyle.regionColumn) === null || _a === void 0 ? void 0 : _a.name); });
                     if (!isDefined(columnTraits)) {
                         columnTraits = this.addObject(stratumId, "columns", this.activeTableStyle.regionColumn.name);
                         columnTraits.setTrait(stratumId, "name", this.activeTableStyle.regionColumn.name);
@@ -429,24 +426,33 @@ function TableMixin(Base) {
          * {@link TableTraits#enableManualRegionMapping} must be enabled.
          */
         get regionColumnDimensions() {
-            var _a, _b;
-            if (!this.enableManualRegionMapping ||
-                !Array.isArray((_a = this.regionProviderList) === null || _a === void 0 ? void 0 : _a.regionProviders)) {
+            var _a;
+            if (!isDefined(this.regionProviderLists)) {
                 return;
             }
             return {
                 id: "regionColumn",
                 name: "Region Column",
-                options: this.tableColumns.map(col => {
+                options: this.tableColumns.map((col) => {
                     return {
                         name: col.name,
                         id: col.name
                     };
                 }),
-                selectedId: (_b = this.activeTableStyle.regionColumn) === null || _b === void 0 ? void 0 : _b.name,
+                selectedId: (_a = this.activeTableStyle.regionColumn) === null || _a === void 0 ? void 0 : _a.name,
                 setDimensionValue: (stratumId, regionCol) => {
                     this.defaultStyle.setTrait(stratumId, "regionColumn", regionCol);
                 }
+            };
+        }
+        get regionMappingDimensions() {
+            return {
+                id: "Manual Region Mapping",
+                type: "group",
+                selectableDimensions: filterOutUndefined([
+                    this.regionColumnDimensions,
+                    this.regionProviderDimensions
+                ])
             };
         }
         /**
@@ -472,7 +478,7 @@ function TableMixin(Base) {
                         defaultStyle: {
                             color: { zScoreFilterEnabled: value === "true" }
                         }
-                    });
+                    }).logError("Failed to update zScoreFilterEnabled");
                 },
                 placement: "belowLegend",
                 type: "checkbox"
@@ -524,33 +530,38 @@ function TableMixin(Base) {
             if (dates === undefined) {
                 return;
             }
-            const times = filterOutUndefined(dates.map(d => d ? { time: d.toISOString(), tag: undefined } : undefined)).reduce(
             // is it correct for discrete times to remove duplicates?
             // see discussion on https://github.com/TerriaJS/terriajs/pull/4577
             // duplicates will mess up the indexing problem as our `<DateTimePicker />`
             // will eliminate duplicates on the UI front, so given the datepicker
             // expects uniques, return uniques here
-            (acc, time) => !acc.some(accTime => accTime.time === time.time && accTime.tag === time.tag)
-                ? [...acc, time]
-                : acc, []);
-            return times;
+            const times = new Set();
+            for (let i = 0; i < dates.length; i++) {
+                const d = dates[i];
+                if (d) {
+                    times.add(d.toISOString());
+                }
+            }
+            return Array.from(times).map((time) => ({ time, tag: undefined }));
         }
-        get legends() {
-            var _a;
-            // Only return legends if we have rows in dataColumnMajor and mapItems to show
-            if (((_a = this.dataColumnMajor) === null || _a === void 0 ? void 0 : _a.length) !== 0 && this.mapItems.length > 0) {
-                const colorLegend = this.activeTableStyle.colorTraits.legend;
-                return filterOutUndefined([colorLegend]);
-            }
-            else {
-                return [];
-            }
+        /** This is a temporary button which shows in the Legend in the Workbench, if custom styling has been applied. */
+        get legendButton() {
+            return this.activeTableStyle.isCustom
+                ? {
+                    title: "Custom",
+                    onClick: action(() => {
+                        SelectableDimensionWorkflow.runWorkflow(this.terria, new TableStylingWorkflow(this));
+                    })
+                }
+                : undefined;
         }
         findFirstColumnByType(type) {
-            return this.tableColumns.find(column => column.type === type);
+            return this.tableColumns.find((column) => column.type === type);
         }
         findColumnByName(name) {
-            return this.tableColumns.find(column => column.name === name);
+            return isDefined(name)
+                ? this.tableColumns.find((column) => column.name === name)
+                : undefined;
         }
         async forceLoadMapItems() {
             var _a;
@@ -578,11 +589,21 @@ function TableMixin(Base) {
                 throw e;
             }
         }
+        /** Load all region provider lists
+         * These are loaded from terria.configParameters.regionMappingDefinitionsUrl
+         */
         async loadRegionProviderList() {
-            if (isDefined(this.regionProviderList))
+            if (isDefined(this.regionProviderLists))
                 return;
-            const regionProviderList = await makeRealPromise(RegionProviderList.fromUrl(this.terria.configParameters.regionMappingDefinitionsUrl, this.terria.corsProxy));
-            runInAction(() => (this.regionProviderList = regionProviderList));
+            // regionMappingDefinitionsUrl is deprecated - but we use it instead of regionMappingDefinitionsUrls if defined
+            const urls = isDefined(this.terria.configParameters.regionMappingDefinitionsUrl)
+                ? [this.terria.configParameters.regionMappingDefinitionsUrl]
+                : this.terria.configParameters.regionMappingDefinitionsUrls;
+            // Load all region in parallel (but preserve order)
+            const regionProviderLists = await Promise.all(urls.map(async (url, i) => 
+            // Note can be called many times - all promises/results are cached in RegionProviderList.metaList
+            await RegionProviderList.fromUrl(url, this.terria.corsProxy)));
+            runInAction(() => (this.regionProviderLists = regionProviderLists));
         }
         /*
          * Appends new table data in column major format to this table.
@@ -608,7 +629,7 @@ function TableMixin(Base) {
     ], TableMixin.prototype, "_dataColumnMajor", void 0);
     __decorate([
         observable
-    ], TableMixin.prototype, "regionProviderList", void 0);
+    ], TableMixin.prototype, "regionProviderLists", void 0);
     __decorate([
         computed
     ], TableMixin.prototype, "dataColumnMajor", null);
@@ -618,9 +639,6 @@ function TableMixin(Base) {
     __decorate([
         computed
     ], TableMixin.prototype, "tableStyles", null);
-    __decorate([
-        computed
-    ], TableMixin.prototype, "activeStyle", null);
     __decorate([
         computed
     ], TableMixin.prototype, "activeTableStyle", null);
@@ -635,16 +653,13 @@ function TableMixin(Base) {
     ], TableMixin.prototype, "_canExportData", null);
     __decorate([
         computed
-    ], TableMixin.prototype, "disableSplitter", null);
-    __decorate([
-        computed
     ], TableMixin.prototype, "disableZoomTo", null);
     __decorate([
         computed
-    ], TableMixin.prototype, "mapItems", null);
+    ], TableMixin.prototype, "showingRegions", null);
     __decorate([
         computed
-    ], TableMixin.prototype, "shortReport", null);
+    ], TableMixin.prototype, "mapItems", null);
     __decorate([
         computed
     ], TableMixin.prototype, "regionMappedImageryParts", null);
@@ -659,6 +674,12 @@ function TableMixin(Base) {
     ], TableMixin.prototype, "chartItems", null);
     __decorate([
         computed
+    ], TableMixin.prototype, "viewingControls", null);
+    __decorate([
+        computed
+    ], TableMixin.prototype, "featureInfoContext", null);
+    __decorate([
+        computed
     ], TableMixin.prototype, "selectableDimensions", null);
     __decorate([
         computed
@@ -669,6 +690,9 @@ function TableMixin(Base) {
     __decorate([
         computed
     ], TableMixin.prototype, "regionColumnDimensions", null);
+    __decorate([
+        computed
+    ], TableMixin.prototype, "regionMappingDimensions", null);
     __decorate([
         computed
     ], TableMixin.prototype, "outlierFilterDimension", null);
@@ -686,7 +710,7 @@ function TableMixin(Base) {
     ], TableMixin.prototype, "discreteTimes", null);
     __decorate([
         computed
-    ], TableMixin.prototype, "legends", null);
+    ], TableMixin.prototype, "legendButton", null);
     __decorate([
         action
     ], TableMixin.prototype, "append", null);

@@ -19,7 +19,7 @@ export default class Catalog {
         this._disposeCreateUserAddedGroup = autorun(() => {
             // Make sure the catalog has a user added data group even if its
             // group or group members are reset.
-            if (!this.group.memberModels.find(m => m.uniqueId === USER_ADDED_CATEGORY_ID)) {
+            if (!this.group.memberModels.find((m) => m.uniqueId === USER_ADDED_CATEGORY_ID)) {
                 let userAddedDataGroup = this.terria.getModelById(BaseModel, USER_ADDED_CATEGORY_ID);
                 if (!isDefined(userAddedDataGroup)) {
                     userAddedDataGroup = new CatalogGroup(USER_ADDED_CATEGORY_ID, this.terria);
@@ -37,7 +37,7 @@ export default class Catalog {
         this._disposeCreateUserAddedGroup();
     }
     get userAddedDataGroup() {
-        const group = this.group.memberModels.find(m => m.uniqueId === USER_ADDED_CATEGORY_ID);
+        const group = this.group.memberModels.find((m) => m.uniqueId === USER_ADDED_CATEGORY_ID);
         return group;
     }
 }

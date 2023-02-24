@@ -1,8 +1,8 @@
 import { maxBy, minBy } from "lodash-es";
 import MappableMixin from "./MappableMixin";
 export function calculateDomain(points) {
-    const xs = points.map(p => p.x);
-    const ys = points.map(p => p.y);
+    const xs = points.map((p) => p.x);
+    const ys = points.map((p) => p.y);
     const asNum = (x) => (x instanceof Date ? x.getTime() : x);
     return {
         x: [minBy(xs, asNum) || 0, maxBy(xs, asNum) || 0],

@@ -10,19 +10,23 @@ import React from "react";
 import { withTranslation } from "react-i18next";
 import styled, { withTheme } from "styled-components";
 import { Category, HelpAction } from "../../../../Core/AnalyticEvents/analyticEvents";
+import { isJsonString } from "../../../../Core/Json";
 import Icon, { StyledIcon } from "../../../../Styled/Icon";
 import Text from "../../../../Styled/Text";
-import { useTranslationIfExists } from "./../../../../Language/languageHelpers";
+import { applyTranslationIfExists } from "./../../../../Language/languageHelpers";
 import HelpVideoPanel from "./HelpVideoPanel";
 let HelpPanelItem = class HelpPanelItem extends React.Component {
     constructor(props) {
         super(props);
     }
     render() {
+        const { i18n } = this.props;
         const itemSelected = this.props.viewState.selectedHelpMenuItem === this.props.content.itemName;
         // `content.icon` is user defined and can possibly force the UI to lookup a
         // nonexistant icon.
-        const title = useTranslationIfExists(this.props.content.title);
+        const title = isJsonString(this.props.content.title)
+            ? applyTranslationIfExists(this.props.content.title, i18n)
+            : "";
         const paneMode = this.props.content.paneMode;
         const opensInPanel = paneMode !== "externalLink";
         const iconGlyph = opensInPanel
@@ -41,7 +45,11 @@ let HelpPanelItem = class HelpPanelItem extends React.Component {
                 } },
                 React.createElement(MenuItemText, null, title),
                 React.createElement(StyledIcon, { styledWidth: "12px", fillColor: this.props.theme.textLightDimmed, glyph: iconGlyph })),
-            opensInPanel && (React.createElement(HelpVideoPanel, { terria: this.props.terria, viewState: this.props.viewState, content: this.props.content, itemString: this.props.content.itemName, paneMode: this.props.content.paneMode, markdownContent: this.props.content.markdownText, videoUrl: useTranslationIfExists(this.props.content.videoUrl), placeholderImage: useTranslationIfExists(this.props.content.placeholderImage) }))));
+            opensInPanel && (React.createElement(HelpVideoPanel, { terria: this.props.terria, viewState: this.props.viewState, content: this.props.content, itemString: this.props.content.itemName, paneMode: this.props.content.paneMode, markdownContent: this.props.content.markdownText, videoUrl: isJsonString(this.props.content.videoUrl)
+                    ? applyTranslationIfExists(this.props.content.videoUrl, i18n)
+                    : undefined, placeholderImage: isJsonString(this.props.content.placeholderImage)
+                    ? applyTranslationIfExists(this.props.content.placeholderImage, i18n)
+                    : undefined, videoCoverImageOpacity: this.props.content.videoCoverImageOpacity }))));
     }
 };
 HelpPanelItem.displayName = "HelpPanelItem";
@@ -50,7 +58,8 @@ HelpPanelItem.propTypes = {
     viewState: PropTypes.object.isRequired,
     content: PropTypes.object.isRequired,
     theme: PropTypes.object,
-    t: PropTypes.func.isRequired
+    t: PropTypes.func.isRequired,
+    i18n: PropTypes.object.isRequired
 };
 HelpPanelItem = __decorate([
     observer
@@ -67,15 +76,15 @@ const MenuButton = styled.button `
   background: transparent;
 
   &:hover {
-    color: ${p => p.theme.textBlack};
+    color: ${(p) => p.theme.textBlack};
     & ${StyledIcon} {
-      fill: ${p => p.theme.textBlack};
+      fill: ${(p) => p.theme.textBlack};
     }
   }
 
-  color: ${p => (p.isSelected ? p.theme.textBlack : p.theme.textDark)};
+  color: ${(p) => (p.isSelected ? p.theme.textBlack : p.theme.textDark)};
   & ${StyledIcon} {
-    fill: ${p => (p.isSelected ? p.theme.textBlack : p.theme.textDark)};
+    fill: ${(p) => (p.isSelected ? p.theme.textBlack : p.theme.textDark)};
   }
 `;
 const MenuItemText = styled(Text).attrs({

@@ -5,7 +5,7 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
 import dateFormat from "dateformat";
-import { get as _get } from "lodash";
+import { get as _get, map as _map } from "lodash";
 import { computed, observable, runInAction } from "mobx";
 import URI from "urijs";
 import isDefined from "../../../Core/isDefined";
@@ -15,8 +15,8 @@ import CatalogMemberMixin from "../../../ModelMixins/CatalogMemberMixin";
 import TableMixin from "../../../ModelMixins/TableMixin";
 import TableAutomaticStylesStratum from "../../../Table/TableAutomaticStylesStratum";
 import ApiTableCatalogItemTraits from "../../../Traits/TraitsClasses/ApiTableCatalogItemTraits";
-import TableStyleTraits from "../../../Traits/TraitsClasses/TableStyleTraits";
-import TableTimeStyleTraits from "../../../Traits/TraitsClasses/TableTimeStyleTraits";
+import TableStyleTraits from "../../../Traits/TraitsClasses/Table/StyleTraits";
+import TableTimeStyleTraits from "../../../Traits/TraitsClasses/Table/TimeStyleTraits";
 import CreateModel from "../../Definition/CreateModel";
 import createStratumInstance from "../../Definition/createStratumInstance";
 import LoadableStratum from "../../Definition/LoadableStratum";
@@ -69,14 +69,14 @@ export class ApiTableCatalogItem extends AutoRefreshingMixin(TableMixin(CatalogM
         return this.apiResponses.length > 0;
     }
     loadDataFromApis() {
-        const apisWithUrl = this.apis.filter(api => api.url);
-        const apiUrls = apisWithUrl.map(api => proxyCatalogItemUrl(this, api.url));
+        const apisWithUrl = this.apis.filter((api) => api.url);
+        const apiUrls = apisWithUrl.map((api) => proxyCatalogItemUrl(this, api.url));
         return Promise.all(apisWithUrl.map(async (api, idx) => {
             let data = await loadJson(apiUrls[idx], undefined, api.requestData
                 ? saveModelToJson(api.requestData)
                 : undefined, api.postRequestDataAsFormData);
             if (api.responseDataPath !== undefined) {
-                data = _get(data, api.responseDataPath);
+                data = getResponseDataPath(data, api.responseDataPath);
             }
             return Promise.resolve({
                 data,
@@ -86,7 +86,7 @@ export class ApiTableCatalogItem extends AutoRefreshingMixin(TableMixin(CatalogM
             runInAction(() => {
                 const columnMajorData = new Map();
                 values
-                    .filter(val => val.api.kind === "COLUMN_MAJOR") // column major rows only
+                    .filter((val) => val.api.kind === "COLUMN_MAJOR") // column major rows only
                     .map((val, i) => {
                     // add the column name to each column
                     val.data["TERRIA_columnName"] =
@@ -95,10 +95,10 @@ export class ApiTableCatalogItem extends AutoRefreshingMixin(TableMixin(CatalogM
                 })
                     .flat()
                     // make row id/data pairs for columnMajorData map
-                    .map(data => Object.entries(data))
+                    .map((data) => Object.entries(data))
                     .flat()
                     // merge rows with the same id
-                    .forEach(rowPart => {
+                    .forEach((rowPart) => {
                     const id = rowPart[0];
                     const value = rowPart[1];
                     const row = {};
@@ -118,23 +118,23 @@ export class ApiTableCatalogItem extends AutoRefreshingMixin(TableMixin(CatalogM
                 }
                 // Make map of ids to values that are constant for that id
                 const perIdData = new Map(values
-                    .filter(val => val.api.kind === "PER_ID") // per id only
-                    .map(val => val.data) // throw away api, keep data
+                    .filter((val) => val.api.kind === "PER_ID") // per id only
+                    .map((val) => val.data) // throw away api, keep data
                     .reduce((curr, prev) => curr.concat(prev), []) // flatten
                     // make id/data pair for perIdData map
-                    .map(data => [data[this.idKey], data]));
+                    .map((data) => [data[this.idKey], data]));
                 // Merge PER_ID data with *all* PER_ROW data (this may result in the same PER_ID data row being added to multiple PER_ROW data row)
                 const perRowData = values
-                    .filter(val => val.api.kind === "PER_ROW")
-                    .map(val => val.data)
+                    .filter((val) => val.api.kind === "PER_ROW")
+                    .map((val) => val.data)
                     .reduce((curr, prev) => curr.concat(prev), [])
-                    .map(row => Object.assign(row, isDefined(row[this.idKey]) ? perIdData.get(row[this.idKey]) : {}));
+                    .map((row) => Object.assign(row, isDefined(row[this.idKey]) ? perIdData.get(row[this.idKey]) : {}));
                 this.apiResponses = perRowData;
             });
         });
     }
     makeTableColumns(addHeaders) {
-        return this.columns.map(col => { var _a; return (addHeaders ? [(_a = col.name) !== null && _a !== void 0 ? _a : ""] : []); });
+        return this.columns.map((col) => { var _a; return (addHeaders ? [(_a = col.name) !== null && _a !== void 0 ? _a : ""] : []); });
     }
     apiResponseToTable() {
         const columnMajorTable = this.makeTableColumns(!this.hasData);
@@ -143,7 +143,7 @@ export class ApiTableCatalogItem extends AutoRefreshingMixin(TableMixin(CatalogM
             return columnMajorTable;
         }
         // Fill in column values from the API response
-        this.apiResponses.forEach(response => {
+        this.apiResponses.forEach((response) => {
             this.columns.forEach((col, mappingIdx) => {
                 var _a;
                 if (!isDefined(col.name))
@@ -195,7 +195,7 @@ export class ApiTableCatalogItem extends AutoRefreshingMixin(TableMixin(CatalogM
         const commonQueryParameters = useUpdateParams
             ? this.updateQueryParameters
             : this.queryParameters;
-        commonQueryParameters.forEach(query => {
+        commonQueryParameters.forEach((query) => {
             uri.addQuery(query.name, substituteDateTimesInQueryParam(query.value));
         });
         // Add API-specific query parameters
@@ -203,7 +203,7 @@ export class ApiTableCatalogItem extends AutoRefreshingMixin(TableMixin(CatalogM
         const specificQueryParameters = useUpdateParams
             ? api.updateQueryParameters
             : api.queryParameters;
-        specificQueryParameters.forEach(query => {
+        specificQueryParameters.forEach((query) => {
             uri.addQuery(query.name, substituteDateTimesInQueryParam(query.value));
         });
         return uri.toString();
@@ -219,5 +219,24 @@ __decorate([
 __decorate([
     computed
 ], ApiTableCatalogItem.prototype, "apiDataIsLoaded", null);
+/**
+ * Return the value at json path of the data object.
+ *
+ * This works exactly like the lodash.get() function but adds support for
+ * traversing array objects.  For eg, the lodash.get() does not support a path
+ * like: `a.users[].name`, but this function will correctly return a `{name}[]`
+ * array if they exist. The particular syntax for array traversal
+ * is borrowed from `jq` CLI tool.
+ */
+function getResponseDataPath(data, jsonPath) {
+    // Split the path at `[].` or `[]`
+    const pathSegments = jsonPath.split(/\[\]\.?/);
+    const getPath = (data, path) => path === ""
+        ? data
+        : Array.isArray(data)
+            ? _map(data, path)
+            : _get(data, path);
+    return pathSegments.reduce((nextData, segment) => getPath(nextData, segment), data);
+}
 StratumOrder.addLoadStratum(TableAutomaticStylesStratum.stratumName);
 //# sourceMappingURL=ApiTableCatalogItem.js.map

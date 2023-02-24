@@ -76,7 +76,7 @@ export default class CkanDefaultFormatsStratum extends LoadableStratum(CkanShare
                     type: "kml"
                 }
             }
-        ].map(format => createStratumInstance(CkanResourceFormatTraits, format));
+        ].map((format) => createStratumInstance(CkanResourceFormatTraits, format));
     }
 }
 CkanDefaultFormatsStratum.stratumName = "ckanDefaultFormats";

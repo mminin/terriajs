@@ -14,6 +14,8 @@ import MeasureTool from "./Items/MeasureTool";
 import MyLocation from "./Items/MyLocation";
 import { ToggleSplitterController } from "./Items/ToggleSplitterTool";
 import ZoomControl, { ZOOM_CONTROL_ID } from "./Items/ZoomControl";
+import SpectralProfile from "./Items/SpectralProfile";
+import BandProfile from "./Items/BandProfile";
 export const CLOSE_TOOL_ID = "close-tool";
 export const registerMapNavigations = (viewState) => {
     const terria = viewState.terria;
@@ -31,6 +33,26 @@ export const registerMapNavigations = (viewState) => {
         order: 1,
         screenSize: "medium",
         render: React.createElement(Compass, { terria: terria, viewState: viewState })
+    });
+    /* CUSTOM SPECTRAL PROFILE TOOL */
+    const spectralProfile = new SpectralProfile(viewState);
+    mapNavigationModel.addItem({
+        id: SpectralProfile.id,
+        name: "Spectral Profile 2",
+        controller: spectralProfile,
+        location: "TOP",
+        order: 7,
+        screenSize: undefined
+    });
+    /* CUSTOM BAND PROFILE TOOL */
+    const bandProfile = new BandProfile(viewState);
+    mapNavigationModel.addItem({
+        id: BandProfile.id,
+        name: "Band Profile",
+        controller: bandProfile,
+        location: "TOP",
+        order: 8,
+        screenSize: undefined
     });
     const zoomToolController = new GenericMapNavigationItemController({
         viewerMode: undefined,

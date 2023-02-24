@@ -15,11 +15,11 @@ import Box, { BoxSpan } from "../../../../Styled/Box";
 import Button from "../../../../Styled/Button";
 import Spacing from "../../../../Styled/Spacing";
 import Text from "../../../../Styled/Text";
-import { useTranslationIfExists } from "../../../../Language/languageHelpers";
+import { applyTranslationIfExists } from "../../../../Language/languageHelpers";
 const UlTrainerItems = styled(Box).attrs({
     as: "ul"
 }) `
-  ${p => p.theme.removeListStyles()}
+  ${(p) => p.theme.removeListStyles()}
 `;
 const TrainerButton = styled(Button) ``;
 let TrainerPane = class TrainerPane extends React.Component {
@@ -27,7 +27,7 @@ let TrainerPane = class TrainerPane extends React.Component {
         super(props);
     }
     render() {
-        const { content, viewState } = this.props;
+        const { content, i18n, viewState } = this.props;
         const { trainerItems, markdownText } = content;
         return (React.createElement(Text, { textDark: true, noFontSize: true },
             React.createElement(Box, { column: true },
@@ -40,7 +40,7 @@ let TrainerPane = class TrainerPane extends React.Component {
                             viewState.setTrainerBarVisible(true);
                         } },
                         React.createElement(BoxSpan, { centered: true },
-                            React.createElement(BoxSpan, { centered: true }, useTranslationIfExists(item.title)))),
+                            React.createElement(BoxSpan, { centered: true }, applyTranslationIfExists(item.title, i18n)))),
                     React.createElement(Spacing, { bottom: 2 })))))))));
     }
 };

@@ -10,12 +10,12 @@ export default function PrivateIndicator(props) {
     const { t } = useTranslation();
     return (React.createElement(IconWrapper, { marginRight: !props.inWorkbench, title: t("catalogItem.privateIndicatorTitle"), inWorkbench: props.inWorkbench, css: `
         margin-top: -1px;
-        ${p => p.inWorkbench && `margin-right: 2px;`}
+        ${(p) => p.inWorkbench && `margin-right: 2px;`}
 
         svg {
           width: 15px;
           height: 15px;
-          fill: ${p => p.inWorkbench ? p.theme.textLight : p.theme.colorPrimary};
+          fill: ${(p) => p.inWorkbench ? p.theme.textLight : p.theme.colorPrimary};
         }
       ` },
         React.createElement(Icon, { glyph: Icon.GLYPHS.lock })));

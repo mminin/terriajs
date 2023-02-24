@@ -9,6 +9,7 @@ import { runInAction } from "mobx";
 import { observer } from "mobx-react";
 import React from "react";
 import isDefined from "../../../Core/isDefined";
+import CatalogMemberMixin from "../../../ModelMixins/CatalogMemberMixin";
 import CommonStrata from "../../../Models/Definition/CommonStrata";
 import Box from "../../../Styled/Box";
 import Spacing from "../../../Styled/Spacing";
@@ -16,41 +17,45 @@ import Text from "../../../Styled/Text";
 import Collapsible from "../../Custom/Collapsible/Collapsible";
 import parseCustomMarkdownToReact from "../../Custom/parseCustomMarkdownToReact";
 let ShortReport = class ShortReport extends React.Component {
-    clickShortReport(reportName, isOpen) {
-        const shortReportSections = this.props.item.shortReportSections;
-        const clickedReport = shortReportSections.find(report => report.name === reportName);
+    clickShortReport(item, reportName, isOpen) {
+        const shortReportSections = item.shortReportSections;
+        const clickedReport = shortReportSections.find((report) => report.name === reportName);
         if (isDefined(clickedReport)) {
             runInAction(() => {
                 /**
                  * Ensure short report order is reflected by all strata up to this point
                  * & replicate all onto user stratum so that toggling doesn't re-order
-                 * reports - a stopgap for the lack of consistent behaviour surrounding
+                 * reports - a stopgap for the lack of consistent behavior surrounding
                  * removals / re-ordering of objectArrayTraits
                  */
-                shortReportSections.forEach(report => report.setTrait(CommonStrata.user, "show", report.show));
+                shortReportSections.forEach((report) => report.setTrait(CommonStrata.user, "show", report.show));
                 clickedReport.setTrait(CommonStrata.user, "show", isOpen);
             });
         }
         return false;
     }
     render() {
-        var _a, _b;
-        const shortReportSections = (_b = (_a = this.props.item) === null || _a === void 0 ? void 0 : _a.shortReportSections) === null || _b === void 0 ? void 0 : _b.filter(r => isDefined(r.name));
-        if ((!isDefined(this.props.item.shortReport) ||
-            this.props.item.shortReport === "") &&
+        var _a;
+        if (!CatalogMemberMixin.isMixedInto(this.props.item))
+            return null;
+        const item = this.props.item;
+        const shortReportSections = (_a = item.shortReportSections) === null || _a === void 0 ? void 0 : _a.filter((r) => isDefined(r.name));
+        if ((!isDefined(item.shortReport) || item.shortReport === "") &&
             (!isDefined(shortReportSections) || shortReportSections.length === 0)) {
             return null;
         }
         return (React.createElement(Box, { fullWidth: true, displayInlineBlock: true, padded: true },
-            isDefined(this.props.item.shortReport) && (React.createElement(Text, { textLight: true, medium: true }, parseCustomMarkdownToReact(this.props.item.shortReport, {
-                catalogItem: this.props.item
+            isDefined(item.shortReport) && (React.createElement(Text, { textLight: true, medium: true }, parseCustomMarkdownToReact(item.shortReport, {
+                catalogItem: item
             }))),
             shortReportSections
-                .filter(r => r.content && r.name)
+                .filter((r) => r.name)
                 .map((r, i) => (React.createElement(React.Fragment, { key: r.name },
-                React.createElement(Collapsible, { title: r.name, isOpen: r.show, onToggle: show => this.clickShortReport.bind(this, r.name, show)() }, parseCustomMarkdownToReact(r.content, {
-                    catalogItem: this.props.item
-                })),
+                r.content ? (React.createElement(Collapsible, { title: r.name, isOpen: r.show, onToggle: (show) => this.clickShortReport(item, r.name, show) }, parseCustomMarkdownToReact(r.content, {
+                    catalogItem: item
+                }))) : (React.createElement(Text, { textLight: true, medium: true }, parseCustomMarkdownToReact(r.name, {
+                    catalogItem: item
+                }))),
                 i < shortReportSections.length - 1 && React.createElement(Spacing, { bottom: 2 }))))));
     }
 };

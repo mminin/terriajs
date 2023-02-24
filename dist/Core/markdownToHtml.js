@@ -39,7 +39,9 @@ function markdownToHtml(markdownString, allowUnsafeHtml = false, domPurifyOption
         if (markdownOptions.injectTermsAsTooltips && markdownOptions.tooltipTerms) {
             stringToParse = injectTerms(stringToParse, markdownOptions.tooltipTerms);
         }
-        unsafeHtml = md.render(stringToParse);
+        unsafeHtml = markdownOptions.inline
+            ? md.renderInline(stringToParse)
+            : md.render(stringToParse);
     }
     if (allowUnsafeHtml) {
         return unsafeHtml;

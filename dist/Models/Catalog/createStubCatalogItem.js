@@ -14,7 +14,7 @@ export const getUniqueStubName = (terria) => {
 export default function createStubCatalogItem(terria, uniqueId) {
     const idToUse = uniqueId || getUniqueStubName(terria);
     const stub = new StubCatalogItem(idToUse, terria);
-    stub.setTrait(CommonStrata.underride, "name", stub.uniqueId);
+    stub.setTrait(CommonStrata.definition, "name", stub.uniqueId);
     terria.addModel(stub);
     return stub;
 }

@@ -12,7 +12,7 @@ import filterOutUndefined from "../Core/filterOutUndefined";
 import isDefined from "../Core/isDefined";
 import runLater from "../Core/runLater";
 import createCombinedModel from "../Models/Definition/createCombinedModel";
-import { THIS_COLUMN_EXPRESSION_TOKEN } from "../Traits/TraitsClasses/TableColumnTraits";
+import { THIS_COLUMN_EXPRESSION_TOKEN } from "../Traits/TraitsClasses/Table/ColumnTraits";
 import TableColumnType, { stringToTableColumnType } from "./TableColumnType";
 const naturalSort = require("javascript-natural-sort");
 naturalSort.insensitive = true;
@@ -57,9 +57,9 @@ export default class TableColumn {
                 show: THIS_COLUMN_EXPRESSION_TOKEN,
                 value: THIS_COLUMN_EXPRESSION_TOKEN
             },
-            ...filterOutUndefined((_c = (_b = (_a = this.traits.transformation) === null || _a === void 0 ? void 0 : _a.dependencies) === null || _b === void 0 ? void 0 : _b.map(colName => {
+            ...filterOutUndefined((_c = (_b = (_a = this.traits.transformation) === null || _a === void 0 ? void 0 : _a.dependencies) === null || _b === void 0 ? void 0 : _b.map((colName) => {
                 var _a;
-                if (this.tableModel.tableColumns.find(col => col.name === colName)) {
+                if (this.tableModel.tableColumns.find((col) => col.name === colName)) {
                     return {
                         type: 3,
                         token: colName,
@@ -86,7 +86,7 @@ export default class TableColumn {
         return this.mexpColumnTokens.reduce((pairs, token) => {
             var _a, _b;
             if (token.token !== THIS_COLUMN_EXPRESSION_TOKEN)
-                pairs[token.value] = (_b = (_a = this.tableModel.tableColumns.find(col => col.name === token.token)) === null || _a === void 0 ? void 0 : _a.valuesAsNumbers.values[rowIndex]) !== null && _b !== void 0 ? _b : null;
+                pairs[token.value] = (_b = (_a = this.tableModel.tableColumns.find((col) => col.name === token.token)) === null || _a === void 0 ? void 0 : _a.valuesAsNumbers.values[rowIndex]) !== null && _b !== void 0 ? _b : null;
             // Add column pair for this value (token `THIS_COLUMN_EXPRESSION_TOKEN`)
             else
                 pairs[THIS_COLUMN_EXPRESSION_TOKEN] = value;
@@ -191,7 +191,7 @@ export default class TableColumn {
         let parsingFailed = false;
         const separators = ["/", "-"];
         const centuryFix = (y) => y < 50 ? 2000 + y : y < 100 ? 1900 + y : y;
-        const ddmmyyyy = value => {
+        const ddmmyyyy = (value) => {
             // Try dd/mm/yyyy and watch out for failures that would also cross out mm/dd/yyyy
             for (let separator of separators) {
                 const sep1 = value.indexOf(separator);
@@ -236,7 +236,7 @@ export default class TableColumn {
             skipMmddyyyy = true;
             return null;
         };
-        let mmddyyyy = value => {
+        let mmddyyyy = (value) => {
             // This function only exists to allow mm-dd-yyyy dates
             // mm/dd/yyyy dates could be picked up by `new Date`
             const separator = "-";
@@ -268,7 +268,7 @@ export default class TableColumn {
                 return null;
             }
         };
-        let yyyyQQ = value => {
+        let yyyyQQ = (value) => {
             // Is it quarterly data in the format yyyy-Qx ? (Ignoring null values, and failing on any purely numeric values)
             if (value[4] === "-" && value[5] === "Q") {
                 const year = +value.slice(0, 4);
@@ -299,7 +299,7 @@ export default class TableColumn {
             parsingFailed = true;
             return null;
         };
-        let dateConstructor = value => {
+        let dateConstructor = (value) => {
             const ms = Date.parse(value);
             if (!Number.isNaN(ms)) {
                 return new Date(ms);
@@ -363,7 +363,7 @@ export default class TableColumn {
         const valuesAsDates = this.valuesAsDates;
         return {
             ...this.valuesAsDates,
-            values: valuesAsDates.values.map(date => date && JulianDate.fromDate(date)),
+            values: valuesAsDates.values.map((date) => date && JulianDate.fromDate(date)),
             minimum: valuesAsDates.minimum && JulianDate.fromDate(valuesAsDates.minimum),
             maximum: valuesAsDates.maximum && JulianDate.fromDate(valuesAsDates.maximum)
         };
@@ -374,7 +374,7 @@ export default class TableColumn {
     get uniqueValues() {
         var _a;
         const replaceWithNull = this.traits.replaceWithNullValues;
-        const values = this.values.map(value => {
+        const values = this.values.map((value) => {
             if (value.length === 0) {
                 return "";
             }
@@ -389,13 +389,13 @@ export default class TableColumn {
         function toArray(key, value) {
             return [key, value];
         }
-        const countArray = Object.keys(count).map(key => toArray(key, count[key]));
+        const countArray = Object.keys(count).map((key) => toArray(key, count[key]));
         countArray.sort(function (a, b) {
             return b[1] - a[1];
         });
         return {
-            values: countArray.map(a => a[0]),
-            counts: countArray.map(a => a[1]),
+            values: countArray.map((a) => a[0]),
+            counts: countArray.map((a) => a[1]),
             numberOfNulls: nullCount
         };
     }
@@ -476,11 +476,11 @@ export default class TableColumn {
         // - remove underscores
         // - capitalise
         this.name
-            .replace(/[A-Z][a-z]/g, letter => ` ${letter.toLowerCase()}`)
+            .replace(/[A-Z][a-z]/g, (letter) => ` ${letter.toLowerCase()}`)
             .replace(/_/g, " ")
             .trim()
             .toLowerCase()
-            .replace(/(^\w|\s\w)/g, m => m.toUpperCase()));
+            .replace(/(^\w|\s\w)/g, (m) => m.toUpperCase()));
     }
     get units() {
         return this.tableModel.columnUnits[this.columnNumber]
@@ -493,7 +493,7 @@ export default class TableColumn {
      */
     get traits() {
         // It is important to match on column name and not column number because the column numbers can vary between stratum
-        const thisColumn = this.tableModel.columns.find(column => column.name === this.name);
+        const thisColumn = this.tableModel.columns.find((column) => column.name === this.name);
         if (thisColumn !== undefined) {
             const result = createCombinedModel(thisColumn, this.tableModel.defaultColumn);
             return result;
@@ -537,23 +537,23 @@ export default class TableColumn {
         return !isDefined(this.regionType) || this.regionType.loaded;
     }
     get regionType() {
+        var _a;
         let regionProvider;
-        const regions = this.tableModel.regionProviderList;
-        if (regions === undefined) {
+        const regionProviderLists = (_a = this.tableModel.regionProviderLists) !== null && _a !== void 0 ? _a : [];
+        if (regionProviderLists.length === 0) {
             return undefined;
         }
         const regionType = this.traits.regionType;
         if (regionType !== undefined) {
             // Explicit region type specified, we just need to resolve it.
-            regionProvider = regions.getRegionProvider(regionType);
+            // Return first match in regionProviderLists
+            regionProvider = regionProviderLists
+                .map((list) => list.getRegionProvider(regionType))
+                .find(isDefined);
         }
         if (!isDefined(regionProvider)) {
-            // No region type specified, so match the column name against the region
-            // aliases.
-            const details = regions.getRegionDetails([this.name], undefined, undefined);
-            if (details.length > 0) {
-                regionProvider = details[0].regionProvider;
-            }
+            // No region type specified, so match the column name against the region aliases.
+            regionProvider = this.tableModel.matchRegionProvider(this.name);
         }
         // Load region IDs for region type
         // Note: loadRegionIDs is called in TableMixin.forceLoadMapItems()
@@ -568,15 +568,15 @@ export default class TableColumn {
         const columnName = this.traits.regionDisambiguationColumn;
         if (columnName !== undefined) {
             // Resolve the explicit disambiguation column.
-            return this.tableModel.tableColumns.find(column => column.name === columnName);
+            return this.tableModel.tableColumns.find((column) => column.name === columnName);
         }
         // See if the region provider likes any of the table's other columns for
         // disambiguation.
-        const disambigName = this.regionType.findDisambigVariable(this.tableModel.tableColumns.map(column => column.name));
+        const disambigName = this.regionType.findDisambigVariable(this.tableModel.tableColumns.map((column) => column.name));
         if (disambigName === undefined) {
             return undefined;
         }
-        return this.tableModel.tableColumns.find(column => column.name === disambigName);
+        return this.tableModel.tableColumns.find((column) => column.name === disambigName);
     }
     /**
      * Gets a function that can be used to retrieve the value of this column for
@@ -692,7 +692,7 @@ export default class TableColumn {
             { hint: /^(.*[_ ])?(time|date)/i, type: TableColumnType.time },
             { hint: /^(year)$/i, type: TableColumnType.time } // Match "year" only, not "Final year" or "0-4 years".
         ];
-        const match = typeHintSet.find(hint => {
+        const match = typeHintSet.find((hint) => {
             if (hint.hint.test(name)) {
                 if (hint.typeFromValues) {
                     return hint.typeFromValues === this.guessColumnTypeFromValues();

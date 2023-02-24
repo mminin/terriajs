@@ -7,13 +7,14 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 import objectTrait from "../Decorators/objectTrait";
 import primitiveTrait from "../Decorators/primitiveTrait";
 import mixTraits from "../mixTraits";
+import AutoRefreshingTraits from "./AutoRefreshingTraits";
 import CatalogMemberTraits from "./CatalogMemberTraits";
-import DimensionTraits from "./DimensionTraits";
-import FeatureInfoTraits from "./FeatureInfoTraits";
+import EnumDimensionTraits from "./DimensionTraits";
+import FeatureInfoUrlTemplateTraits from "./FeatureInfoTraits";
 import LegendOwnerTraits from "./LegendOwnerTraits";
-import TableTraits from "./TableTraits";
+import TableTraits from "./Table/TableTraits";
 import UrlTraits from "./UrlTraits";
-export default class OpenDataSoftCatalogItemTraits extends mixTraits(TableTraits, FeatureInfoTraits, UrlTraits, CatalogMemberTraits, LegendOwnerTraits) {
+export default class OpenDataSoftCatalogItemTraits extends mixTraits(AutoRefreshingTraits, TableTraits, FeatureInfoUrlTemplateTraits, UrlTraits, CatalogMemberTraits, LegendOwnerTraits) {
 }
 __decorate([
     primitiveTrait({
@@ -66,7 +67,7 @@ __decorate([
 ], OpenDataSoftCatalogItemTraits.prototype, "groupByFields", void 0);
 __decorate([
     objectTrait({
-        type: DimensionTraits,
+        type: EnumDimensionTraits,
         name: "Available fields",
         description: "Names of fields which can be 'selected'"
     })
@@ -78,4 +79,11 @@ __decorate([
         description: "Aggregate time values (eg 1 day). See https://help.opendatasoft.com/apis/ods-search-v2/#group-by-clause"
     })
 ], OpenDataSoftCatalogItemTraits.prototype, "aggregateTime", void 0);
+__decorate([
+    primitiveTrait({
+        type: "string",
+        name: "Refresh interval template",
+        description: 'Template used to calculate refresh interval based on Opendatasoft dataset object. This template is rendered using dataset JSON object as view. For example `"{{metas.custom.update-frequency}}"` will use `"update-frequency"` custom metadata property. This supports "human readable" time strings - for example "15 minutes" and "60 sec".'
+    })
+], OpenDataSoftCatalogItemTraits.prototype, "refreshIntervalTemplate", void 0);
 //# sourceMappingURL=OpenDataSoftCatalogItemTraits.js.map

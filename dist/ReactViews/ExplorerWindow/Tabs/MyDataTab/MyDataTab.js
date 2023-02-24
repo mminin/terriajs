@@ -16,9 +16,10 @@ const MyDataTab = observer(createReactClass({
     propTypes: {
         terria: PropTypes.object,
         viewState: PropTypes.object,
+        onFileAddFinished: PropTypes.func.isRequired,
+        onUrlAddFinished: PropTypes.func.isRequired,
         localDataTypes: PropTypes.arrayOf(PropTypes.object),
         remoteDataTypes: PropTypes.arrayOf(PropTypes.object),
-        onFileAddFinished: PropTypes.func.isRequired,
         t: PropTypes.func.isRequired
     },
     getInitialState() {
@@ -57,13 +58,13 @@ const MyDataTab = observer(createReactClass({
                     React.createElement("button", { type: "button", onClick: this.changeTab.bind(null, tab.id), title: tab.caption, className: classNames(Styles.tabListBtn, {
                             [Styles.isActive]: this.state.activeTab === tab.id
                         }), css: `
-                  color: ${p => p.theme.colorPrimary};
+                  color: ${(p) => p.theme.colorPrimary};
                   &:hover,
                   &:focus {
-                    color: ${p => p.theme.grey};
+                    color: ${(p) => p.theme.grey};
                   }
                   svg {
-                    fill: ${p => p.theme.colorPrimary};
+                    fill: ${(p) => p.theme.colorPrimary};
                   }
                 ` },
                         React.createElement(Icon, { glyph: Icon.GLYPHS[tab.id] }),
@@ -96,18 +97,18 @@ const MyDataTab = observer(createReactClass({
                 }) },
                 React.createElement(If, { condition: this.state.activeTab },
                     React.createElement("button", { type: "button", onClick: this.resetTab, className: Styles.btnBackToMyData, css: `
-                  color: ${p => p.theme.colorPrimary};
+                  color: ${(p) => p.theme.colorPrimary};
                   &:hover,
                   &:focus {
-                    border: 1px solid ${p => p.theme.colorPrimary};
+                    border: 1px solid ${(p) => p.theme.colorPrimary};
                   }
                   svg {
-                    fill: ${p => p.theme.colorPrimary};
+                    fill: ${(p) => p.theme.colorPrimary};
                   }
                 ` },
                         React.createElement(Icon, { glyph: Icon.GLYPHS.left }),
                         t("addData.back")),
-                    React.createElement(AddData, { terria: this.props.terria, viewState: this.props.viewState, activeTab: this.state.activeTab, resetTab: this.resetTab, localDataTypes: this.props.localDataTypes, remoteDataTypes: this.props.remoteDataTypes, onFileAddFinished: this.props.onFileAddFinished })),
+                    React.createElement(AddData, { terria: this.props.terria, viewState: this.props.viewState, activeTab: this.state.activeTab, resetTab: this.resetTab, onFileAddFinished: this.props.onFileAddFinished, onUrlAddFinished: this.props.onUrlAddFinished, localDataTypes: this.props.localDataTypes, remoteDataTypes: this.props.remoteDataTypes })),
                 React.createElement(If, { condition: showTwoColumn },
                     React.createElement(Box, { flexShrinkZero: true, column: true },
                         React.createElement("p", { className: Styles.explanation },

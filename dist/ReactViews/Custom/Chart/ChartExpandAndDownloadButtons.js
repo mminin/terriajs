@@ -43,8 +43,8 @@ let ChartExpandAndDownloadButtons = class ChartExpandAndDownloadButtons extends 
             }
             // We want to show only one source item at a time, so remove any
             // existing source items from the workbench
-            sourceItems.forEach(sourceItem => {
-                workbench.items.forEach(workbenchItem => {
+            sourceItems.forEach((sourceItem) => {
+                workbench.items.forEach((workbenchItem) => {
                     if (sourceItem.uniqueId === workbenchItem.uniqueId) {
                         workbench.remove(workbenchItem);
                     }
@@ -58,7 +58,7 @@ let ChartExpandAndDownloadButtons = class ChartExpandAndDownloadButtons extends 
         });
     }
     resolveSourceItems() {
-        Promise.all(this.props.sourceItems.map(sourceItem => Promise.resolve(sourceItem))).then(action(results => {
+        Promise.all(this.props.sourceItems.map((sourceItem) => Promise.resolve(sourceItem))).then(action((results) => {
             this.sourceItems = filterOutUndefined(results);
         }));
     }
@@ -76,7 +76,7 @@ let ChartExpandAndDownloadButtons = class ChartExpandAndDownloadButtons extends 
         }
         // The downloads and download names default to the sources and source names if not defined.
         let downloads = filterOutUndefined(this.props.downloads ||
-            this.sourceItems.map(item => hasTraits(item, UrlTraits, "url") ? item.url : undefined));
+            this.sourceItems.map((item) => hasTraits(item, UrlTraits, "url") ? item.url : undefined));
         const { sourceNames, canDownload, raiseToTitle, t } = this.props;
         if (sourceNames && sourceNames.length > 0) {
             const downloadNames = this.props.downloadNames || sourceNames;
@@ -115,13 +115,13 @@ const ExpandAndDownloadDropdowns = function (props) {
             [Styles.raiseToTitle]: props.raiseToTitle
         }) },
         React.createElement("div", { className: Styles.chartDropdownButton },
-            React.createElement(Dropdown, { selectOption: props.onExpand, options: props.sourceNames.map(name => ({ name })), theme: expandDropdownTheme }, props.t("chart.expand") + " ▾"),
+            React.createElement(Dropdown, { selectOption: props.onExpand, options: props.sourceNames.map((name) => ({ name })), theme: expandDropdownTheme }, props.t("chart.expand") + " ▾"),
             props.canDownload && (React.createElement(Dropdown, { options: props.downloads, theme: downloadDropdownTheme }, props.t("chart.download") + " ▾")))));
 };
 const ExpandAndDownloadButtons = function (props) {
     return (React.createElement("div", { className: Styles.chartExpand },
         React.createElement("button", { type: "button", className: Styles.btnChartExpand, onClick: props.onExpand }, props.t("chart.expand")),
-        props.downloadUrl && (React.createElement("a", { className: classNames(Styles.btnSmall, Styles.aDownload), href: props.downloadUrl },
+        props.downloadUrl && (React.createElement("a", { download: true, className: classNames(Styles.btnSmall, Styles.aDownload), href: props.downloadUrl },
             React.createElement(Icon, { glyph: Icon.GLYPHS.download })))));
 };
 export default withTranslation()(ChartExpandAndDownloadButtons);

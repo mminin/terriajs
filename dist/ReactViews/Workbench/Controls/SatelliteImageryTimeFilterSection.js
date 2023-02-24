@@ -54,8 +54,8 @@ const SatelliteImageryTimeFilterSection = observer(createReactClass({
                 return;
             }
             const item = this.props.item;
-            const thisLayerFeature = pickedFeatures.features.filter(feature => {
-                return (item.mapItems.find(mapItem => {
+            const thisLayerFeature = pickedFeatures.features.filter((feature) => {
+                return (item.mapItems.find((mapItem) => {
                     var _a;
                     return mapItem.imageryProvider &&
                         mapItem.imageryProvider === ((_a = feature.imageryLayer) === null || _a === void 0 ? void 0 : _a.imageryProvider);
@@ -98,7 +98,7 @@ const SatelliteImageryTimeFilterSection = observer(createReactClass({
             ? feature.position.getValue(this.props.item.currentTime)
             : undefined;
         return (React.createElement("div", { className: Styles.active, css: `
-            background: ${p => p.theme.colorPrimary};
+            background: ${(p) => p.theme.colorPrimary};
           ` },
             React.createElement("div", { className: Styles.infoGroup },
                 React.createElement("div", null, t("satellite.infoGroup")),

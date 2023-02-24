@@ -4,20 +4,27 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
-import { action, computed } from "mobx";
+import { uniq } from "lodash-es";
+import { action, computed, runInAction } from "mobx";
 import clone from "terriajs-cesium/Source/Core/clone";
 import DeveloperError from "terriajs-cesium/Source/Core/DeveloperError";
 import AsyncLoader from "../Core/AsyncLoader";
 import filterOutUndefined from "../Core/filterOutUndefined";
+import flatten from "../Core/flatten";
 import isDefined from "../Core/isDefined";
 import { isJsonNumber, isJsonString } from "../Core/Json";
 import Result from "../Core/Result";
+import CatalogMemberFactory from "../Models/Catalog/CatalogMemberFactory";
+import CommonStrata from "../Models/Definition/CommonStrata";
 import hasTraits from "../Models/Definition/hasTraits";
 import { BaseModel } from "../Models/Definition/Model";
 import ModelReference from "../Traits/ModelReference";
+import { ItemPropertiesTraits } from "../Traits/TraitsClasses/ItemPropertiesTraits";
 import CatalogMemberMixin, { getName } from "./CatalogMemberMixin";
+import ReferenceMixin from "./ReferenceMixin";
 const naturalSort = require("javascript-natural-sort");
 naturalSort.insensitive = true;
+const MERGED_GROUP_ID_PREPEND = "__merged__";
 function GroupMixin(Base) {
     class Klass extends Base {
         constructor() {
@@ -40,10 +47,10 @@ function GroupMixin(Base) {
         get mergedExcludeMembers() {
             var _a;
             const blacklistSet = new Set((_a = this.excludeMembers) !== null && _a !== void 0 ? _a : []);
-            this.knownContainerUniqueIds.forEach(containerId => {
+            this.knownContainerUniqueIds.forEach((containerId) => {
                 const container = this.terria.getModelById(BaseModel, containerId);
                 if (container && GroupMixin.isMixedInto(container)) {
-                    container.mergedExcludeMembers.forEach(s => blacklistSet.add(s));
+                    container.mergedExcludeMembers.forEach((s) => blacklistSet.add(s));
                 }
             });
             return Array.from(blacklistSet);
@@ -53,7 +60,7 @@ function GroupMixin(Base) {
             if (members === undefined) {
                 return [];
             }
-            const models = filterOutUndefined(members.map(id => {
+            const models = filterOutUndefined(members.map((id) => {
                 if (!ModelReference.isRemoved(id)) {
                     const model = this.terria.getModelById(BaseModel, id);
                     if (this.mergedExcludeMembers.length == 0) {
@@ -65,14 +72,14 @@ function GroupMixin(Base) {
                         : undefined;
                     if (model &&
                         // Does excludeMembers not include model ID
-                        !this.mergedExcludeMembers.find(name => {
+                        !this.mergedExcludeMembers.find((name) => {
                             var _a;
                             return ((_a = model.uniqueId) === null || _a === void 0 ? void 0 : _a.toLowerCase().trim()) ===
                                 name.toLowerCase().trim();
                         }) &&
                         // Does excludeMembers not include model name
                         (!modelName ||
-                            !this.mergedExcludeMembers.find(name => modelName.toLowerCase().trim() === name.toLowerCase().trim())))
+                            !this.mergedExcludeMembers.find((name) => modelName.toLowerCase().trim() === name.toLowerCase().trim())))
                         return model;
                 }
             }));
@@ -81,14 +88,8 @@ function GroupMixin(Base) {
             // If not, then the model will be placed at the end of the array
             if (isDefined(this.sortMembersBy)) {
                 return models.sort((a, b) => {
-                    const aValue = CatalogMemberMixin.isMixedInto(a) &&
-                        hasTraits(a, a.TraitsClass, this.sortMembersBy)
-                        ? a[this.sortMembersBy]
-                        : Infinity;
-                    const bValue = CatalogMemberMixin.isMixedInto(b) &&
-                        hasTraits(b, b.TraitsClass, this.sortMembersBy)
-                        ? b[this.sortMembersBy]
-                        : Infinity;
+                    const aValue = getSortProperty(a, this.sortMembersBy);
+                    const bValue = getSortProperty(b, this.sortMembersBy);
                     return naturalSort(isJsonString(aValue) || isJsonNumber(aValue) ? aValue : Infinity, isJsonString(bValue) || isJsonNumber(bValue) ? bValue : Infinity);
                 });
             }
@@ -115,8 +116,11 @@ function GroupMixin(Base) {
                     (await this.loadMetadata()).throwIfError();
                 // Call Group AsyncLoader if no errors occurred while loading metadata
                 (await this._memberLoader.load()).throwIfError();
+                // Order here is important, as mergeGroupMembersByName will create models and the following functions will be applied on memberModels
+                this.mergeGroupMembersByName();
                 this.refreshKnownContainerUniqueIds(this.uniqueId);
                 this.addShareKeysToMembers();
+                this.addItemPropertiesToMembers();
             }
             catch (e) {
                 return Result.error(e, `Failed to load group \`${getName(this)}\``);
@@ -126,6 +130,55 @@ function GroupMixin(Base) {
         toggleOpen(stratumId) {
             this.setTrait(stratumId, "isOpen", !this.isOpen);
         }
+        /** "Merges" group members with the same name if `mergeGroupsByName` Trait is set to `true`
+         * It does this by:
+         * - Creating a new CatalogGroup with all members of each merged group
+         * - Appending merged group ids to `excludeMembers`
+         * This is only applied to the first level of group members (it is not recursive)
+         * `mergeGroupsByName` is not applied to nested groups automatically.
+         */
+        mergeGroupMembersByName() {
+            if (!this.mergeGroupsByName)
+                return;
+            // Create map of group names to group models
+            const membersByName = new Map();
+            this.memberModels.forEach((member) => {
+                var _a, _b;
+                if (GroupMixin.isMixedInto(member) &&
+                    CatalogMemberMixin.isMixedInto(member) &&
+                    member.name) {
+                    // Push member to map
+                    (_b = (_a = membersByName.get(member.name)) === null || _a === void 0 ? void 0 : _a.push(member)) !== null && _b !== void 0 ? _b : membersByName.set(member.name, [member]);
+                }
+            });
+            membersByName.forEach((groups, name) => {
+                var _a;
+                if (groups.length > 1) {
+                    const groupIdsToMerge = groups
+                        .map((g) => g.uniqueId)
+                        .filter(isJsonString);
+                    const mergedGroupId = `${this.uniqueId}/${MERGED_GROUP_ID_PREPEND}${name}`;
+                    let mergedGroup = this.terria.getModelById(BaseModel, mergedGroupId);
+                    // Create mergedGroup if it doesn't exist - and then add it to group.members
+                    if (!mergedGroup) {
+                        mergedGroup = CatalogMemberFactory.create("group", mergedGroupId, this.terria);
+                        if (mergedGroup) {
+                            // We add groupIdsToMerge as shareKeys here for backward compatibility
+                            this.terria.addModel(mergedGroup, groupIdsToMerge);
+                            this.add(CommonStrata.override, mergedGroup);
+                        }
+                    }
+                    // Set merged group traits - name and members
+                    // Also set excludeMembers to exclude all groups that are merged.
+                    if (GroupMixin.isMixedInto(mergedGroup) &&
+                        CatalogMemberMixin.isMixedInto(mergedGroup)) {
+                        mergedGroup.setTrait(CommonStrata.definition, "name", name);
+                        mergedGroup.setTrait(CommonStrata.definition, "members", flatten(groups.map((g) => [...g.members])));
+                        this.setTrait(CommonStrata.override, "excludeMembers", uniq([...((_a = this.excludeMembers) !== null && _a !== void 0 ? _a : []), ...groupIdsToMerge]));
+                    }
+                }
+            });
+        }
         refreshKnownContainerUniqueIds(uniqueId) {
             if (!uniqueId)
                 return;
@@ -133,6 +186,11 @@ function GroupMixin(Base) {
                 if (model.knownContainerUniqueIds.indexOf(uniqueId) < 0) {
                     model.knownContainerUniqueIds.push(uniqueId);
                 }
+            });
+        }
+        addItemPropertiesToMembers() {
+            this.memberModels.forEach((model) => {
+                applyItemProperties(this, model);
             });
         }
         addShareKeysToMembers(members = this.memberModels) {
@@ -158,10 +216,10 @@ function GroupMixin(Base) {
             members.forEach((model) => {
                 // Only add shareKey if model.uniqueId is an autoID (i.e. contains groupId)
                 if (isDefined(model.uniqueId) && model.uniqueId.includes(groupId)) {
-                    shareKeys.forEach(groupShareKey => {
+                    shareKeys.forEach((groupShareKey) => {
                         // Get shareKeys for current model
                         const modelShareKeys = this.terria.modelIdShareKeysMap.get(model.uniqueId);
-                        modelShareKeys === null || modelShareKeys === void 0 ? void 0 : modelShareKeys.forEach(modelShareKey => {
+                        modelShareKeys === null || modelShareKeys === void 0 ? void 0 : modelShareKeys.forEach((modelShareKey) => {
                             this.terria.addShareKey(model.uniqueId, modelShareKey.replace(groupId, groupShareKey));
                         });
                         this.terria.addShareKey(model.uniqueId, model.uniqueId.replace(groupId, groupShareKey));
@@ -255,7 +313,13 @@ function GroupMixin(Base) {
     ], Klass.prototype, "toggleOpen", null);
     __decorate([
         action
+    ], Klass.prototype, "mergeGroupMembersByName", null);
+    __decorate([
+        action
     ], Klass.prototype, "refreshKnownContainerUniqueIds", null);
+    __decorate([
+        action
+    ], Klass.prototype, "addItemPropertiesToMembers", null);
     __decorate([
         action
     ], Klass.prototype, "addShareKeysToMembers", null);
@@ -284,4 +348,48 @@ function GroupMixin(Base) {
     GroupMixin.isMixedInto = isMixedInto;
 })(GroupMixin || (GroupMixin = {}));
 export default GroupMixin;
+function getSortProperty(model, prop) {
+    return (CatalogMemberMixin.isMixedInto(model) &&
+        hasTraits(model, model.TraitsClass, prop)) ||
+        (GroupMixin.isMixedInto(model) &&
+            hasTraits(model, model.TraitsClass, prop)) ||
+        (ReferenceMixin.isMixedInto(model) &&
+            hasTraits(model, model.TraitsClass, prop))
+        ? model[prop]
+        : undefined;
+}
+function setItemPropertyTraits(model, itemProperties) {
+    if (!itemProperties)
+        return;
+    Object.keys(itemProperties).map((k) => model.setTrait(CommonStrata.override, k, itemProperties[k]));
+}
+/** Applies itemProperties object to a model - this will set traits in override stratum.
+ * Also copy ItemPropertiesTraits to target if it supports them
+ */
+export function applyItemProperties(model, target) {
+    runInAction(() => {
+        var _a;
+        if (!target.uniqueId)
+            return;
+        // Apply itemProperties to non GroupMixin targets
+        if (!GroupMixin.isMixedInto(target))
+            setItemPropertyTraits(target, model.itemProperties);
+        // Apply itemPropertiesByType
+        setItemPropertyTraits(target, (_a = model.itemPropertiesByType.find((itemProps) => itemProps.type && itemProps.type === target.type)) === null || _a === void 0 ? void 0 : _a.itemProperties);
+        // Apply itemPropertiesByIds
+        model.itemPropertiesByIds.forEach((itemPropsById) => {
+            if (itemPropsById.ids.includes(target.uniqueId)) {
+                setItemPropertyTraits(target, itemPropsById.itemProperties);
+            }
+        });
+        // Copy over ItemPropertiesTraits from model, if target has them
+        // For example GroupMixin and ReferenceMixin
+        if (hasTraits(target, ItemPropertiesTraits, "itemProperties"))
+            target.setTrait(CommonStrata.underride, "itemProperties", model.traits.itemProperties.toJson(model.itemProperties));
+        if (hasTraits(target, ItemPropertiesTraits, "itemPropertiesByType"))
+            target.setTrait(CommonStrata.underride, "itemPropertiesByType", model.traits.itemPropertiesByType.toJson(model.itemPropertiesByType));
+        if (hasTraits(target, ItemPropertiesTraits, "itemPropertiesByIds"))
+            target.setTrait(CommonStrata.underride, "itemPropertiesByIds", model.traits.itemPropertiesByIds.toJson(model.itemPropertiesByIds));
+    });
+}
 //# sourceMappingURL=GroupMixin.js.map

@@ -15,8 +15,8 @@ import KmlDataSource from "terriajs-cesium/Source/DataSources/KmlDataSource";
 import isDefined from "../../../Core/isDefined";
 import readXml from "../../../Core/readXml";
 import TerriaError, { networkRequestError } from "../../../Core/TerriaError";
-import MappableMixin from "../../../ModelMixins/MappableMixin";
 import CatalogMemberMixin from "../../../ModelMixins/CatalogMemberMixin";
+import MappableMixin from "../../../ModelMixins/MappableMixin";
 import UrlMixin from "../../../ModelMixins/UrlMixin";
 import KmlCatalogItemTraits from "../../../Traits/TraitsClasses/KmlCatalogItemTraits";
 import CreateModel from "../../Definition/CreateModel";
@@ -39,7 +39,7 @@ class KmlCatalogItem extends MappableMixin(UrlMixin(CatalogMemberMixin(CreateMod
         return "1d";
     }
     forceLoadMapItems() {
-        return new Promise(resolve => {
+        return new Promise((resolve) => {
             if (isDefined(this.kmlString)) {
                 const parser = new DOMParser();
                 resolve(parser.parseFromString(this.kmlString, "text/xml"));
@@ -63,14 +63,14 @@ class KmlCatalogItem extends MappableMixin(UrlMixin(CatalogMemberMixin(CreateMod
                 });
             }
         })
-            .then(kmlLoadInput => {
+            .then((kmlLoadInput) => {
             return KmlDataSource.load(kmlLoadInput);
         })
-            .then(dataSource => {
+            .then((dataSource) => {
             this._dataSource = dataSource;
             this.doneLoading(dataSource); // Unsure if this is necessary
         })
-            .catch(e => {
+            .catch((e) => {
             throw networkRequestError(TerriaError.from(e, {
                 sender: this,
                 title: i18next.t("models.kml.errorLoadingTitle"),

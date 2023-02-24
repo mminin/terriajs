@@ -1,3 +1,4 @@
+import { runInAction } from "mobx";
 var ViewerMode;
 (function (ViewerMode) {
     ViewerMode["Cesium"] = "cesium";
@@ -25,16 +26,18 @@ export const MapViewers = Object.seal({
 });
 export const isViewerMode = (mode) => mode in MapViewers;
 export function setViewerMode(viewerMode, viewer) {
-    if (viewerMode === "3d" || viewerMode === "3dsmooth") {
-        viewer.viewerMode = ViewerMode.Cesium;
-        viewer.viewerOptions.useTerrain = viewerMode === "3d";
-    }
-    else if (viewerMode === "2d") {
-        viewer.viewerMode = ViewerMode.Leaflet;
-    }
-    else {
-        console.error(`Trying to select ViewerMode ${viewerMode} that doesn't exist`);
-    }
+    runInAction(() => {
+        if (viewerMode === "3d" || viewerMode === "3dsmooth") {
+            viewer.viewerMode = ViewerMode.Cesium;
+            viewer.viewerOptions.useTerrain = viewerMode === "3d";
+        }
+        else if (viewerMode === "2d") {
+            viewer.viewerMode = ViewerMode.Leaflet;
+        }
+        else {
+            console.error(`Trying to select ViewerMode ${viewerMode} that doesn't exist`);
+        }
+    });
 }
 export default ViewerMode;
 //# sourceMappingURL=ViewerMode.js.map

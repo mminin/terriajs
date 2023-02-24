@@ -42,7 +42,7 @@ export default class Csv {
      * @returns A promise that resolves to the CSV data.
      */
     static parseUrl(url, columnMajor = false, filterOutComments = false, options = {}) {
-        return loadWithXhr({ url }).then(csv => {
+        return loadWithXhr({ url }).then((csv) => {
             if (typeof csv === "string") {
                 return Csv.parseString(csv, columnMajor, filterOutComments, options);
             }

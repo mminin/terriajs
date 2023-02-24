@@ -4,6 +4,7 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
+import { get as _get } from "lodash-es";
 import { computed, observable, runInAction } from "mobx";
 import { createTransformer } from "mobx-utils";
 import Pbf from "pbf";
@@ -20,8 +21,10 @@ import DataSource from "terriajs-cesium/Source/DataSources/CustomDataSource";
 import ModelGraphics from "terriajs-cesium/Source/DataSources/ModelGraphics";
 import PointGraphics from "terriajs-cesium/Source/DataSources/PointGraphics";
 import PropertyBag from "terriajs-cesium/Source/DataSources/PropertyBag";
+import ColorBlendMode from "terriajs-cesium/Source/Scene/ColorBlendMode";
 import HeightReference from "terriajs-cesium/Source/Scene/HeightReference";
-import URI from "urijs";
+import ShadowMode from "terriajs-cesium/Source/Scene/ShadowMode";
+import isDefined from "../../../Core/isDefined";
 import loadArrayBuffer from "../../../Core/loadArrayBuffer";
 import TerriaError from "../../../Core/TerriaError";
 import AutoRefreshingMixin from "../../../ModelMixins/AutoRefreshingMixin";
@@ -113,6 +116,7 @@ export default class GtfsCatalogItem extends MappableMixin(UrlMixin(AutoRefreshi
         return GtfsCatalogItem.type;
     }
     get dataSource() {
+        var _a;
         this._dataSource.entities.suspendEvents();
         // Convert the GTFS protobuf into a more useful shape
         const vehicleData = this.convertManyFeedEntitiesToBillboardData(this.gtfsFeedEntities);
@@ -121,8 +125,25 @@ export default class GtfsCatalogItem extends MappableMixin(UrlMixin(AutoRefreshi
                 continue;
             }
             const entity = this._dataSource.entities.getOrCreateEntity(data.sourceId);
-            if (!entity.model && this._model) {
-                entity.model = this._model;
+            if (!entity.model) {
+                if (this._coloredModels) {
+                    const gtfsEntity = (_a = data.featureInfo) === null || _a === void 0 ? void 0 : _a.get("entity");
+                    const value = _get(gtfsEntity, this.model.colorModelsByProperty.property);
+                    if (value !== undefined) {
+                        const index = this.model.colorModelsByProperty.colorGroups.findIndex((colorGroup) => colorGroup.regExp !== undefined &&
+                            new RegExp(colorGroup.regExp).test(value));
+                        if (index !== -1) {
+                            entity.model = this._coloredModels[index];
+                        }
+                        entity.point = undefined;
+                    }
+                    else {
+                        entity.model = this._model;
+                    }
+                }
+                else if (this._model) {
+                    entity.model = this._model;
+                }
             }
             if (this.model !== undefined &&
                 this.model !== null &&
@@ -170,10 +191,10 @@ export default class GtfsCatalogItem extends MappableMixin(UrlMixin(AutoRefreshi
         }
         // remove entities that no longer exist
         if (this._dataSource.entities.values.length > vehicleData.length) {
-            const idSet = new Set(vehicleData.map(val => val.sourceId));
+            const idSet = new Set(vehicleData.map((val) => val.sourceId));
             this._dataSource.entities.values
-                .filter(entity => !idSet.has(entity.id))
-                .forEach(entity => this._dataSource.entities.remove(entity));
+                .filter((entity) => !idSet.has(entity.id))
+                .forEach((entity) => this._dataSource.entities.remove(entity));
         }
         this._dataSource.entities.resumeEvents();
         return this._dataSource;
@@ -198,6 +219,7 @@ export default class GtfsCatalogItem extends MappableMixin(UrlMixin(AutoRefreshi
         return Axis.fromName(this.model.forwardAxis);
     }
     get _model() {
+        var _a, _b;
         if (this.model.url === undefined) {
             return undefined;
         }
@@ -205,21 +227,42 @@ export default class GtfsCatalogItem extends MappableMixin(UrlMixin(AutoRefreshi
             uri: new ConstantProperty(this.model.url),
             upAxis: new ConstantProperty(this._cesiumUpAxis),
             forwardAxis: new ConstantProperty(this._cesiumForwardAxis),
-            scale: new ConstantProperty(this.model.scale !== undefined ? this.model.scale : 1),
+            scale: new ConstantProperty((_a = this.model.scale) !== null && _a !== void 0 ? _a : 1),
             heightReference: new ConstantProperty(HeightReference.RELATIVE_TO_GROUND),
             distanceDisplayCondition: new ConstantProperty({
                 near: 0.0,
                 far: this.model.maximumDistance
-            })
+            }),
+            maximumScale: new ConstantProperty(this.model.maximumScale),
+            minimumPixelSize: new ConstantProperty((_b = this.model.minimumPixelSize) !== null && _b !== void 0 ? _b : 0),
+            shadows: ShadowMode.DISABLED
         };
         return new ModelGraphics(options);
+    }
+    get _coloredModels() {
+        var _a, _b, _c, _d;
+        const colorGroups = (_b = (_a = this.model) === null || _a === void 0 ? void 0 : _a.colorModelsByProperty) === null || _b === void 0 ? void 0 : _b.colorGroups;
+        const model = this._model;
+        if (!isDefined(model) ||
+            !isDefined((_d = (_c = this.model) === null || _c === void 0 ? void 0 : _c.colorModelsByProperty) === null || _d === void 0 ? void 0 : _d.property) ||
+            !isDefined(colorGroups) ||
+            colorGroups.length === 0) {
+            return undefined;
+        }
+        return colorGroups.map(({ color }) => {
+            const coloredModel = model.clone();
+            coloredModel.color = new ConstantProperty(Color.fromCssColorString(color !== null && color !== void 0 ? color : "white"));
+            coloredModel.colorBlendMode = new ConstantProperty(ColorBlendMode.MIX);
+            coloredModel.colorBlendAmount = new ConstantProperty(0.7);
+            return coloredModel;
+        });
     }
     forceLoadMetadata() {
         return Promise.resolve();
     }
     forceLoadMapItems() {
         if (this.strata.get(GtfsStratum.stratumName) === undefined) {
-            GtfsStratum.load(this).then(stratum => {
+            GtfsStratum.load(this).then((stratum) => {
                 runInAction(() => {
                     this.strata.set(GtfsStratum.stratumName, stratum);
                 });
@@ -249,8 +292,11 @@ export default class GtfsCatalogItem extends MappableMixin(UrlMixin(AutoRefreshi
             "Content-Type": "application/x-google-protobuf;charset=UTF-8",
             "Cache-Control": "no-cache"
         };
-        if (this.apiKey !== undefined) {
-            headers.Authorization = `apikey ${this.apiKey}`;
+        if (this.headers !== undefined) {
+            this.headers.forEach(({ name, value }) => {
+                if (name !== undefined && value !== undefined)
+                    headers[name] = value;
+            });
         }
         if (this.url !== null && this.url !== undefined) {
             return loadArrayBuffer(proxyCatalogItemUrl(this, this.url), headers).then((arr) => {
@@ -292,7 +338,7 @@ export default class GtfsCatalogItem extends MappableMixin(UrlMixin(AutoRefreshi
         let point;
         if (this.image !== undefined && this.image !== null) {
             billboard = new BillboardGraphics({
-                image: new ConstantProperty(new URI(this.image).absoluteTo(this.terria.baseUrl).toString()),
+                image: new ConstantProperty(this.image),
                 heightReference: new ConstantProperty(HeightReference.RELATIVE_TO_GROUND),
                 scaleByDistance: this.scaleImageByDistance.nearValue ===
                     this.scaleImageByDistance.farValue
@@ -358,6 +404,9 @@ __decorate([
 __decorate([
     computed
 ], GtfsCatalogItem.prototype, "_model", null);
+__decorate([
+    computed
+], GtfsCatalogItem.prototype, "_coloredModels", null);
 function updateBbox(lat, lon, rectangle) {
     if (lon < rectangle.west)
         rectangle.west = lon;

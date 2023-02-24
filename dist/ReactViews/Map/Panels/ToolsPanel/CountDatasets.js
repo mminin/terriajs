@@ -1,103 +1,97 @@
 "use strict";
-import React from "react";
-import createReactClass from "create-react-class";
-import PropTypes from "prop-types";
-import ObserverModelMixin from "../../../ObserveModelMixin";
-import defined from "terriajs-cesium/Source/Core/defined";
-import when from "terriajs-cesium/Source/ThirdParty/when";
-import { withTranslation } from "react-i18next";
+import { observer } from "mobx-react";
+import React, { useState } from "react";
+import { useTranslation } from "react-i18next";
+import { applyTranslationIfExists, TRANSLATE_KEY_PREFIX } from "../../../../Language/languageHelpers";
+import CatalogMemberMixin from "../../../../ModelMixins/CatalogMemberMixin";
+import GroupMixin from "../../../../ModelMixins/GroupMixin";
+import ReferenceMixin from "../../../../ModelMixins/ReferenceMixin";
 import Loader from "../../../Loader";
+import { useViewState } from "../../../StandardUserInterface/ViewStateContext";
 import Styles from "./tools-panel.scss";
-let countValue = 1;
-const CountDatasets = createReactClass({
-    displayName: "CountDatasets",
-    mixins: [ObserverModelMixin],
-    propTypes: {
-        terria: PropTypes.object,
-        viewState: PropTypes.object.isRequired,
-        t: PropTypes.func.isRequired
-    },
-    getInitialState() {
-        const { t } = this.props;
-        return {
-            btnText: t("countDatasets.btnText")
-        };
-    },
-    countDatasets() {
-        const { t } = this.props;
+const CountDatasets = observer((props) => {
+    const [btnStringOrComponent, setBtnStringOrComponent] = useState(`${TRANSLATE_KEY_PREFIX}countDatasets.btnText`);
+    const { t, i18n } = useTranslation();
+    const viewState = useViewState();
+    const countDatasets = () => {
         const totals = {
             name: undefined,
             groups: 0,
-            items: 0,
+            members: 0,
             messages: [],
             subTotals: [],
             showResults: false
         };
         function counter(group, stats, path) {
             stats.name = group.name;
-            const promises = [];
-            for (let i = 0; i < group.items.length; ++i) {
-                const item = group.items[i];
-                if (item.countValue === countValue) {
-                    continue;
+            const promises = group.memberModels.map(async (model) => {
+                // Not pure - updates stats object & path
+                let member = model;
+                if (ReferenceMixin.isMixedInto(member)) {
+                    (await member.loadReference()).ignoreError();
+                    if (!member.target) {
+                        return;
+                    }
+                    member = member.target;
                 }
-                item.countValue = countValue;
-                if (typeof item.items !== "undefined") {
+                if (!CatalogMemberMixin.isMixedInto(member))
+                    return;
+                // if (member.countValue === countValue) {
+                //   continue;
+                // }
+                // member.countValue = countValue;
+                if (GroupMixin.isMixedInto(member)) {
                     const childStats = {
                         name: undefined,
                         groups: 0,
-                        items: 0,
+                        members: 0,
                         messages: [],
                         subTotals: []
                     };
-                    path.push(item.name);
-                    const loadPromise = item.load();
-                    if (defined(loadPromise) && item.isLoading) {
-                        promises.push(loadPromise
-                            .then(recurseAndUpdateTotals.bind(undefined, item, stats, childStats, path.slice()))
-                            .otherwise(reportLoadError.bind(undefined, item, stats, path.slice())));
-                    }
-                    else {
-                        promises.push(recurseAndUpdateTotals(item, stats, childStats, path));
-                    }
+                    path.push(member.name);
+                    const loadPromise = member.loadMembers();
+                    let countPromise = member.isLoading
+                        ? loadPromise
+                            .then((result) => result.throwIfError())
+                            .then(recurseAndUpdateTotals.bind(undefined, member, stats, childStats, path.slice()))
+                            .catch(reportLoadError.bind(undefined, member, stats, path.slice()))
+                        : recurseAndUpdateTotals(member, stats, childStats, path);
                     path.pop();
+                    return countPromise;
                 }
                 else {
-                    ++stats.items;
+                    ++stats.members;
                 }
-            }
-            return when.all(promises);
+            });
+            return Promise.all(promises).then(() => { });
         }
-        function recurseAndUpdateTotals(item, stats, childStats, path) {
-            const promise = counter(item, childStats, path).then(function () {
+        function recurseAndUpdateTotals(member, stats, childStats, path) {
+            const promise = counter(member, childStats, path).then(function () {
                 stats.groups += childStats.groups + 1;
-                stats.items += childStats.items;
+                stats.members += childStats.members;
                 stats.messages.push.apply(stats.messages, childStats.messages);
                 stats.subTotals.push(childStats);
             });
             return promise;
         }
-        function reportLoadError(item, stats, path) {
+        function reportLoadError(member, stats, path) {
             stats.messages.push(path.join(" -> ") + t("countDatasets.loadError"));
         }
-        this.setState({
-            btnText: React.createElement(Loader, { message: t("countDatasets.countingMessage") })
-        });
-        ++countValue;
-        const root = this.props.terria.catalog.group;
-        const that = this;
+        setBtnStringOrComponent(React.createElement(Loader, { message: t("countDatasets.countingMessage") }));
+        // ++countValue;
+        const root = viewState.terria.catalog.group;
         counter(root, totals, []).then(function () {
             let info = t("countDatasets.totals", {
-                items: totals.items,
+                items: totals.members,
                 groups: totals.groups
             });
-            that.props.updateResults(info);
+            props.updateResults(info);
             let i;
             const subTotals = totals.subTotals;
             for (i = 0; i < subTotals.length; ++i) {
                 info += t("countDatasets.subTotals", {
                     name: subTotals[i].name,
-                    items: subTotals[i].items,
+                    items: subTotals[i].members,
                     groups: subTotals[i].groups
                 });
             }
@@ -106,18 +100,15 @@ const CountDatasets = createReactClass({
             for (i = 0; i < messages.length; ++i) {
                 info += "<div>" + messages[i] + "</div>";
             }
-            that.setState({
-                btnText: t("countDatasets.recount")
-            });
-            that.props.updateResults(info);
+            setBtnStringOrComponent(`${TRANSLATE_KEY_PREFIX}countDatasets.recount`);
+            props.updateResults(info);
         });
-    },
-    render() {
-        const { t } = this.props;
-        return (React.createElement("form", null,
-            t("countDatasets.title"),
-            React.createElement("button", { className: Styles.submit, onClick: this.countDatasets, type: "button", value: t("countDatasets.btnCount") }, this.state.btnText)));
-    }
+    };
+    return (React.createElement("form", null,
+        t("countDatasets.title"),
+        React.createElement("button", { className: Styles.submit, onClick: countDatasets, type: "button", value: t("countDatasets.btnCount") }, typeof btnStringOrComponent === "string"
+            ? applyTranslationIfExists(btnStringOrComponent, i18n)
+            : btnStringOrComponent)));
 });
-export default withTranslation()(CountDatasets);
+export default CountDatasets;
 //# sourceMappingURL=CountDatasets.js.map

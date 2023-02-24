@@ -3,10 +3,9 @@ import isDefined from "../../Core/isDefined";
 import readJson from "../../Core/readJson";
 import TerriaError from "../../Core/TerriaError";
 import TimeVarying from "../../ModelMixins/TimeVarying";
-import addUserCatalogMember from "./addUserCatalogMember";
 import CommonStrata from "../Definition/CommonStrata";
+import addUserCatalogMember from "./addUserCatalogMember";
 import createCatalogItemFromFileOrUrl from "./createCatalogItemFromFileOrUrl";
-import raiseErrorOnRejectedPromise from "../raiseErrorOnRejectedPromise";
 import ResultPendingCatalogItem from "./ResultPendingCatalogItem";
 export default async function addUserFiles(files, terria, viewState, fileType) {
     const dataType = fileType || getDataType().localDataType[0];
@@ -14,7 +13,7 @@ export default async function addUserFiles(files, terria, viewState, fileType) {
     const promises = [];
     function loadCatalogItemFromFile(file) {
         try {
-            const item = createCatalogItemFromFileOrUrl(terria, viewState, file, dataType.value, true);
+            const item = createCatalogItemFromFileOrUrl(terria, viewState, file, dataType.value);
             return addUserCatalogMember(terria, item);
         }
         catch (e) {
@@ -50,8 +49,11 @@ export default async function addUserFiles(files, terria, viewState, fileType) {
                     return loadCatalogItemFromFile(file);
                 }
             });
-            loadPromise = raiseErrorOnRejectedPromise(terria, promise);
-            promises.push(loadPromise);
+            loadPromise = promise.catch((e) => {
+                terria.raiseErrorToUser(e);
+                return undefined;
+            });
+            promises.push();
         }
         else {
             loadPromise = loadCatalogItemFromFile(file);
@@ -64,16 +66,16 @@ export default async function addUserFiles(files, terria, viewState, fileType) {
     const addedItems = await Promise.all(promises);
     // if addedItem has only undefined item, means init files
     // have been uploaded
-    if (addedItems.every(item => item === undefined)) {
+    if (addedItems.every((item) => item === undefined)) {
         viewState.openAddData();
     }
     else {
-        const items = addedItems.filter(item => isDefined(item) && !(item instanceof TerriaError));
-        tempCatalogItemList.forEach(item => {
+        const items = addedItems.filter((item) => isDefined(item) && !(item instanceof TerriaError));
+        tempCatalogItemList.forEach((item) => {
             terria.catalog.userAddedDataGroup.remove(CommonStrata.user, item);
             terria.workbench.remove(item);
         });
-        items.forEach(item => TimeVarying.is(item) && terria.timelineStack.addToTop(item));
+        items.forEach((item) => TimeVarying.is(item) && terria.timelineStack.addToTop(item));
         return items;
     }
 }

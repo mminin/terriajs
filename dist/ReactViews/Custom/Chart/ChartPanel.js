@@ -18,25 +18,28 @@ import Icon from "../../../Styled/Icon";
 import Loader from "../../Loader";
 import Chart from "./BottomDockChart";
 import Styles from "./chart-panel.scss";
-import ChartPanelDownloadButton from "./ChartPanelDownloadButton";
+import { ChartPanelDownloadButton } from "./ChartPanelDownloadButton";
 const height = 300;
 let ChartPanel = class ChartPanel extends React.Component {
     get chartView() {
         return new ChartView(this.props.terria);
     }
     closePanel() {
-        this.chartView.chartItems.forEach(chartItem => {
+        this.chartView.chartItems.forEach((chartItem) => {
             chartItem.updateIsSelectedInWorkbench(false);
         });
     }
     componentDidUpdate() {
+        // Required so that components like the splitter that depend on screen
+        // height will re-adjust.
+        this.props.viewState.triggerResizeEvent();
         if (defined(this.props.onHeightChange)) {
             this.props.onHeightChange();
         }
     }
     render() {
         const chartableCatalogItems = this.chartView.chartableItems;
-        const chartItems = this.chartView.chartItems.filter(c => c.showInChartPanel);
+        const chartItems = this.chartView.chartItems.filter((c) => c.showInChartPanel);
         this.props.terria.currentViewer.notifyRepaintRequired();
         if (chartItems.length === 0) {
             return null;
@@ -54,8 +57,8 @@ let ChartPanel = class ChartPanel extends React.Component {
         if (items.length > 0) {
             // Load all items
             Promise.all(items
-                .filter(item => MappableMixin.isMixedInto(item))
-                .map(item => item.loadMapItems())).then(results => Result.combine(results, {
+                .filter((item) => MappableMixin.isMixedInto(item))
+                .map((item) => item.loadMapItems())).then((results) => Result.combine(results, {
                 message: "Failed to load chart items",
                 importance: -1
             }).raiseError(this.props.terria));

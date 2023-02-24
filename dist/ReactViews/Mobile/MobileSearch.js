@@ -51,7 +51,7 @@ const MobileSearch = observer(createReactClass({
     },
     renderLocationResult(theme) {
         const searchState = this.props.viewState.searchState;
-        return searchState.locationSearchResults.map(search => (React.createElement(LocationSearchResults, { key: search.searchProvider.name, terria: this.props.terria, viewState: this.props.viewState, search: search, locationSearchText: searchState.locationSearchText, onLocationClick: this.onLocationClick, isWaitingForSearchToStart: searchState.isWaitingToStartLocationSearch, theme: theme })));
+        return searchState.locationSearchResults.map((search) => (React.createElement(LocationSearchResults, { key: search.searchProvider.name, terria: this.props.terria, viewState: this.props.viewState, search: search, locationSearchText: searchState.locationSearchText, onLocationClick: this.onLocationClick, isWaitingForSearchToStart: searchState.isWaitingToStartLocationSearch, theme: theme })));
     }
 }));
 module.exports = withTranslation()(MobileSearch);

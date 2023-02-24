@@ -7,7 +7,7 @@ export function parseOwsKeywordList(json) {
     const Keyword = isJsonString(json.Keyword)
         ? json.Keyword
         : Array.isArray(json.Keyword)
-            ? filterOutUndefined(json.Keyword.map(s => (isJsonString(s) ? s : undefined)))
+            ? filterOutUndefined(json.Keyword.map((s) => (isJsonString(s) ? s : undefined)))
             : [];
     return {
         type,

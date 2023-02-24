@@ -5,7 +5,7 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
 import i18next from "i18next";
-import { computed, reaction, runInAction, observable } from "mobx";
+import { computed, observable, reaction, runInAction } from "mobx";
 import Cartesian3 from "terriajs-cesium/Source/Core/Cartesian3";
 import Cartographic from "terriajs-cesium/Source/Core/Cartographic";
 import Color from "terriajs-cesium/Source/Core/Color";
@@ -20,7 +20,7 @@ import CustomDataSource from "terriajs-cesium/Source/DataSources/CustomDataSourc
 import Entity from "terriajs-cesium/Source/DataSources/Entity";
 import PolylineGlowMaterialProperty from "terriajs-cesium/Source/DataSources/PolylineGlowMaterialProperty";
 import isDefined from "../Core/isDefined";
-import DragPoints from "../Map/DragPoints";
+import DragPoints from "../Map/DragPoints/DragPoints";
 import MappableMixin from "../ModelMixins/MappableMixin";
 import MappableTraits from "../Traits/TraitsClasses/MappableTraits";
 import CreateModel from "./Definition/CreateModel";
@@ -47,6 +47,17 @@ export default class UserDrawing extends MappableMixin(CreateModel(MappableTrait
          */
         this.onPointClicked = options.onPointClicked;
         /**
+         * Callback that occurs when point is moved. Function takes a CustomDataSource which is a list of PointEntities.
+         */
+        this.onPointMoved = options.onPointMoved;
+        /**
+         * Callback that occurs when a drawing is complete. This is called when the
+         * user has clicked done button and the shape has at least 1 point.
+         * The callback function will receive the points in the shape and a rectangle
+         * if `drawRectangle` was set to `true`.
+         */
+        this.onDrawingComplete = options.onDrawingComplete;
+        /**
          * Callback that occurs on clean up, i.e. when drawing is done or cancelled.
          */
         this.onCleanUp = options.onCleanUp;
@@ -69,7 +80,10 @@ export default class UserDrawing extends MappableMixin(CreateModel(MappableTrait
         this.drawRectangle = defaultValue(options.drawRectangle, false);
         this.invisible = options.invisible;
         // helper for dragging points around
-        this.dragHelper = new DragPoints(options.terria, customDataSource => {
+        this.dragHelper = new DragPoints(options.terria, (customDataSource) => {
+            if (typeof this.onPointMoved === "function") {
+                this.onPointMoved(customDataSource);
+            }
             this.prepareToAddNewPoint();
         });
     }
@@ -94,6 +108,9 @@ export default class UserDrawing extends MappableMixin(CreateModel(MappableTrait
         var svgString = svgPrefix + svgCircle + svgSuffix;
         // create the cesium entity
         return svgDataDeclare + svgString;
+    }
+    get cesiumRectangle() {
+        return this.getRectangleForShape();
     }
     enterDrawMode() {
         this.dragHelper.setUp();
@@ -202,6 +219,12 @@ export default class UserDrawing extends MappableMixin(CreateModel(MappableTrait
                 eyeOffset: new Cartesian3(0.0, 0.0, -50.0)
             }
         });
+        // Remove the existing points if we are in drawRectangle mode and the user
+        // has picked a 3rd point. This lets the user draw new rectangle that
+        // replaces the current one.
+        if (this.drawRectangle && this.pointEntities.entities.values.length === 2) {
+            this.pointEntities.entities.removeAll();
+        }
         this.pointEntities.entities.add(pointEntity);
         this.dragHelper.updateDraggableObjects(this.pointEntities);
         if (isDefined(this.onPointClicked)) {
@@ -225,12 +248,24 @@ export default class UserDrawing extends MappableMixin(CreateModel(MappableTrait
             message: this.getDialogMessage(),
             buttonText: this.getButtonText(),
             onCancel: () => {
+                runInAction(() => {
+                    if (this.onDrawingComplete) {
+                        const isDrawingComplete = this.pointEntities.entities.values.length >= 2;
+                        const points = this.getPointsForShape();
+                        if (isDrawingComplete && points) {
+                            this.onDrawingComplete({
+                                points,
+                                rectangle: this.getRectangleForShape()
+                            });
+                        }
+                    }
+                });
                 this.endDrawing();
             },
             onEnable: (viewState) => {
                 runInAction(() => (viewState.explorerPanelIsVisible = false));
                 if (this.drawRectangle) {
-                    this.mouseMoveDispose = reaction(() => this.terria.currentViewer.mouseCoords.cartographic, mouseCoordsCartographic => {
+                    this.mouseMoveDispose = reaction(() => this.terria.currentViewer.mouseCoords.cartographic, (mouseCoordsCartographic) => {
                         if (!isDefined(mouseCoordsCartographic))
                             return;
                         if (isDefined(this.mousePointEntity)) {
@@ -273,11 +308,7 @@ export default class UserDrawing extends MappableMixin(CreateModel(MappableTrait
                         this.dragHelper.resetDragCount();
                     }
                     reaction.dispose();
-                    // If drawing a rectangle -> limit to 2 points
-                    if (this.inDrawMode &&
-                        (!this.drawRectangle ||
-                            (this.drawRectangle &&
-                                this.pointEntities.entities.values.length < 2))) {
+                    if (this.inDrawMode) {
                         this.prepareToAddNewPoint();
                     }
                 }
@@ -293,7 +324,7 @@ export default class UserDrawing extends MappableMixin(CreateModel(MappableTrait
             return userClickedExistingPoint;
         }
         const that = this;
-        features.forEach(feature => {
+        features.forEach((feature) => {
             let index = -1;
             for (let i = 0; i < this.pointEntities.entities.values.length; i++) {
                 const pointFeature = this.pointEntities.entities.values[i];
@@ -384,14 +415,22 @@ export default class UserDrawing extends MappableMixin(CreateModel(MappableTrait
      *     Click to add another point
      */
     getDialogMessage() {
-        let message = "<strong>" + this.messageHeader + "</strong></br>";
+        let message = "<strong>" +
+            (typeof this.messageHeader === "function"
+                ? this.messageHeader()
+                : this.messageHeader) +
+            "</strong></br>";
         let innerMessage = isDefined(this.onMakeDialogMessage)
             ? this.onMakeDialogMessage()
             : "";
         if (innerMessage !== "") {
             message += innerMessage + "</br>";
         }
-        if (this.pointEntities.entities.values.length > 0) {
+        if (this.drawRectangle && this.pointEntities.entities.values.length >= 2) {
+            message +=
+                "<i>" + i18next.t("models.userDrawing.clickToRedrawRectangle") + "</i>";
+        }
+        else if (this.pointEntities.entities.values.length > 0) {
             message +=
                 "<i>" + i18next.t("models.userDrawing.clickToAddAnotherPoint") + "</i>";
         }
@@ -426,6 +465,18 @@ export default class UserDrawing extends MappableMixin(CreateModel(MappableTrait
             return pos;
         }
     }
+    getRectangleForShape() {
+        var _a, _b, _c;
+        if (!this.drawRectangle) {
+            return undefined;
+        }
+        if (this.pointEntities.entities.values.length < 2) {
+            return undefined;
+        }
+        const rectangle = (_c = (_b = (_a = this.otherEntities.entities
+            .getById("rectangle")) === null || _a === void 0 ? void 0 : _a.rectangle) === null || _b === void 0 ? void 0 : _b.coordinates) === null || _c === void 0 ? void 0 : _c.getValue(this.terria.timelineClock.currentTime);
+        return rectangle;
+    }
 }
 __decorate([
     observable
@@ -435,5 +486,5 @@ __decorate([
 ], UserDrawing.prototype, "mapItems", null);
 __decorate([
     computed
-], UserDrawing.prototype, "svgPoint", null);
+], UserDrawing.prototype, "cesiumRectangle", null);
 //# sourceMappingURL=UserDrawing.js.map

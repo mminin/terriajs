@@ -1,16 +1,20 @@
 "use strict";
 var linkifyContent = require("./linkifyContent");
-var formatNumberForLocale = require("./formatNumberForLocale");
 /**
  * Format the value for the description, used by the Feature Info Panel.
  * Strings have markdown applied to them. Anything else is returned as-is.
  *
  * @param {} value The value to format.
- * @param {Object} [options] Number formatting options, passed to formatNumberForLocale.
+ * @param {Object} [options] Number formatting options, passed to Number.toLocaleString().
  */
 function formatPropertyValue(value, options) {
     if (typeof value === "number") {
-        return formatNumberForLocale(value, options);
+        // Note we default useGrouping to false (not true) and maximumFractionDigits to 20 (not 3).
+        return value.toLocaleString(undefined, {
+            useGrouping: false,
+            maximumFractionDigits: 20,
+            ...options
+        });
     }
     else if (typeof value === "string") {
         // do not linkify if it contains html elements, which we detect by looking for <x...>

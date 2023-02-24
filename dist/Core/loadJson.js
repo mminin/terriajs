@@ -1,4 +1,3 @@
-import makeRealPromise from "./makeRealPromise";
 import Resource from "terriajs-cesium/Source/Core/Resource";
 export default function loadJson(urlOrResource, headers, body, asForm = false) {
     let responseType = "json";
@@ -34,6 +33,6 @@ export default function loadJson(urlOrResource, headers, body, asForm = false) {
                 ? urlOrResource.fetchJson()
                 : Resource.fetchJson(params);
     }
-    return makeRealPromise(jsonPromise);
+    return jsonPromise;
 }
 //# sourceMappingURL=loadJson.js.map

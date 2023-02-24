@@ -5,13 +5,14 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
-import React from "react";
-import PropTypes from "prop-types";
 import classNames from "classnames";
+import { reaction } from "mobx";
+import { observer } from "mobx-react";
+import PropTypes from "prop-types";
+import React from "react";
 import Icon from "../Styled/Icon";
 import Styles from "./drag-drop-notification.scss";
-import { observer } from "mobx-react";
-import { reaction } from "mobx";
+import { withViewState } from "./StandardUserInterface/ViewStateContext";
 let DragDropNotification = class DragDropNotification extends React.Component {
     constructor(props) {
         super(props);
@@ -79,5 +80,5 @@ DragDropNotification.propTypes = {
 DragDropNotification = __decorate([
     observer
 ], DragDropNotification);
-module.exports = DragDropNotification;
+export default withViewState(DragDropNotification);
 //# sourceMappingURL=DragDropNotification.js.map

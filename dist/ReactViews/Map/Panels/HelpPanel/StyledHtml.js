@@ -7,14 +7,14 @@ import Spacing from "../../../../Styled/Spacing";
 import Text from "../../../../Styled/Text";
 import Box from "../../../../Styled/Box";
 import styled from "styled-components";
-import { useTranslationIfExists } from "../../../../Language/languageHelpers";
+import { applyTranslationIfExists } from "../../../../Language/languageHelpers";
 import { parseCustomMarkdownToReactWithOptions } from "../../../Custom/parseCustomMarkdownToReact";
 const Numbers = styled(Text) `
   width: 22px;
   height: 22px;
   line-height: 22px;
   border-radius: 50%;
-  background-color: ${props => props.theme.textDarker};
+  background-color: ${(props) => props.theme.textDarker};
 `;
 const renderOrderedList = function (contents) {
     return (React.createElement(For, { each: "content", index: "i", of: contents },
@@ -29,9 +29,9 @@ export class StyledHtmlRaw extends React.Component {
         super(props);
     }
     render() {
-        const { viewState, injectTooltips } = this.props;
+        const { viewState, injectTooltips, i18n } = this.props;
         const styledTextProps = this.props.styledTextProps || {};
-        const markdownToParse = useTranslationIfExists(this.props.markdown);
+        const markdownToParse = applyTranslationIfExists(this.props.markdown, i18n);
         const parsed = parseCustomMarkdownToReactWithOptions(markdownToParse, {
             injectTermsAsTooltips: injectTooltips,
             tooltipTerms: viewState.terria.configParameters.helpContentTerms
@@ -43,7 +43,7 @@ export class StyledHtmlRaw extends React.Component {
             React.createElement(When, { condition: /(h[0-6]|p)/i.test(item.type) },
                 React.createElement(Text, Object.assign({ as: item.type, key: i, textDark: true, medium: item.type === "p" }, styledTextProps), item.props.children)),
             React.createElement(When, { condition: item.type === "ol" },
-                renderOrderedList(item.props.children.map(point => point.props.children)),
+                renderOrderedList(item.props.children.map((point) => point.props.children)),
                 React.createElement(Spacing, { bottom: 4 })),
             React.createElement(Otherwise, null,
                 React.createElement(Text, Object.assign({ key: i, textDark: true, medium: true }, styledTextProps), item))))))));
@@ -56,7 +56,8 @@ StyledHtmlRaw.propTypes = {
     theme: PropTypes.object,
     styledTextProps: PropTypes.object,
     injectTooltips: PropTypes.bool,
-    t: PropTypes.func.isRequired
+    t: PropTypes.func.isRequired,
+    i18n: PropTypes.object.isRequired
 };
 StyledHtmlRaw.defaultProps = {
     injectTooltips: true

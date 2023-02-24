@@ -1,9 +1,8 @@
 import i18next from "i18next";
 import LanguageDetector from "i18next-browser-languagedetector";
-import { initReactI18next } from "react-i18next";
 import HttpApi from "i18next-http-backend";
-import translationEN from "../Language/en/translation.json";
-import translationFR from "../Language/fr/translation.json";
+import { initReactI18next } from "react-i18next";
+import isDefined from "../Core/isDefined";
 const defaultLanguageConfiguration = {
     enabled: false,
     debug: false,
@@ -28,7 +27,7 @@ class Internationalization {
      * as `languageConfiguration` can be serialised, but `i18nOptions` may have
      * some functions that are passed in from a TerriaMap
      */
-    i18StartOptions) {
+    i18StartOptions, terriajsResourcesBaseUrl) {
         const languageConfig = Object.assign(defaultLanguageConfiguration, languageConfiguration);
         /**
          * initialization of the language with i18next
@@ -39,11 +38,13 @@ class Internationalization {
          * @param {String} languageConfiguration.fallbackLanguage the language to be used on startup
          * @param {Array} languageConfiguration.changeLanguageOnStartWhen
          */
-        i18next
+        return i18next
             .use(HttpApi)
             .use(LanguageDetector)
             .use(initReactI18next)
             .init({
+            // use i18next-json-v3 as weblate still doesn't support v4
+            compatibilityJSON: "v3",
             debug: languageConfig.debug,
             react: languageConfig.react,
             fallbackLng: languageConfig.fallbackLanguage,
@@ -78,16 +79,19 @@ class Internationalization {
             ns: ["translation", "languageOverrides"],
             defaultNS: "languageOverrides",
             fallbackNS: "translation",
-            resources: {
-                en: {
-                    translation: translationEN
-                },
-                fr: {
-                    translation: translationFR
-                }
-            },
             backend: Object.assign({
-                loadPath: "/languages/{{lng}}/{{ns}}.json",
+                // Loads translation files from either a TerriaMap's languages assets or from TerriaJS' assets
+                // Always load "translation" namespace from TerriaJS assets, and load "languageOverrides" namespace from the TerriaMap
+                loadPath: function loadPath([_lng], [namespace]) {
+                    if (namespace === "translation")
+                        return `${terriajsResourcesBaseUrl}languages/{{lng}}/{{ns}}.json`;
+                    // Apply languageConfig.overridesBaseUrl to path for "languageOverrides" namespace if defined
+                    if (namespace === "languageOverrides" &&
+                        isDefined(languageConfig.overridesBaseUrl)) {
+                        return `${languageConfig.overridesBaseUrl}{{lng}}.json`;
+                    }
+                    return "languages/{{lng}}/{{ns}}.json";
+                },
                 crossDomain: false
             }, { ...i18StartOptions === null || i18StartOptions === void 0 ? void 0 : i18StartOptions.backend }),
             detection: {
@@ -99,12 +103,10 @@ class Internationalization {
                 lookupLocalStorage: "i18nextLng",
                 // cache user language on
                 caches: ["localStorage"],
-                excludeCacheFor: ["cimode"],
+                excludeCacheFor: ["cimode"] // languages to not persist (cookie, localStorage)
                 // optional expire and domain for set cookie
                 // cookieMinutes: 10,
                 // cookieDomain: "myDomain",
-                // only detect languages that are in the whitelist
-                checkWhitelist: true
             },
             interpolation: {
                 escapeValue: false // not needed for react as it escapes by default and not needed in node

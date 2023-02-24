@@ -14,7 +14,7 @@ const groupElementKeys = Object.keys(GROUP_ELEMENT_TO_KEY_MAPPING);
  * @param isSmallScreen Whether to display components for large or small screens - this will be passed to child components
  *      as a "smallScreen" prop if it's defined in the child component's propTypes. This is mainly used with the
  *      {@link ResponsiveSwitch} HOC.
- * @param customUI {Array<Element>} An array of elements - these should be grouping elements like <Nav> and <Menu> that in turn
+ * @param customUI {React.ReactNode} An array of elements - these should be grouping elements like <Nav> and <Menu> that in turn
  *      have other elements specified as children.
  * @returns {Object<Array<Element>>} An index of arrays of custom elements against where they should go - e.g. an array
  *      for "menu", an array for "nav" etc.
@@ -36,7 +36,7 @@ function buildEmptyAccumulator() {
 }
 /** Finds the associated key string for the grouping element provided - e.g. a <Nav> element will resolve to 'nav' */
 function findKeyForGroupElement(groupElement) {
-    return groupElementKeys.filter(key => groupElement.type === GROUP_ELEMENT_TO_KEY_MAPPING[key])[0];
+    return groupElementKeys.filter((key) => groupElement.type === GROUP_ELEMENT_TO_KEY_MAPPING[key])[0];
 }
 /**
  * Gets the children out of a grouping element and sanitises them - e.g. plain strings are converted to <span>s and
@@ -47,7 +47,7 @@ function findKeyForGroupElement(groupElement) {
  * @returns {Array<Element>} a collection of processed children.
  */
 function getGroupChildren(isSmallScreen, groupElement) {
-    return React.Children.map(groupElement.props.children, child => {
+    return React.Children.map(groupElement.props.children, (child) => {
         if (typeof child === "string") {
             return React.createElement("span", null, child);
         }

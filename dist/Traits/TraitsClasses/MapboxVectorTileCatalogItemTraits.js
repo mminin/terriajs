@@ -8,13 +8,12 @@ import anyTrait from "../Decorators/anyTrait";
 import primitiveTrait from "../Decorators/primitiveTrait";
 import mixTraits from "../mixTraits";
 import CatalogMemberTraits from "./CatalogMemberTraits";
-import FeatureInfoTraits from "./FeatureInfoTraits";
+import ImageryProviderTraits from "./ImageryProviderTraits";
 import LayerOrderingTraits from "./LayerOrderingTraits";
 import LegendOwnerTraits from "./LegendOwnerTraits";
 import MappableTraits from "./MappableTraits";
-import RasterLayerTraits from "./RasterLayerTraits";
 import UrlTraits from "./UrlTraits";
-export default class MapboxVectorTileCatalogItemTraits extends mixTraits(LayerOrderingTraits, FeatureInfoTraits, UrlTraits, MappableTraits, CatalogMemberTraits, LegendOwnerTraits, RasterLayerTraits) {
+export default class MapboxVectorTileCatalogItemTraits extends mixTraits(LayerOrderingTraits, UrlTraits, MappableTraits, CatalogMemberTraits, LegendOwnerTraits, ImageryProviderTraits) {
     constructor() {
         super(...arguments);
         this.idProperty = "FID";
@@ -27,21 +26,21 @@ __decorate([
     primitiveTrait({
         type: "string",
         name: "lineColor",
-        description: "This propery exists for backward compatibility. The outline color of the features, specified as a CSS color string. This will only be used if `layer` trait has been set. For more complex styling - see `style` trait."
+        description: "This property exists for backward compatibility. The outline color of the features, specified as a CSS color string. This will only be used if `layer` trait has been set. For more complex styling - see `style` trait."
     })
 ], MapboxVectorTileCatalogItemTraits.prototype, "lineColor", void 0);
 __decorate([
     primitiveTrait({
         type: "string",
         name: "fillColor",
-        description: "This propery exists for backward compatibility. The fill color of the features, specified as a CSS color string. This will only be used if `layer` trait has been set. For more complex styling - see `style` trait."
+        description: "This property exists for backward compatibility. The fill color of the features, specified as a CSS color string. This will only be used if `layer` trait has been set. For more complex styling - see `style` trait."
     })
 ], MapboxVectorTileCatalogItemTraits.prototype, "fillColor", void 0);
 __decorate([
     primitiveTrait({
         type: "string",
         name: "layer",
-        description: "This propery exists for backward compatibility. It can be used to only show a particular layer in the tileset."
+        description: "This property exists for backward compatibility. It can be used to only show a particular layer in the tileset."
     })
 ], MapboxVectorTileCatalogItemTraits.prototype, "layer", void 0);
 __decorate([
@@ -60,6 +59,14 @@ For example:
       "source-layer": "buildings",
       "paint": {
         "fill-color": "black"
+      }
+    },
+    {
+      "type": "line",
+      "source-layer": "buildings",
+      "paint": {
+        "line-color": "red",
+        "line-width": 1
       }
     },
     {

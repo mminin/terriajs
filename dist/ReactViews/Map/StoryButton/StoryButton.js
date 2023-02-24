@@ -7,7 +7,7 @@ import Prompt from "../../Generic/Prompt";
 import { useRefForTerria } from "../../Hooks/useRefForTerria";
 import Styles from "./story-button.scss";
 const STORY_BUTTON_NAME = "MenuBarStoryButton";
-const onStoryButtonClick = (props) => () => {
+export const onStoryButtonClick = (props) => () => {
     props.viewState.toggleStoryBuilder();
     props.terria.currentViewer.notifyRepaintRequired();
     // Allow any animations to finish, then trigger a resize.

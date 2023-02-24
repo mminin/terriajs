@@ -59,7 +59,7 @@ class GeoJsonCatalogItem extends GeoJsonMixin(CreateModel(GeoJsonCatalogItemTrai
                     throw fileApiNotSupportedError(this.terria);
                 }
                 const body = this.requestData ? toJS(this.requestData) : undefined;
-                const blob = await loadBlob(this.url, undefined, body);
+                const blob = await loadBlob(proxyCatalogItemUrl(this, this.url), undefined, body);
                 jsonData = await parseZipJsonBlob(blob);
             }
             else {
@@ -74,7 +74,7 @@ class GeoJsonCatalogItem extends GeoJsonMixin(CreateModel(GeoJsonCatalogItemTrai
         }
         if (Array.isArray(jsonData)) {
             // Array that isn't a feature collection
-            const fc = toFeatureCollection(jsonData.map(item => {
+            const fc = toFeatureCollection(jsonData.map((item) => {
                 let geojson = item;
                 if (this.responseGeoJsonPath !== undefined) {
                     geojson = _get(item, this.responseGeoJsonPath);
@@ -111,13 +111,13 @@ export function fileApiNotSupportedError(terria) {
         message: i18next.t("models.userData.fileApiNotSupportedTitle", {
             appName: terria.appName,
             chrome: '<a href="http://www.google.com/chrome" target="_blank">' +
-                i18next.t("models.userData.chrome") +
+                i18next.t("browsers.chrome") +
                 "</a>",
             firefox: '<a href="http://www.mozilla.org/firefox" target="_blank">' +
-                i18next.t("models.userData.firefox") +
+                i18next.t("browsers.firefox") +
                 "</a>",
             edge: '<a href="http://www.microsoft.com/edge" target="_blank">' +
-                i18next.t("models.userData.edge") +
+                i18next.t("browsers.edge") +
                 "</a>"
         })
     });

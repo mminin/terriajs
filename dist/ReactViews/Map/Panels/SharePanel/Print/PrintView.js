@@ -1,16 +1,16 @@
-import React, { useRef, useState } from "react";
-import ReactDOM from "react-dom";
 import DOMPurify from "dompurify";
-import DistanceLegend from "../../../Legend/DistanceLegend";
-import { terriaTheme } from "../../../../StandardUserInterface/StandardTheme";
+import React, { useEffect, useRef, useState } from "react";
+import ReactDOM from "react-dom";
 import { StyleSheetManager, ThemeProvider } from "styled-components";
-import { useEffect } from "react";
-import PrintViewMap from "./PrintViewMap";
-import PrintWorkbench from "./PrintWorkbench";
-import PrintDatasets from "./PrintDatasets";
+import { terriaTheme } from "../../../../StandardUserInterface/StandardTheme";
+import { useViewState } from "../../../../StandardUserInterface/ViewStateContext";
+import DistanceLegend from "../../../Legend/DistanceLegend";
 import { buildShareLink, buildShortShareLink, canShorten } from "../BuildShareLink";
+import PrintDatasets from "./PrintDatasets";
 import PrintSource from "./PrintSource";
 import PrintViewButtons from "./PrintViewButtons";
+import PrintViewMap from "./PrintViewMap";
+import PrintWorkbench from "./PrintWorkbench";
 const PRINT_MAP_WIDTH = 1000;
 const styles = `
     .tjs-_base__list-reset {
@@ -93,7 +93,7 @@ const styles = `
 `;
 const mkStyle = (unsafeCSS) => {
     const style = document.createElement("style");
-    style.innerHTML = DOMPurify.sanitize(unsafeCSS);
+    style.innerHTML = DOMPurify.sanitize(unsafeCSS, {});
     return style;
 };
 export const downloadImg = (dataString, fileName = "map.png") => {
@@ -106,6 +106,7 @@ const getScale = (maybeElement) => maybeElement
     ? PRINT_MAP_WIDTH / maybeElement.offsetWidth
     : 1;
 const PrintView = (props) => {
+    const viewState = useViewState();
     const rootNode = useRef(document.createElement("main"));
     const [screenshot, setScreenshot] = useState(null);
     const [shareLink, setShareLink] = useState("");
@@ -116,29 +117,35 @@ const PrintView = (props) => {
         props.window.addEventListener("beforeunload", props.closeCallback);
     }, [props.window]);
     useEffect(() => {
-        setScreenshot(props.terria.currentViewer.captureScreenshot());
+        setScreenshot(viewState.terria.currentViewer.captureScreenshot());
     }, [props.window]);
     useEffect(() => {
-        canShorten(props.terria)
-            ? buildShortShareLink(props.terria, props.viewState, {
+        canShorten(viewState.terria)
+            ? buildShortShareLink(viewState.terria, viewState, {
                 includeStories: false
-            }).then(setShareLink)
-            : setShareLink(buildShareLink(props.terria, props.viewState, {
+            })
+                .then((url) => {
+                setShareLink(url);
+            })
+                .catch(() => buildShareLink(viewState.terria, viewState, {
+                includeStories: false
+            }))
+            : setShareLink(buildShareLink(viewState.terria, viewState, {
                 includeStories: false
             }));
-    }, [props.terria, props.viewState]);
+    }, [viewState.terria, viewState]);
     return ReactDOM.createPortal(React.createElement(StyleSheetManager, { target: props.window.document.head },
         React.createElement(ThemeProvider, { theme: terriaTheme },
             React.createElement(PrintViewButtons, { window: props.window, screenshot: screenshot }),
             React.createElement("section", { className: "mapSection" },
                 React.createElement("div", { className: "datasets" },
-                    React.createElement(PrintWorkbench, { workbench: props.terria.workbench })),
+                    React.createElement(PrintWorkbench, { workbench: viewState.terria.workbench })),
                 React.createElement("div", { className: "map" }, screenshot ? (React.createElement(PrintViewMap, { screenshot: screenshot },
-                    React.createElement(DistanceLegend, { terria: props.terria, scale: getScale(props.terria.currentViewer.getContainer()), isPrintMode: true }))) : (React.createElement("div", null, "Loading...")))),
+                    React.createElement(DistanceLegend, { terria: viewState.terria, scale: getScale(viewState.terria.currentViewer.getContainer()), isPrintMode: true }))) : (React.createElement("div", null, "Loading...")))),
             React.createElement("section", { className: "PrintView__source" }, shareLink && React.createElement(PrintSource, { link: shareLink })),
             React.createElement("section", null,
                 React.createElement("h2", null, "Datasets"),
-                React.createElement(PrintDatasets, { items: props.terria.workbench.items })))), rootNode.current);
+                React.createElement(PrintDatasets, { items: viewState.terria.workbench.items })))), rootNode.current);
 };
 export default PrintView;
 //# sourceMappingURL=PrintView.js.map

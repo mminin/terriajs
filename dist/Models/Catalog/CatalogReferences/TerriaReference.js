@@ -73,9 +73,9 @@ export default class TerriaReference extends UrlMixin(ReferenceMixin(CreateModel
                         typeof targetJson.isOpen === "boolean") {
                         target.setTrait(CommonStrata.definition, "isOpen", targetJson.isOpen);
                     }
-                    updateModelFromJson(target, CommonStrata.definition, targetJson).catchError(error => {
+                    updateModelFromJson(target, CommonStrata.definition, targetJson).catchError((error) => {
                         target.setTrait(CommonStrata.underride, "isExperiencingIssues", true);
-                        console.log(error.toError());
+                        error.log();
                     });
                     return target;
                 }
@@ -98,7 +98,7 @@ TerriaReference.type = "terria-reference";
 function findCatalogMemberJson(catalogMembers, path) {
     const member = path.reduce((group, id) => {
         if (Array.isArray(group === null || group === void 0 ? void 0 : group.members)) {
-            return group.members.find(m => (m === null || m === void 0 ? void 0 : m.id) === id);
+            return group.members.find((m) => (m === null || m === void 0 ? void 0 : m.id) === id);
         }
         else {
             return undefined;

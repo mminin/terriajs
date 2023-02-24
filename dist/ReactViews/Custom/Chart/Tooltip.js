@@ -44,7 +44,7 @@ let Tooltip = class Tooltip extends React.Component {
     get groups() {
         // momentLines and momentPoints are not shown in the tooltip body
         const tooltipItems = this.items.filter(({ chartItem }) => chartItem.type !== "momentLines" && chartItem.type !== "momentPoints");
-        return Object.entries(groupBy(tooltipItems, "chartItem.categoryName")).map(o => ({
+        return Object.entries(groupBy(tooltipItems, "chartItem.categoryName")).map((o) => ({
             name: o[0],
             items: o[1]
         }));

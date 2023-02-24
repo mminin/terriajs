@@ -40,7 +40,7 @@ export function parseOverrides(overrides) {
     }
     // Remove undefined properties
     if (overrides)
-        Object.keys(overrides).forEach(key => overrides[key] === undefined
+        Object.keys(overrides).forEach((key) => overrides[key] === undefined
             ? delete overrides[key]
             : null);
     return overrides !== null && overrides !== void 0 ? overrides : {};
@@ -70,7 +70,7 @@ export default class TerriaError {
         this.stack = ((_f = new Error().stack) !== null && _f !== void 0 ? _f : "")
             .split("\n")
             // Filter out some less useful lines in the stack trace
-            .filter(s => ["result.ts", "terriaerror.ts", "opendatasoft.apiclient.umd.js"].every(remove => !s.toLowerCase().includes(remove)))
+            .filter((s) => ["result.ts", "terriaerror.ts", "opendatasoft.apiclient.umd.js"].every((remove) => !s.toLowerCase().includes(remove)))
             .join("\n");
     }
     /**
@@ -142,7 +142,7 @@ export default class TerriaError {
      * `overrides` can be used to add more context to the combined `TerriaError`.
      */
     static combine(errors, overrides) {
-        const filteredErrors = errors.filter(e => isDefined(e));
+        const filteredErrors = errors.filter((e) => isDefined(e));
         if (filteredErrors.length === 0)
             return;
         // If only one error, just create parent error - this is so we don't get unnecessary levels of TerriaError created
@@ -151,7 +151,7 @@ export default class TerriaError {
         }
         // Find highest severity across errors (eg if one if `Error`, then the new TerriaError will also be `Error`)
         const severity = () => filteredErrors
-            .map(error => typeof error.severity === "function"
+            .map((error) => typeof error.severity === "function"
             ? error.severity()
             : error.severity)
             .includes(TerriaErrorSeverity.Error)
@@ -159,13 +159,13 @@ export default class TerriaError {
             : TerriaErrorSeverity.Warning;
         // overrideRaiseToUser will be true if at least one error includes overrideRaiseToUser = true
         // Otherwise, it will be undefined
-        let overrideRaiseToUser = filteredErrors.some(error => error.overrideRaiseToUser === true) ||
+        let overrideRaiseToUser = filteredErrors.some((error) => error.overrideRaiseToUser === true) ||
             undefined;
         // overrideRaiseToUser will be false if:
         // - NO errors includes overrideRaiseToUser = true
         // - and at least one error includes overrideRaiseToUser = false
         if (!isDefined(overrideRaiseToUser) &&
-            filteredErrors.some(error => error.overrideRaiseToUser === false)) {
+            filteredErrors.some((error) => error.overrideRaiseToUser === false)) {
             overrideRaiseToUser = false;
         }
         return new TerriaError({
@@ -203,7 +203,7 @@ export default class TerriaError {
     }
     /** Has any error in the error tree been raised to the user? */
     get raisedToUser() {
-        return this.flatten().find(error => error._raisedToUser) ? true : false;
+        return this.flatten().find((error) => error._raisedToUser) ? true : false;
     }
     /** Resolve error seveirty */
     get resolvedSeverity() {
@@ -215,7 +215,7 @@ export default class TerriaError {
     set raisedToUser(r) {
         this._raisedToUser = r;
         if (this.originalError) {
-            this.originalError.forEach(err => err instanceof TerriaError ? (err.raisedToUser = r) : null);
+            this.originalError.forEach((err) => err instanceof TerriaError ? (err.raisedToUser = r) : null);
         }
     }
     /** Print error to console */
@@ -257,7 +257,7 @@ export default class TerriaError {
         return filterOutUndefined([
             this,
             ...flatten(this.originalError
-                ? this.originalError.map(error => error instanceof TerriaError ? error.flatten() : [])
+                ? this.originalError.map((error) => error instanceof TerriaError ? error.flatten() : [])
                 : [])
         ]);
     }
@@ -270,20 +270,20 @@ export default class TerriaError {
     toError() {
         // indentation required per nesting when stringifying nested error messages
         const indentChar = "  ";
-        const buildNested = prop => (error, depth) => {
+        const buildNested = (prop) => (error, depth) => {
             if (!Array.isArray(error.originalError)) {
                 return;
             }
             const indent = indentChar.repeat(depth);
             const nestedMessage = error.originalError
-                .map(e => {
+                .map((e) => {
                 var _a, _b;
                 if (e instanceof TerriaError) {
                     // recursively build the message for nested errors
-                    return `${(_a = e[prop]) === null || _a === void 0 ? void 0 : _a.split("\n").map(s => indent + s).join("\n")}\n${buildNested(prop)(e, depth + 1)}`;
+                    return `${(_a = e[prop]) === null || _a === void 0 ? void 0 : _a.split("\n").map((s) => indent + s).join("\n")}\n${buildNested(prop)(e, depth + 1)}`;
                 }
                 else {
-                    return `${(_b = e[prop]) === null || _b === void 0 ? void 0 : _b.split("\n").map(s => indent + s).join("\n")}`;
+                    return `${(_b = e[prop]) === null || _b === void 0 ? void 0 : _b.split("\n").map((s) => indent + s).join("\n")}`;
                 }
             })
                 .join("\n");
@@ -313,10 +313,10 @@ export default class TerriaError {
             }
             const indent = indentChar.repeat(depth);
             const nestedMessage = error.originalError
-                .map(e => {
+                .map((e) => {
                 const log = `${e.message}\n${e.stack}`
                     .split("\n")
-                    .map(s => indent + s)
+                    .map((s) => indent + s)
                     .join("\n");
                 if (e instanceof TerriaError) {
                     // recursively build the message for nested errors
@@ -332,11 +332,14 @@ export default class TerriaError {
         const nestedMessage = buildNested(this, 1);
         return `${this.title}: ${this.highestImportanceError.message}\n${nestedMessage}`;
     }
+    raiseError(terria, errorOverrides, forceRaiseToUser) {
+        terria.raiseErrorToUser(this, errorOverrides, forceRaiseToUser);
+    }
 }
 __decorate([
     observable
 ], TerriaError.prototype, "showDetails", void 0);
-/** Wrap up network requets error with user-friendly message */
+/** Wrap up network request error with user-friendly message */
 export function networkRequestError(error) {
     // Combine network error with "networkRequestMessageDetailed" - this contains extra info about what could cause network error
     return TerriaError.combine([

@@ -10,10 +10,15 @@ import { Ref } from "react";
 import defined from "terriajs-cesium/Source/Core/defined";
 import CesiumEvent from "terriajs-cesium/Source/Core/Event";
 import addedByUser from "../Core/addedByUser";
-import { Category, HelpAction } from "../Core/AnalyticEvents/analyticEvents";
+import {
+  Category,
+  HelpAction,
+  StoryAction
+} from "../Core/AnalyticEvents/analyticEvents";
 import Result from "../Core/Result";
 import triggerResize from "../Core/triggerResize";
-import PickedFeatures from "../Map/PickedFeatures";
+//import PickedFeatures from "../Map/PickedFeatures";
+import PickedFeatures from "../Map/PickedFeatures/PickedFeatures";
 import CatalogMemberMixin, { getName } from "../ModelMixins/CatalogMemberMixin";
 import GroupMixin from "../ModelMixins/GroupMixin";
 import MappableMixin from "../ModelMixins/MappableMixin";
@@ -21,8 +26,13 @@ import ReferenceMixin from "../ModelMixins/ReferenceMixin";
 import CommonStrata from "../Models/Definition/CommonStrata";
 import { BaseModel } from "../Models/Definition/Model";
 import getAncestors from "../Models/getAncestors";
+import { SelectableDimension } from "../Models/SelectableDimensions/SelectableDimensions";
 import Terria from "../Models/Terria";
+import { ViewingControl } from "../Models/ViewingControls";
+
 import { SATELLITE_HELP_PROMPT_KEY } from "../ReactViews/HelpScreens/SatelliteHelpPrompt";
+import { animationDuration } from "../ReactViews/StandardUserInterface/StandardUserInterface";
+import { FeatureInfoPanelButtonGenerator } from "../ViewModels/FeatureInfoPanel";
 import {
   defaultTourPoints,
   RelativePosition,
@@ -76,6 +86,9 @@ export default class ViewState {
   @observable mobileMenuVisible: boolean = false;
   @observable explorerPanelAnimating: boolean = false;
   @observable topElement: string = "FeatureInfo";
+
+  @observable portals: Map<string, HTMLElement | null> = new Map();
+
   @observable lastUploadedFiles: any[] = [];
   @observable storyBuilderShown: boolean = false;
 
@@ -98,25 +111,63 @@ export default class ViewState {
 
   @observable printWindow: Window | null = null;
 
+  /**
+   * Toggles ActionBar visibility. Do not set manually, it is
+   * automatically set when rendering <ActionBar>
+   */
+  @observable isActionBarVisible = false;
+
+  /**
+   * A global list of functions that generate a {@link ViewingControl} option
+   * for the given catalog item instance.  This is useful for plugins to extend
+   * the viewing control menu across catalog items.
+   *
+   * Use {@link ViewingControlsMenu.addMenuItem} instead of updating directly.
+   */
+  @observable
+  readonly globalViewingControlOptions: ((
+    item: CatalogMemberMixin.Instance
+  ) => ViewingControl | undefined)[] = [];
+
+  /**
+   * A global list of hooks for generating input controls for items in the workbench.
+   * The hooks in this list gets called once for each item in shown in the workbench.
+   * This is a mechanism for plugins to extend workbench input controls by adding new ones.
+   *
+   * Use {@link WorkbenchItem.Inputs.addInput} instead of updating directly.
+   */
+  @observable
+  readonly workbenchItemInputGenerators: ((
+    item: BaseModel
+  ) => SelectableDimension | undefined)[] = [];
+
+  /**
+   * A global list of generator functions for showing buttons in feature info panel.
+   * Use {@link FeatureInfoPanelButton.addButton} instead of updating directly.
+   */
+  @observable
+  readonly featureInfoPanelButtonGenerators: FeatureInfoPanelButtonGenerator[] =
+    [];
+
   /* SPECTRAL PROFILE */
   @observable spectralProfileActive: boolean = false;
   @observable spectralLocationSelected: boolean = false;
   @observable currentSpectralImage: string = "";
   @observable spectralAtomic: boolean = false;
 
-  @action setSpectralProfileActive(bool: boolean){
+  @action setSpectralProfileActive(bool: boolean) {
     this.spectralProfileActive = bool;
   }
 
-  @action setSpectralLocationSelected(bool: boolean){
+  @action setSpectralLocationSelected(bool: boolean) {
     this.spectralLocationSelected = bool;
   }
 
-  @action setCurrentSpectralImage(str: string){
+  @action setCurrentSpectralImage(str: string) {
     this.currentSpectralImage = str;
   }
 
-  @action setSpectralAtomic(bool: boolean){
+  @action setSpectralAtomic(bool: boolean) {
     // console.log("setting atomic to: ", bool);
     this.spectralAtomic = bool;
   }
@@ -127,62 +178,62 @@ export default class ViewState {
     lon: ""
   };
 
-  @action setSpectralDataObject(id:string, latitude:string, longitude:string){
+  @action setSpectralDataObject(
+    id: string,
+    latitude: string,
+    longitude: string
+  ) {
     this.spectralDataObject = {
-      image_id:id,
-      lat:latitude,
-      lon:longitude
+      image_id: id,
+      lat: latitude,
+      lon: longitude
     };
   }
 
   @observable spectralX: number[] = [];
 
-  @action setSpectralX(arr: number[]){
+  @action setSpectralX(arr: number[]) {
     this.spectralX = [...arr];
   }
 
   @observable spectralY: number[] = [];
 
-  @action setSpectralY(arr: number[]){
+  @action setSpectralY(arr: number[]) {
     this.spectralY = arr;
   }
 
   @observable currentSpectralArray: any[] = [];
 
-  @action 
-  addObjectToSpectralArray(obj: object){
+  @action
+  addObjectToSpectralArray(obj: object) {
     this.currentSpectralArray.push(obj);
   }
 
-  @action 
-  nullifyArray(){
-     this.currentSpectralArray.length = 0;
+  @action
+  nullifyArray() {
+    this.currentSpectralArray.length = 0;
   }
 
   @computed
-  get getSpectralArrayObject(){
-    return (
-      this.currentSpectralArray
-    );
+  get getSpectralArrayObject() {
+    return this.currentSpectralArray;
   }
 
   @computed
-  get getSpectralArrayLength(){
-    return (
-      this.currentSpectralArray.length
-    );
+  get getSpectralArrayLength() {
+    return this.currentSpectralArray.length;
   }
 
   @observable spectralCounter: number = 0;
 
   @action
-  incrementSpectralCounter(){
+  incrementSpectralCounter() {
     this.spectralCounter += 1;
     console.log("spectral counter ", this.spectralCounter);
   }
 
   @action
-  nullifySpectralCounter(){
+  nullifySpectralCounter() {
     this.spectralCounter = 0;
     console.log("spectral counter ", this.spectralCounter);
   }
@@ -223,6 +274,11 @@ export default class ViewState {
     this.currentTrainerStepIndex = index;
   }
 
+  @action
+  setActionBarVisible(visible: boolean) {
+    this.isActionBarVisible = visible;
+  }
+
   /**
    * Bottom dock state & action
    */
@@ -234,7 +290,11 @@ export default class ViewState {
     }
   }
 
-  @observable workbenchWithOpenControls: string | undefined = undefined;
+  /**
+   * ID of the workbench item whose ViewingControls menu is currently open.
+   */
+  @observable
+  workbenchItemWithOpenControls: string | undefined = undefined;
 
   errorProvider: any | null = null;
 
@@ -294,7 +354,7 @@ export default class ViewState {
         return a.priority - b.priority;
       })
       .filter(
-        tourPoint => (<any>this.appRefs).get(tourPoint.appRefName)?.current
+        (tourPoint) => (<any>this.appRefs).get(tourPoint.appRefName)?.current
       );
   }
   @action
@@ -379,10 +439,22 @@ export default class ViewState {
   @observable feedbackFormIsVisible: boolean = false;
 
   /**
+   * Gets or sets a value indicating whether the catalog's modal share panel
+   * is currently visible.
+   */
+  @observable shareModalIsVisible: boolean = false; // Small share modal inside StoryEditor
+
+  /**
    * Gets or sets a value indicating whether the catalog's model share panel
    * is currently visible.
    */
   @observable shareModelIsVisible: boolean = false;
+
+  /**
+   * Used to indicate that the Share Panel should stay open even if it loses focus.
+   * This is used when clicking a help link in the Share Panel - The Help Panel will open, and when it is closed, the Share Panel should still be visible for the user to continue their task.
+   */
+  @observable retainSharePanel: boolean = false; // The large share panel accessed via Share/Print button
 
   /**
    * The currently open tool
@@ -432,7 +504,7 @@ export default class ViewState {
     // of the original camera set from config once they acknowdge
     this._disclaimerVisibleSubscription = reaction(
       () => this.disclaimerVisible,
-      disclaimerVisible => {
+      (disclaimerVisible) => {
         if (disclaimerVisible) {
           this.isMapFullScreen = true;
         } else if (!disclaimerVisible && this.isMapFullScreen) {
@@ -529,7 +601,7 @@ export default class ViewState {
 
     this._storyBeforeUnloadSubscription = reaction(
       () => this.terria.stories.length > 0,
-      hasScenes => {
+      (hasScenes) => {
         if (hasScenes) {
           window.addEventListener("beforeunload", handleWindowClose);
         } else {
@@ -567,7 +639,7 @@ export default class ViewState {
 
     // (wing): much better to do by listening for transitionend, but will leave
     // this as is until that's in place
-    setTimeout(function() {
+    setTimeout(function () {
       // should we do this here in viewstate? it pulls in browser dependent things,
       // and (defensively) calls it.
       // but only way to ensure we trigger this resize, by standardising fullscreen
@@ -713,6 +785,18 @@ export default class ViewState {
   }
 
   @action
+  openHelpPanelItemFromSharePanel(
+    evt: React.MouseEvent<HTMLDivElement>,
+    itemName: string
+  ) {
+    evt.preventDefault();
+    evt.stopPropagation();
+    this.setRetainSharePanel(true);
+    this.showHelpPanel();
+    this.selectHelpMenuItem(itemName);
+  }
+
+  @action
   selectHelpMenuItem(key: string) {
     this.selectedHelpMenuItem = key;
     this.helpPanelExpanded = true;
@@ -721,6 +805,11 @@ export default class ViewState {
   @action
   hideHelpPanel() {
     this.showHelpMenu = false;
+  }
+
+  @action
+  setRetainSharePanel(retain: boolean) {
+    this.retainSharePanel = retain;
   }
 
   @action
@@ -817,6 +906,20 @@ export default class ViewState {
     this.mobileMenuVisible = !this.mobileMenuVisible;
   }
 
+  @action
+  runStories() {
+    this.storyBuilderShown = false;
+    this.storyShown = true;
+
+    setTimeout(function () {
+      triggerResize();
+    }, animationDuration || 1);
+
+    this.terria.currentViewer.notifyRepaintRequired();
+
+    this.terria.analytics?.logEvent(Category.story, StoryAction.runStory);
+  }
+
   @computed
   get breadcrumbsShown() {
     return (
@@ -852,9 +955,19 @@ export default class ViewState {
   }
 }
 
-interface Tool {
+/* interface Tool {
   toolName: string;
   getToolComponent: () => React.ComponentType | Promise<React.ComponentType>;
+
+  showCloseButton: boolean;
+  params?: any;
+} */
+
+interface Tool {
+  toolName: string;
+  getToolComponent: () =>
+    | React.ComponentType<any>
+    | Promise<React.ComponentType<any>>;
 
   showCloseButton: boolean;
   params?: any;

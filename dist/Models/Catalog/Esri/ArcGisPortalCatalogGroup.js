@@ -99,7 +99,8 @@ export class ArcGisPortalStratum extends LoadableStratum(ArcGisPortalCatalogGrou
                 }
                 else if (portalItemsServerResponse !== undefined &&
                     groupResponse !== undefined) {
-                    portalItemsServerResponse.results = portalItemsServerResponse.results.concat(groupResponse.results);
+                    portalItemsServerResponse.results =
+                        portalItemsServerResponse.results.concat(groupResponse.results);
                 }
             }
         }
@@ -119,7 +120,8 @@ export class ArcGisPortalStratum extends LoadableStratum(ArcGisPortalCatalogGrou
                 portalItemsServerResponse !== undefined) {
                 const categories = new Map();
                 portalItemsServerResponse.results.forEach(function (item) {
-                    item.categories.forEach(function (category, index) {
+                    item.categories.forEach(function (rawCategory, index) {
+                        const category = rawCategory.trim();
                         if (index === 0) {
                             item.groupId = category;
                         }
@@ -150,7 +152,7 @@ export class ArcGisPortalStratum extends LoadableStratum(ArcGisPortalCatalogGrou
     get members() {
         if (this.filteredGroups.length > 0) {
             const groupIds = [];
-            this.filteredGroups.forEach(g => {
+            this.filteredGroups.forEach((g) => {
                 if (this._catalogGroup.hideEmptyGroups && g.members.length > 0) {
                     groupIds.push(g.uniqueId);
                 }
@@ -161,7 +163,7 @@ export class ArcGisPortalStratum extends LoadableStratum(ArcGisPortalCatalogGrou
             return groupIds;
         }
         // Otherwise return the id's of all the resources of all the filtered datasets
-        return this.filteredDatasets.map(ds => {
+        return this.filteredDatasets.map((ds) => {
             return this._catalogGroup.uniqueId + "/" + ds.id;
         }, this);
     }
@@ -173,7 +175,7 @@ export class ArcGisPortalStratum extends LoadableStratum(ArcGisPortalCatalogGrou
             return [];
         if (this._catalogGroup.excludeMembers !== undefined) {
             const bl = this._catalogGroup.excludeMembers;
-            return this.datasets.filter(ds => bl.indexOf(ds.title) === -1);
+            return this.datasets.filter((ds) => bl.indexOf(ds.title) === -1);
         }
         return this.datasets;
     }
@@ -202,7 +204,7 @@ export class ArcGisPortalStratum extends LoadableStratum(ArcGisPortalCatalogGrou
             return [];
         if (this._catalogGroup.excludeMembers !== undefined) {
             const bl = this._catalogGroup.excludeMembers;
-            return this.groups.filter(group => {
+            return this.groups.filter((group) => {
                 if (group.name === undefined)
                     return false;
                 else
@@ -212,7 +214,7 @@ export class ArcGisPortalStratum extends LoadableStratum(ArcGisPortalCatalogGrou
         return this.groups;
     }
     createMembersFromDatasets() {
-        this.filteredDatasets.forEach(dataset => {
+        this.filteredDatasets.forEach((dataset) => {
             this.createMemberFromDataset(dataset);
         });
     }
@@ -290,7 +292,7 @@ export default class ArcGisPortalCatalogGroup extends UrlMixin(GroupMixin(Catalo
     forceLoadMetadata() {
         const portalStratum = (this.strata.get(ArcGisPortalStratum.stratumName));
         if (!portalStratum) {
-            return ArcGisPortalStratum.load(this).then(stratum => {
+            return ArcGisPortalStratum.load(this).then((stratum) => {
                 if (stratum === undefined)
                     return;
                 runInAction(() => {

@@ -4,54 +4,14 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
-import ModelTraits from "../ModelTraits";
-import objectTrait from "../Decorators/objectTrait";
-import primitiveTrait from "../Decorators/primitiveTrait";
 import anyTrait from "../Decorators/anyTrait";
-class FeatureInfoFormatTraits extends ModelTraits {
+import primitiveTrait from "../Decorators/primitiveTrait";
+import ModelTraits from "../ModelTraits";
+export class FeatureInfoTemplateTraits extends ModelTraits {
     constructor() {
         super(...arguments);
-        this.maximumFractionDigits = 20;
-        this.minimumFractionDigits = 0;
-        this.useGrouping = true;
+        this.showFeatureInfoDownloadWithTemplate = false;
     }
-}
-__decorate([
-    primitiveTrait({
-        type: "number",
-        name: "Maximum Fraction Digits",
-        description: "To reduce the number of decimal places to a maximum of X digits."
-    })
-], FeatureInfoFormatTraits.prototype, "maximumFractionDigits", void 0);
-__decorate([
-    primitiveTrait({
-        type: "number",
-        name: "Minimum Fraction Digits",
-        description: "To increase the number of decimal places to a minimum of X digits."
-    })
-], FeatureInfoFormatTraits.prototype, "minimumFractionDigits", void 0);
-__decorate([
-    primitiveTrait({
-        type: "boolean",
-        name: "Use grouping",
-        description: "To show thousands separators"
-    })
-], FeatureInfoFormatTraits.prototype, "useGrouping", void 0);
-__decorate([
-    primitiveTrait({
-        type: "string",
-        name: "Type",
-        description: "Set to 'datetime' if you want to format as a date time"
-    })
-], FeatureInfoFormatTraits.prototype, "type", void 0);
-__decorate([
-    primitiveTrait({
-        type: "string",
-        name: "Datetime format",
-        description: "A date format style using the npm dateformat package, e.g. 'dd-mm-yyyy HH:MM:ss' or 'isoDateTime'"
-    })
-], FeatureInfoFormatTraits.prototype, "format", void 0);
-export class FeatureInfoTemplateTraits extends ModelTraits {
 }
 __decorate([
     primitiveTrait({
@@ -69,6 +29,14 @@ __decorate([
     })
 ], FeatureInfoTemplateTraits.prototype, "template", void 0);
 __decorate([
+    primitiveTrait({
+        type: "boolean",
+        name: "Show feature info download",
+        description: "Show feature info download **if** a `template` has been provided. If no `template` is provided, then download will always show.",
+        isNullable: false
+    })
+], FeatureInfoTemplateTraits.prototype, "showFeatureInfoDownloadWithTemplate", void 0);
+__decorate([
     anyTrait({
         name: "Partials",
         description: "An object, mapping partial names to a template string. Defines the partials used in Template."
@@ -80,27 +48,30 @@ __decorate([
         description: "An object, mapping field names to formatting options."
     })
 ], FeatureInfoTemplateTraits.prototype, "formats", void 0);
-export default class FeatureInfoTraits extends ModelTraits {
+/** Note: MappableTraits has the following:
+ * - featureInfoTemplate
+ * - showStringIfPropertyValueIsNull
+ *
+ * FeatureInfoUrlTemplateTraits is used by FeatureInfoUrlTemplateMixin
+ */
+export default class FeatureInfoUrlTemplateTraits extends ModelTraits {
+    constructor() {
+        super(...arguments);
+        this.maxRequests = 10;
+    }
 }
-__decorate([
-    objectTrait({
-        type: FeatureInfoTemplateTraits,
-        name: "Feature info template",
-        description: "A template object for formatting content in feature info panel"
-    })
-], FeatureInfoTraits.prototype, "featureInfoTemplate", void 0);
 __decorate([
     primitiveTrait({
         type: "string",
         name: "Feature Info Url template",
         description: "A template URL string for fetching feature info. Template values of the form {x} will be replaced with corresponding property values from the picked feature."
     })
-], FeatureInfoTraits.prototype, "featureInfoUrlTemplate", void 0);
+], FeatureInfoUrlTemplateTraits.prototype, "featureInfoUrlTemplate", void 0);
 __decorate([
     primitiveTrait({
-        type: "string",
-        name: "Show string if property value is null",
-        description: "If the value of a property is null or undefined, show the specified string as the value of the property. Otherwise, the property name will not be listed at all."
+        type: "number",
+        name: "Max feature request",
+        description: "Max number of feature info requests to send to API url. Keep this number small to avoid sending to many requests to server (default 10)."
     })
-], FeatureInfoTraits.prototype, "showStringIfPropertyValueIsNull", void 0);
+], FeatureInfoUrlTemplateTraits.prototype, "maxRequests", void 0);
 //# sourceMappingURL=FeatureInfoTraits.js.map

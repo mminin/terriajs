@@ -64,7 +64,7 @@ const CleanDropdownPanel = createReactClass({
           // mix of scss+styled-components atm
           .tjs-sc-InnerPanelCloseButton {
             svg:not(:hover):not(:focus) {
-              fill: ${p => p.theme.textLight};
+              fill: ${(p) => p.theme.textLight};
             }
             svg {
               height: 12px;

@@ -51,8 +51,7 @@ const SideBarDatasetSearchResults = observer(createReactClass({
                 React.createElement("span", null, t("search.data")),
                 React.createElement(Icon, { glyph: this.state.isOpen ? Icon.GLYPHS.opened : Icon.GLYPHS.closed })),
             React.createElement("ul", { className: Styles.items }, this.props.viewState.searchState.catalogSearchProvider && (React.createElement(SearchResult, { clickAction: this.searchInDataCatalog, icon: "data", name: t("search.search", {
-                    searchText: this.props.viewState.searchState
-                        .locationSearchText
+                    searchText: this.props.viewState.searchState.locationSearchText
                 }) })))));
     }
 }));

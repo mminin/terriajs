@@ -7,15 +7,19 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 import primitiveTrait from "../Decorators/primitiveTrait";
 import mixTraits from "../mixTraits";
 import CatalogMemberTraits from "./CatalogMemberTraits";
+import { GeoJsonTraits } from "./GeoJsonTraits";
 import LegendOwnerTraits from "./LegendOwnerTraits";
 import MappableTraits from "./MappableTraits";
 import UrlTraits from "./UrlTraits";
-export default class ArcGisFeatureServerCatalogItemTraits extends mixTraits(UrlTraits, MappableTraits, CatalogMemberTraits, LegendOwnerTraits) {
+export default class ArcGisFeatureServerCatalogItemTraits extends mixTraits(UrlTraits, MappableTraits, CatalogMemberTraits, LegendOwnerTraits, GeoJsonTraits) {
     constructor() {
         super(...arguments);
         this.clampToGround = true;
         this.useStyleInformationFromService = true;
         this.layerDef = "1=1";
+        this.where = "1=1";
+        this.maxFeatures = 5000;
+        this.featuresPerRequest = 1000;
     }
 }
 __decorate([
@@ -36,7 +40,36 @@ __decorate([
     primitiveTrait({
         type: "string",
         name: "layerDef",
-        description: "The 'layerDef' string to pass to the server when requesting geometry."
+        description: "DEPRECATED, use `where` instead. The 'layerDef' string to pass to the server when requesting geometry."
     })
 ], ArcGisFeatureServerCatalogItemTraits.prototype, "layerDef", void 0);
+__decorate([
+    primitiveTrait({
+        type: "string",
+        name: "Where clause",
+        description: "The 'where' string to pass to the server when requesting geometry."
+    })
+], ArcGisFeatureServerCatalogItemTraits.prototype, "where", void 0);
+__decorate([
+    primitiveTrait({
+        type: "number",
+        name: "Maximum features",
+        description: "The maximum number of features to be retrieved from the feature service."
+    })
+], ArcGisFeatureServerCatalogItemTraits.prototype, "maxFeatures", void 0);
+__decorate([
+    primitiveTrait({
+        type: "number",
+        name: "Features per request",
+        description: "The number of features to be retrieved from the feature service in each request. This should be equal to the " +
+            "maxRecordCount specified by the server."
+    })
+], ArcGisFeatureServerCatalogItemTraits.prototype, "featuresPerRequest", void 0);
+__decorate([
+    primitiveTrait({
+        type: "boolean",
+        name: "Supports pagination",
+        description: "Whether this feature service supports pagination. By default, this will be inferred from the server's response."
+    })
+], ArcGisFeatureServerCatalogItemTraits.prototype, "supportsPagination", void 0);
 //# sourceMappingURL=ArcGisFeatureServerCatalogItemTraits.js.map

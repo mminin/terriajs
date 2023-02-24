@@ -58,6 +58,7 @@ const StorySharePanel = createReactClass({
             React.createElement(If, { condition: this.isOpen() },
                 React.createElement("div", { css: `
               margin-top: 35px;
+              font-family: ${(p) => p.theme.fontBase};
             ` },
                     React.createElement(InnerPanel, { showDropdownAsModal: this.props.showDropdownAsModal, modalWidth: this.props.modalWidth, onDismissed: this.onClose, innerRef: this.onInnerMounted, doNotCloseFlag: this.getDoNotCloseFlag(), theme: this.props.theme, caretOffset: this.state.caretOffset, dropdownOffset: this.state.dropdownOffset }, this.props.children)))));
     }

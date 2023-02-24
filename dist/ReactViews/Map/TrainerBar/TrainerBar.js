@@ -1,31 +1,31 @@
 import { observer } from "mobx-react";
 import React from "react";
-import { withTranslation } from "react-i18next";
+import { Translation, withTranslation } from "react-i18next";
 import styled, { withTheme } from "styled-components";
 import { PaneMode } from "../../../ReactViewModels/defaultHelpContent";
-import Select from "../../../Styled/Select";
-import measureElement from "../../HOCs/measureElement";
-import { GLYPHS, StyledIcon } from "../../../Styled/Icon";
-import Text from "../../../Styled/Text";
 import Box from "../../../Styled/Box";
 import Button, { RawButton } from "../../../Styled/Button";
+import { GLYPHS, StyledIcon } from "../../../Styled/Icon";
+import Select from "../../../Styled/Select";
 import Spacing from "../../../Styled/Spacing";
-import { useTranslationIfExists } from "./../../../Language/languageHelpers";
-const StyledHtml = require("../../Map/Panels/HelpPanel/StyledHtml")
-    .default;
+import Text, { TextSpan } from "../../../Styled/Text";
+import measureElement from "../../HOCs/measureElement";
+import { withViewState } from "../../StandardUserInterface/ViewStateContext";
+import { applyTranslationIfExists } from "./../../../Language/languageHelpers";
+const StyledHtml = require("../../Map/Panels/HelpPanel/StyledHtml").default;
 const CloseButton = require("../../Generic/CloseButton").default;
 const TrainerBarWrapper = styled(Box) `
   top: 0;
-  left: ${p => (p.isMapFullScreen ? 0 : Number(p.theme.workbenchWidth))}px;
-  z-index: ${p => Number(p.theme.frontComponentZIndex) + 100};
+  left: ${(p) => (p.isMapFullScreen ? 0 : Number(p.theme.workbenchWidth))}px;
+  z-index: ${(p) => Number(p.theme.frontComponentZIndex) + 100};
 `;
 // Help with discoverability
 const BoxTrainerExpandedSteps = styled(Box) ``;
 const getSelectedTrainerFromHelpContent = (viewState, helpContent) => {
     const selected = viewState.selectedTrainerItem;
-    const found = helpContent.find(item => item.itemName === selected);
+    const found = helpContent.find((item) => item.itemName === selected);
     // Try and find the item that we selected, otherwise find the first trainer pane
-    return found || helpContent.find(item => item.paneMode === PaneMode.trainer);
+    return (found || helpContent.find((item) => item.paneMode === PaneMode.trainer));
 };
 // Ripped from StyledHtml.jsx
 const Numbers = styled(Text) `
@@ -33,7 +33,7 @@ const Numbers = styled(Text) `
   height: 22px;
   line-height: 22px;
   border-radius: 50%;
-  background-color: ${props => props.theme.textLight};
+  background-color: ${(props) => props.theme.textLight};
 `;
 const StepText = styled(Text).attrs({}) `
   ol,
@@ -58,7 +58,7 @@ const renderStep = (step, number, viewState, options = {
             React.createElement(Numbers, { textDarker: true, textAlignCenter: true, darkBg: true }, number),
             React.createElement(Spacing, { right: 3 })),
         React.createElement(Box, { column: true },
-            React.createElement(Text, { textLight: true, extraExtraLarge: true, semiBold: true }, useTranslationIfExists(step.title)),
+            React.createElement(Translation, null, (t, { i18n }) => (React.createElement(Text, { textLight: true, extraExtraLarge: true, semiBold: true }, applyTranslationIfExists(step.title, i18n)))),
             options.renderDescription && (step === null || step === void 0 ? void 0 : step.markdownDescription) && (React.createElement(React.Fragment, null,
                 React.createElement(Spacing, { bottom: options.comfortable ? 2 : 1 }),
                 React.createElement(StepText, { medium: true, textLightDimmed: true },
@@ -96,7 +96,7 @@ class StepAccordionRaw extends React.Component {
                     React.createElement(RawButton, { onClick: () => setIsShowingAllSteps(!isShowingAllSteps), title: isShowingAllSteps
                             ? t("trainer.hideAllSteps")
                             : t("trainer.showAllSteps") },
-                        React.createElement(Text, { medium: true, primary: true, isLink: true, textAlignLeft: true }, isShowingAllSteps
+                        React.createElement(TextSpan, { medium: true, primary: true, isLink: true, textAlignLeft: true }, isShowingAllSteps
                             ? t("trainer.hideAllSteps")
                             : t("trainer.showAllSteps")))))
             }))),
@@ -125,9 +125,10 @@ class StepAccordionRaw extends React.Component {
                         React.createElement(StyledHtml, { viewState: viewState, styledTextProps: { textDark: false, textLightDimmed: true }, markdown: selectedTrainer.footnote })))) : (React.createElement(Spacing, { bottom: 3 }))))));
     }
 }
-const StepAccordion = measureElement(StepAccordionRaw);
+const StepAccordion = withTranslation()(withViewState(measureElement(StepAccordionRaw)));
 export const TrainerBar = observer((props) => {
-    const { t, terria, theme, viewState } = props;
+    const { i18n, t, theme, viewState } = props;
+    const terria = viewState.terria;
     const { helpContent } = terria.configParameters;
     // All these null guards are because we are rendering based on nested
     // map-owner defined (helpContent)content which could be malformed
@@ -163,8 +164,8 @@ export const TrainerBar = observer((props) => {
                 // without minimising select click target
                 color: transparent;
               }
-            `, paddingForLeftIcon: "45px", leftIcon: () => (React.createElement(StyledIcon, { css: "padding-left:15px;", light: true, styledWidth: "21px", glyph: GLYPHS.oneTwoThree })), onChange: (e) => viewState.setCurrentTrainerItemIndex(Number(e.target.value)), value: viewState.currentTrainerItemIndex }, selectedTrainerItems.map((item, index) => (React.createElement("option", { key: item.title, value: index }, useTranslationIfExists(item.title)))))),
-            React.createElement(StepAccordion, { viewState: viewState, selectedTrainerSteps: selectedTrainerSteps, isShowingAllSteps: viewState.trainerBarShowingAllSteps, setIsShowingAllSteps: (bool) => viewState.setTrainerBarShowingAllSteps(bool), isExpanded: viewState.trainerBarExpanded, setIsExpanded: (bool) => viewState.setTrainerBarExpanded(bool), selectedTrainer: selectedTrainerItem, theme: theme, t: t }),
+            `, paddingForLeftIcon: "45px", leftIcon: () => (React.createElement(StyledIcon, { css: "padding-left:15px;", light: true, styledWidth: "21px", glyph: GLYPHS.oneTwoThree })), onChange: (e) => viewState.setCurrentTrainerItemIndex(Number(e.target.value)), value: viewState.currentTrainerItemIndex }, selectedTrainerItems.map((item, index) => (React.createElement("option", { key: item.title, value: index }, applyTranslationIfExists(item.title, i18n)))))),
+            React.createElement(StepAccordion, { selectedTrainerSteps: selectedTrainerSteps, isShowingAllSteps: viewState.trainerBarShowingAllSteps, setIsShowingAllSteps: (bool) => viewState.setTrainerBarShowingAllSteps(bool), isExpanded: viewState.trainerBarExpanded, setIsExpanded: (bool) => viewState.setTrainerBarExpanded(bool), selectedTrainer: selectedTrainerItem, theme: theme }),
             React.createElement(Spacing, { right: 4 }),
             React.createElement(Box, null,
                 React.createElement(Button, { secondary: true, shortMinHeight: true, css: `
@@ -190,5 +191,5 @@ export const TrainerBar = observer((props) => {
                         color: theme.textLight, onClick: () => viewState.setTrainerBarVisible(false) })),
                 React.createElement(Spacing, { right: 6 })))));
 });
-export default withTranslation()(withTheme(TrainerBar));
+export default withTranslation()(withViewState(withTheme(TrainerBar)));
 //# sourceMappingURL=TrainerBar.js.map

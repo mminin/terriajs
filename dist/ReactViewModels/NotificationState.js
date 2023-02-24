@@ -17,7 +17,7 @@ export default class NotificationState {
     }
     addNotificationToQueue(notification) {
         var _a;
-        const alreadyQueued = this.notifications.filter(item => item.title === notification.title &&
+        const alreadyQueued = this.notifications.filter((item) => item.title === notification.title &&
             item.message === notification.message).length !== 0;
         const keyNotSeenBefore = notification.key === undefined ||
             !this.alreadyNotifiedKeys.has(notification.key);
@@ -37,7 +37,7 @@ export default class NotificationState {
         (removed === null || removed === void 0 ? void 0 : removed.onDismiss) && removed.onDismiss();
         // Remove all ignored notifications
         // This is needed here as the action of dismissing the current notification may change "ignore" status of notifications in stack
-        this.notifications = this.notifications.filter(n => { var _a; return !(typeof n.ignore === "function" ? n.ignore() : (_a = n.ignore) !== null && _a !== void 0 ? _a : false); });
+        this.notifications = this.notifications.filter((n) => { var _a; return !(typeof n.ignore === "function" ? n.ignore() : (_a = n.ignore) !== null && _a !== void 0 ? _a : false); });
         return removed;
     }
     get currentNotification() {

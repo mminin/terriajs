@@ -24,7 +24,7 @@ export default class CatalogIndexReference extends ReferenceMixin(CreateModel(Ca
         return CatalogIndexReference.type;
     }
     async forceLoadReference(previousTarget) {
-        var _a, _b, _c, _d;
+        var _a, _b, _c;
         if (this.uniqueId === undefined) {
             return;
         }
@@ -38,7 +38,7 @@ export default class CatalogIndexReference extends ReferenceMixin(CreateModel(Ca
         // Get full list of containers by recursively searching for parent models
         const findContainers = (model) => [
             ...model.memberKnownContainerUniqueIds,
-            ...flatten(filterOutUndefined(model.memberKnownContainerUniqueIds.map(parentId => {
+            ...flatten(filterOutUndefined(model.memberKnownContainerUniqueIds.map((parentId) => {
                 var _a, _b;
                 const parent = (_b = (_a = model.terria.catalogIndex) === null || _a === void 0 ? void 0 : _a.models) === null || _b === void 0 ? void 0 : _b.get(parentId);
                 if (parent) {
@@ -70,8 +70,15 @@ export default class CatalogIndexReference extends ReferenceMixin(CreateModel(Ca
             // member.sourceReference = target.sourceReference
             return member;
         }
+        const parentErrorMessage = new TerriaError({
+            title: `Failed to find dataset "${(_b = this.name) !== null && _b !== void 0 ? _b : this.uniqueId}"`,
+            message: {
+                key: "core.terriaError.networkRequestMessage"
+            },
+            importance: 1
+        });
         // No member exists - throw error
-        throw (_c = TerriaError.combine(errors, `Failed to find member ${(_b = this.name) !== null && _b !== void 0 ? _b : this.uniqueId}`)) !== null && _c !== void 0 ? _c : TerriaError.from(`Failed to find member ${(_d = this.name) !== null && _d !== void 0 ? _d : this.uniqueId}`);
+        throw (_c = TerriaError.combine(errors, parentErrorMessage)) !== null && _c !== void 0 ? _c : parentErrorMessage;
     }
 }
 CatalogIndexReference.type = "catalog-index-reference";

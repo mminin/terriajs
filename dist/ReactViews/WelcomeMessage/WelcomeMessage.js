@@ -15,8 +15,10 @@ import Button, { RawButton } from "../../Styled/Button";
 import Icon, { StyledIcon } from "../../Styled/Icon";
 import Spacing from "../../Styled/Spacing";
 import Text, { TextSpan } from "../../Styled/Text";
+import { ExplorerWindowElementName } from "../ExplorerWindow/ExplorerWindow";
 import { useKeyPress } from "../Hooks/useKeyPress.js";
 import VideoGuide from "../Map/Panels/HelpPanel/VideoGuide";
+import { withViewState } from "../StandardUserInterface/ViewStateContext";
 import { TourPortalDisplayName } from "../Tour/TourPortal";
 import FadeIn from "../Transitions/FadeIn/FadeIn";
 import SlideUpFadeIn from "../Transitions/SlideUpFadeIn/SlideUpFadeIn";
@@ -50,7 +52,7 @@ let WelcomeMessage = class WelcomeMessage extends React.Component {
     }
     render() {
         const viewState = this.props.viewState || {};
-        return (React.createElement(WelcomeMessagePure, { showWelcomeMessage: viewState.showWelcomeMessage, setShowWelcomeMessage: bool => this.props.viewState.setShowWelcomeMessage(bool), isTopElement: this.props.viewState.topElement === "WelcomeMessage", viewState: this.props.viewState }));
+        return (React.createElement(WelcomeMessagePure, { showWelcomeMessage: viewState.showWelcomeMessage, setShowWelcomeMessage: (bool) => this.props.viewState.setShowWelcomeMessage(bool), isTopElement: this.props.viewState.topElement === "WelcomeMessage", viewState: this.props.viewState }));
     }
 };
 WelcomeMessage.displayName = "WelcomeMessage";
@@ -62,7 +64,7 @@ WelcomeMessage.propTypes = {
 WelcomeMessage = __decorate([
     observer
 ], WelcomeMessage);
-export const WelcomeMessagePure = props => {
+export const WelcomeMessagePure = (props) => {
     const { showWelcomeMessage, setShowWelcomeMessage, viewState } = props;
     const { t } = useTranslation();
     // This is required so we can do nested animations
@@ -100,7 +102,7 @@ export const WelcomeMessagePure = props => {
                 if (shouldExploreData) {
                     setShouldExploreData(false);
                     viewState.openAddData();
-                    viewState.setTopElement("AddData");
+                    viewState.setTopElement(ExplorerWindowElementName);
                 }
                 if (shouldOpenHelp) {
                     setShouldOpenHelp(false);
@@ -125,7 +127,7 @@ export const WelcomeMessagePure = props => {
                 React.createElement(VideoGuide, { viewState: viewState, videoLink: viewState.terria.configParameters.welcomeMessageVideo.videoUrl, background: viewState.terria.configParameters.welcomeMessageVideo
                         .placeholderImage, videoName: WELCOME_MESSAGE_VIDEO }),
                 React.createElement(SlideUpFadeIn, { isVisible: welcomeVisible },
-                    React.createElement(Box, { styledWidth: "667px", styledMinHeight: "504px", displayInlineBlock: true, paddedRatio: viewState.useSmallScreenInterface ? 2 : 6, onClick: e => {
+                    React.createElement(Box, { styledWidth: "667px", styledMinHeight: "504px", displayInlineBlock: true, paddedRatio: viewState.useSmallScreenInterface ? 2 : 6, onClick: (e) => {
                             viewState.setTopElement("WelcomeMessage");
                             e.stopPropagation();
                         } },
@@ -198,5 +200,5 @@ WelcomeMessagePure.propTypes = {
     isTopElement: PropTypes.bool.isRequired,
     viewState: PropTypes.object.isRequired
 };
-export default withTranslation()(withTheme(WelcomeMessage));
+export default withTranslation()(withViewState(withTheme(WelcomeMessage)));
 //# sourceMappingURL=WelcomeMessage.js.map

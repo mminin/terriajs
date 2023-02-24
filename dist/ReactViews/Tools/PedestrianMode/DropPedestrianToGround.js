@@ -5,8 +5,9 @@ import EllipsoidTerrainProvider from "terriajs-cesium/Source/Core/EllipsoidTerra
 import sampleTerrainMostDetailed from "terriajs-cesium/Source/Core/sampleTerrainMostDetailed";
 import ScreenSpaceEventHandler from "terriajs-cesium/Source/Core/ScreenSpaceEventHandler";
 import ScreenSpaceEventType from "terriajs-cesium/Source/Core/ScreenSpaceEventType";
+import isDefined from "../../../Core/isDefined";
 import MouseTooltip from "./MouseTooltip";
-const DropPedestrianToGround = props => {
+const DropPedestrianToGround = (props) => {
     const cesium = props.cesium;
     const scene = cesium.scene;
     const eventHandler = new ScreenSpaceEventHandler(scene.canvas);
@@ -18,17 +19,19 @@ const DropPedestrianToGround = props => {
         const dropPedestrian = ({ position: mousePosition }) => {
             // Convert mouse position to a point on the globe.
             const pickRay = scene.camera.getPickRay(mousePosition);
-            const pickPosition = scene.globe.pick(pickRay, scene);
+            const pickPosition = isDefined(pickRay)
+                ? scene.globe.pick(pickRay, scene)
+                : undefined;
             if (!pickPosition)
                 return;
             setShowMouseTooltip(false);
             // Get the precise position and fly to it.
-            getPrecisePosition(scene, pickPosition).then(cartographic => {
+            getPrecisePosition(scene, pickPosition).then((cartographic) => {
                 cartographic.height += props.pedestrianHeight;
                 const position = Cartographic.toCartesian(cartographic);
                 flyTo(scene, position, {
                     orientation: {
-                        heading: 0,
+                        heading: scene.camera.heading,
                         pitch: 0,
                         roll: 0
                     }
@@ -67,7 +70,7 @@ async function getPrecisePosition(scene, position) {
     return preciseCartographic;
 }
 async function flyTo(scene, destination, options) {
-    return new Promise(resolve => scene.camera.flyTo({
+    return new Promise((resolve) => scene.camera.flyTo({
         destination,
         ...options,
         complete: () => {

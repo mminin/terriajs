@@ -1,8 +1,7 @@
 "use strict";
 var defaultValue = require("terriajs-cesium/Source/Core/defaultValue").default;
 var defined = require("terriajs-cesium/Source/Core/defined").default;
-var DeveloperError = require("terriajs-cesium/Source/Core/DeveloperError")
-    .default;
+var DeveloperError = require("terriajs-cesium/Source/Core/DeveloperError").default;
 var FunctionParameter = require("./FunctionParameter");
 var inherit = require("../../Core/inherit");
 var knockout = require("terriajs-cesium/Source/ThirdParty/knockout").default;
@@ -63,21 +62,22 @@ Object.defineProperties(RegionDataParameter.prototype, {
         }
     }
 });
-RegionDataParameter.prototype.getEnabledItemsWithMatchingRegionType = function () {
-    var result = [];
-    var nowViewingItems = this.terria.nowViewing.items;
-    var regionProvider = this.regionProvider;
-    for (var i = 0; i < nowViewingItems.length; ++i) {
-        var item = nowViewingItems[i];
-        if (defined(item.regionMapping) &&
-            defined(item.regionMapping.regionDetails) &&
-            item.regionMapping.regionDetails.length > 0 &&
-            item.regionMapping.regionDetails[0].regionProvider === regionProvider) {
-            result.push(item);
+RegionDataParameter.prototype.getEnabledItemsWithMatchingRegionType =
+    function () {
+        var result = [];
+        var nowViewingItems = this.terria.nowViewing.items;
+        var regionProvider = this.regionProvider;
+        for (var i = 0; i < nowViewingItems.length; ++i) {
+            var item = nowViewingItems[i];
+            if (defined(item.regionMapping) &&
+                defined(item.regionMapping.regionDetails) &&
+                item.regionMapping.regionDetails.length > 0 &&
+                item.regionMapping.regionDetails[0].regionProvider === regionProvider) {
+                result.push(item);
+            }
         }
-    }
-    return result;
-};
+        return result;
+    };
 /**
  * Gets the selected region codes, column headings, and data table for this parameter.
  *

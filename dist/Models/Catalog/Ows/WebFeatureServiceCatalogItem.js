@@ -5,30 +5,34 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
 import i18next from "i18next";
-import { computed, isObservableArray, runInAction } from "mobx";
+import { computed, runInAction } from "mobx";
 import combine from "terriajs-cesium/Source/Core/combine";
 import containsAny from "../../../Core/containsAny";
 import isDefined from "../../../Core/isDefined";
 import isReadOnlyArray from "../../../Core/isReadOnlyArray";
 import loadText from "../../../Core/loadText";
 import TerriaError from "../../../Core/TerriaError";
-import gmlToGeoJson from "../../../Map/gmlToGeoJson";
+import gmlToGeoJson from "../../../Map/Vector/gmlToGeoJson";
 import GeoJsonMixin, { toFeatureCollection } from "../../../ModelMixins/GeojsonMixin";
 import GetCapabilitiesMixin from "../../../ModelMixins/GetCapabilitiesMixin";
 import UrlMixin from "../../../ModelMixins/UrlMixin";
 import xml2json from "../../../ThirdParty/xml2json";
 import { InfoSectionTraits } from "../../../Traits/TraitsClasses/CatalogMemberTraits";
-import WebFeatureServiceCatalogItemTraits from "../../../Traits/TraitsClasses/WebFeatureServiceCatalogItemTraits";
+import WebFeatureServiceCatalogItemTraits, { SUPPORTED_CRS_4326, SUPPORTED_CRS_3857 } from "../../../Traits/TraitsClasses/WebFeatureServiceCatalogItemTraits";
 import CreateModel from "../../Definition/CreateModel";
 import createStratumInstance from "../../Definition/createStratumInstance";
 import LoadableStratum from "../../Definition/LoadableStratum";
 import proxyCatalogItemUrl from "../proxyCatalogItemUrl";
 import WebFeatureServiceCapabilities, { getRectangleFromLayer } from "./WebFeatureServiceCapabilities";
-class GetCapabilitiesStratum extends LoadableStratum(WebFeatureServiceCatalogItemTraits) {
+export class GetCapabilitiesStratum extends LoadableStratum(WebFeatureServiceCatalogItemTraits) {
     constructor(catalogItem, capabilities) {
         super();
         this.catalogItem = catalogItem;
         this.capabilities = capabilities;
+        // Helper function to check if geojson output is supported (by checking GetCapabilities OutputTypes OR FeatureType OutputTypes)
+        this.hasJsonOutputFormat = (outputFormats) => {
+            return isDefined(outputFormats === null || outputFormats === void 0 ? void 0 : outputFormats.find((format) => ["json", "JSON", "application/json"].includes(format)));
+        };
     }
     static async load(catalogItem, capabilities) {
         if (!isDefined(catalogItem.getCapabilitiesUrl)) {
@@ -45,10 +49,7 @@ class GetCapabilitiesStratum extends LoadableStratum(WebFeatureServiceCatalogIte
         return new GetCapabilitiesStratum(model, this.capabilities);
     }
     get capabilitiesFeatureTypes() {
-        const lookup = name => [
-            name,
-            this.capabilities && this.capabilities.findLayer(name)
-        ];
+        const lookup = (name) => [name, this.capabilities && this.capabilities.findLayer(name)];
         return new Map(this.catalogItem.typeNamesArray.map(lookup));
     }
     get info() {
@@ -103,7 +104,7 @@ class GetCapabilitiesStratum extends LoadableStratum(WebFeatureServiceCatalogIte
         // If more than one layer, push layer description titles for each applicable layer
         if (this.capabilitiesFeatureTypes.size > 1) {
             layerDescriptions = [];
-            this.capabilitiesFeatureTypes.forEach(layer => {
+            this.capabilitiesFeatureTypes.forEach((layer) => {
                 if (layer &&
                     layer.Abstract &&
                     !containsAny(layer.Abstract, WebFeatureServiceCatalogItem.abstractsToIgnore)) {
@@ -155,6 +156,38 @@ class GetCapabilitiesStratum extends LoadableStratum(WebFeatureServiceCatalogIte
             return keyword === "GEOSERVER";
         }
     }
+    // Find which GML formats are supported, choose the one most suited to Terria. If not available, default to "gml3"
+    get outputFormat() {
+        var _a, _b;
+        const supportsGeojson = this.hasJsonOutputFormat(this.capabilities.outputTypes) ||
+            [...this.capabilitiesFeatureTypes.values()].reduce((hasGeojson, current) => hasGeojson && this.hasJsonOutputFormat(current === null || current === void 0 ? void 0 : current.OutputFormats), true);
+        const searchValue = new RegExp(".*gml/3.1.1.*|.*gml3.1.1.*");
+        return supportsGeojson
+            ? "JSON"
+            : (_b = (_a = this.capabilities.outputTypes) === null || _a === void 0 ? void 0 : _a.find((outputFormat) => searchValue.test(outputFormat))) !== null && _b !== void 0 ? _b : "gml3";
+    }
+    /** Finds the best srsName to use.
+     * First checks if one provided in url. If one is provided in url, and this is supported by Terria, will use this.
+     * Note that an error will be thrown if user supplied srsName is not supported by the user supplied WFS service.
+     * If no srsName provided, or the provided one is not supported by Terria,
+     * then checks getCapabilities response and returns the first listed srs that is included in our list of supported srs.
+     * This enables us to use a urn identifier if supported, or a normal EPSG code if not.
+     * e.g. "urn:ogc:def:crs:EPSG::4326" or "EPSG:4326"
+     **/
+    get srsName() {
+        var _a, _b, _c, _d, _e, _f, _g, _h;
+        // First check to see if URL has CRS or SRS
+        const supportedCrs = [...SUPPORTED_CRS_3857, ...SUPPORTED_CRS_4326];
+        const queryParams = (_b = (_a = this.catalogItem.uri) === null || _a === void 0 ? void 0 : _a.query(true)) !== null && _b !== void 0 ? _b : {};
+        const urlCrs = (_f = (_e = (_d = (_c = queryParams.srsName) !== null && _c !== void 0 ? _c : queryParams.crs) !== null && _d !== void 0 ? _d : queryParams.CRS) !== null && _e !== void 0 ? _e : queryParams.srs) !== null && _f !== void 0 ? _f : queryParams.SRS;
+        if (urlCrs && supportedCrs.includes(urlCrs))
+            return urlCrs;
+        // If no srsName provided, then find what the server supports and use the best one for Terria
+        const layerSrsArray = (_g = this.capabilities.srsNames) === null || _g === void 0 ? void 0 : _g.find((layer) => layer.layerName === this.catalogItem.typeNamesArray[0] //If multiple layers in this WFS request, only use the first layer to find best srsName
+        );
+        return ((_h = layerSrsArray === null || layerSrsArray === void 0 ? void 0 : layerSrsArray.srsArray.find((srsName) => SUPPORTED_CRS_4326.includes(srsName))) !== null && _h !== void 0 ? _h : "urn:ogc:def:crs:EPSG::4326" // Default to urn identifier for WGS84 if we cant find something better. Sometimes WFS service will support this even if not specified in GetCapabilities response.
+        );
+    }
 }
 __decorate([
     computed
@@ -171,6 +204,12 @@ __decorate([
 __decorate([
     computed
 ], GetCapabilitiesStratum.prototype, "isGeoServer", null);
+__decorate([
+    computed
+], GetCapabilitiesStratum.prototype, "outputFormat", null);
+__decorate([
+    computed
+], GetCapabilitiesStratum.prototype, "srsName", null);
 class WebFeatureServiceCatalogItem extends GetCapabilitiesMixin(UrlMixin(GeoJsonMixin(CreateModel(WebFeatureServiceCatalogItemTraits)))) {
     constructor() {
         super(...arguments);
@@ -223,7 +262,7 @@ class WebFeatureServiceCatalogItem extends GetCapabilitiesMixin(UrlMixin(GeoJson
             });
         }
         // Check if layers exist
-        const missingLayers = this.typeNamesArray.filter(layer => !getCapabilitiesStratum.capabilitiesFeatureTypes.has(layer));
+        const missingLayers = this.typeNamesArray.filter((layer) => !getCapabilitiesStratum.capabilitiesFeatureTypes.has(layer));
         if (missingLayers.length > 0) {
             throw new TerriaError({
                 sender: this,
@@ -231,12 +270,6 @@ class WebFeatureServiceCatalogItem extends GetCapabilitiesMixin(UrlMixin(GeoJson
                 message: i18next.t("models.webFeatureServiceCatalogItem.noLayerFoundMessage", this)
             });
         }
-        // Check if geojson output is supported (by checking GetCapabilities OutputTypes OR FeatureType OutputTypes)
-        const hasOutputFormat = (outputFormats) => {
-            return isDefined(outputFormats === null || outputFormats === void 0 ? void 0 : outputFormats.find(format => ["json", "JSON", "application/json"].includes(format)));
-        };
-        const supportsGeojson = hasOutputFormat(getCapabilitiesStratum.capabilities.outputTypes) ||
-            [...getCapabilitiesStratum.capabilitiesFeatureTypes.values()].reduce((hasGeojson, current) => hasGeojson && hasOutputFormat(current === null || current === void 0 ? void 0 : current.OutputFormats), true);
         const url = this.uri
             .clone()
             .setSearch(combine({
@@ -244,14 +277,14 @@ class WebFeatureServiceCatalogItem extends GetCapabilitiesMixin(UrlMixin(GeoJson
             request: "GetFeature",
             typeName: this.typeNames,
             version: "1.1.0",
-            outputFormat: supportsGeojson ? "JSON" : "gml3",
-            srsName: "urn:ogc:def:crs:EPSG::4326",
+            outputFormat: this.outputFormat,
+            srsName: this.srsName,
             maxFeatures: this.maxFeatures
         }, this.parameters))
             .toString();
         const getFeatureResponse = await loadText(proxyCatalogItemUrl(this, url));
         // Check for errors (if supportsGeojson and the request returns XML, OR the response includes ExceptionReport)
-        if ((supportsGeojson && getFeatureResponse.startsWith("<")) ||
+        if ((this.outputFormat === "JSON" && getFeatureResponse.startsWith("<")) ||
             getFeatureResponse.includes("ExceptionReport")) {
             let errorMessage;
             try {
@@ -264,7 +297,7 @@ class WebFeatureServiceCatalogItem extends GetCapabilitiesMixin(UrlMixin(GeoJson
                 message: `${i18next.t("models.webFeatureServiceCatalogItem.missingDataMessage", this)} ${isDefined(errorMessage) ? `<br/>Error: ${errorMessage}` : ""}`
             });
         }
-        let geojsonData = supportsGeojson
+        let geojsonData = this.outputFormat === "JSON"
             ? JSON.parse(getFeatureResponse)
             : gmlToGeoJson(getFeatureResponse);
         const fc = toFeatureCollection(geojsonData);
@@ -286,7 +319,7 @@ class WebFeatureServiceCatalogItem extends GetCapabilitiesMixin(UrlMixin(GeoJson
     get shortReport() {
         var _a;
         // Show notice if reached
-        if (isObservableArray((_a = this.readyData) === null || _a === void 0 ? void 0 : _a.features) &&
+        if (((_a = this.readyData) === null || _a === void 0 ? void 0 : _a.features) !== undefined &&
             this.readyData.features.length >= this.maxFeatures) {
             return i18next.t("models.webFeatureServiceCatalogItem.reachedMaxFeatureLimit", this);
         }

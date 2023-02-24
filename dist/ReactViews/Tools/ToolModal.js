@@ -2,12 +2,12 @@ import { observer } from "mobx-react";
 import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
 import styled, { useTheme } from "styled-components";
-import Box from "../../Styled/Box";
+import Box, { BoxSpan } from "../../Styled/Box";
 import { RawButton } from "../../Styled/Button";
 import Spacing from "../../Styled/Spacing";
 import Text from "../../Styled/Text";
 import { GLYPHS, StyledIcon } from "../../Styled/Icon";
-export const Frame = observer(props => {
+export const Frame = observer((props) => {
     const theme = useTheme();
     const [t] = useTranslation();
     const [showChildren, setShowChildren] = useState(true);
@@ -19,7 +19,7 @@ export const Frame = observer(props => {
                 React.createElement(ToolCloseButton, { viewState: viewState, t: t }),
                 React.createElement(Spacing, { right: 4 }),
                 React.createElement(RawButton, { onClick: () => setShowChildren(!showChildren) },
-                    React.createElement(Box, { paddedRatio: 1, centered: true },
+                    React.createElement(BoxSpan, { paddedRatio: 1, centered: true },
                         React.createElement(StyledIcon, { styledWidth: "12px", light: true, glyph: showChildren ? GLYPHS.opened : GLYPHS.closed }))))),
         showChildren && props.children));
 });
@@ -29,7 +29,7 @@ export const Main = styled(Text) `
   padding: 15px;
   overflow-y: auto;
   ${({ theme }) => theme.borderRadiusBottom(theme.radius40Button)}
-  background-color: ${p => p.theme.darkWithOverlay};
+  background-color: ${(p) => p.theme.darkWithOverlay};
   min-height: 350px;
 `;
 const Wrapper = styled(Box).attrs({
@@ -41,18 +41,18 @@ const Wrapper = styled(Box).attrs({
   top: 70px;
   left: 0px;
   min-height: 220px;
-  // background: ${p => p.theme.dark};
-  margin-left: ${props => props.isMapFullScreen ? 16 : parseInt(props.theme.workbenchWidth) + 40}px;
+  // background: ${(p) => p.theme.dark};
+  margin-left: ${(props) => props.isMapFullScreen ? 16 : parseInt(props.theme.workbenchWidth) + 40}px;
   transition: margin-left 0.25s;
 `;
 const Toggle = styled(Box) `
   ${({ theme }) => theme.borderRadiusTop(theme.radius40Button)}
 `;
-const ToolCloseButton = props => {
+const ToolCloseButton = (props) => {
     return (React.createElement(RawButton, { onClick: () => props.viewState.closeTool() },
         React.createElement(Text, { textLight: true, small: true, semiBold: true, uppercase: true }, props.t("tool.exitBtnTitle"))));
 };
-const Title = props => {
+const Title = (props) => {
     return (React.createElement(Box, { centered: true },
         React.createElement(Box, null, props.icon && (React.createElement(StyledIcon, { styledWidth: "20px", light: true, glyph: props.icon }))),
         React.createElement(Spacing, { right: 1 }),

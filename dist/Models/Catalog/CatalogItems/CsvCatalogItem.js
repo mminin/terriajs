@@ -16,8 +16,8 @@ import Csv from "../../../Table/Csv";
 import TableAutomaticStylesStratum from "../../../Table/TableAutomaticStylesStratum";
 import CsvCatalogItemTraits from "../../../Traits/TraitsClasses/CsvCatalogItemTraits";
 import CreateModel from "../../Definition/CreateModel";
-import proxyCatalogItemUrl from "../proxyCatalogItemUrl";
 import StratumOrder from "../../Definition/StratumOrder";
+import proxyCatalogItemUrl from "../proxyCatalogItemUrl";
 // Types of CSVs:
 // - Points - Latitude and longitude columns or address
 // - Regions - Region column
@@ -98,7 +98,7 @@ export default class CsvCatalogItem extends TableMixin(AutoRefreshingMixin(UrlMi
         if (!this.refreshUrl) {
             return;
         }
-        Csv.parseUrl(proxyCatalogItemUrl(this, this.refreshUrl), true, this.ignoreRowsStartingWithComment).then(dataColumnMajor => {
+        Csv.parseUrl(proxyCatalogItemUrl(this, this.refreshUrl), true, this.ignoreRowsStartingWithComment).then((dataColumnMajor) => {
             runInAction(() => {
                 if (this.polling.shouldReplaceData) {
                     this.dataColumnMajor = dataColumnMajor;

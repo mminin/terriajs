@@ -1,16 +1,17 @@
-import React from "react";
-import createReactClass from "create-react-class";
-import PropTypes from "prop-types";
 import classNames from "classnames";
+import createReactClass from "create-react-class";
+import { runInAction } from "mobx";
 import { observer } from "mobx-react";
+import PropTypes from "prop-types";
+import React from "react";
+import { withTranslation } from "react-i18next";
+import Box from "../../Styled/Box";
+import Icon from "../../Styled/Icon";
 import DataCatalog from "../DataCatalog/DataCatalog";
 import DataPreview from "../Preview/DataPreview";
-import MobileSearch from "./MobileSearch";
 import WorkbenchList from "../Workbench/WorkbenchList";
-import Icon from "../../Styled/Icon";
 import Styles from "./mobile-modal-window.scss";
-import { runInAction } from "mobx";
-import { withTranslation } from "react-i18next";
+import MobileSearch from "./MobileSearch";
 const MobileModalWindow = observer(createReactClass({
     displayName: "MobileModalWindow",
     propTypes: {
@@ -71,7 +72,7 @@ const MobileModalWindow = observer(createReactClass({
         const mobileView = this.props.viewState.mobileView;
         const { t } = this.props;
         return (React.createElement("div", { className: modalClass },
-            React.createElement("div", { className: Styles.modalBg },
+            React.createElement(Box, { column: true, className: Styles.modalBg },
                 React.createElement("div", { className: Styles.modalTop },
                     React.createElement(If, { condition: this.props.viewState.explorerPanelIsVisible && mobileView },
                         React.createElement("button", { type: "button", className: Styles.doneButton, onClick: this.onClearMobileUI }, t("mobile.doneBtnText"))),

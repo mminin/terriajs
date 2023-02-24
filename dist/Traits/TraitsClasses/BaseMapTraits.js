@@ -34,7 +34,7 @@ __decorate([
     modelReferenceTrait({
         factory: CatalogMemberFactory,
         name: "Base map item",
-        description: 'Catalog item defition to be used for the base map. It is also possible to reference an existing catalog item using its id (i.e. `"//Surface Geology"`).'
+        description: 'Catalog item definition to be used for the base map. It is also possible to reference an existing catalog item using its id (i.e. `"//Surface Geology"`).'
     })
 ], BaseMapTraits.prototype, "item", void 0);
 export class BaseMapsTraits extends ModelTraits {

@@ -1,0 +1,1 @@
+{"version":3,"file":"ensureSuffix.js","sourceRoot":"","sources":["../../lib/Core/ensureSuffix.ts"],"names":[],"mappings":"AAAA;;;GAGG;AACH,MAAM,CAAC,OAAO,UAAU,YAAY,CAAC,GAAW,EAAE,IAAY;IAC5D,OAAO,GAAG,CAAC,QAAQ,CAAC,IAAI,CAAC,CAAC,CAAC,CAAC,GAAG,CAAC,CAAC,CAAC,GAAG,GAAG,GAAG,IAAI,EAAE,CAAC;AACpD,CAAC"}

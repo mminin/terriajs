@@ -1,6 +1,6 @@
 import React from "react";
 import debounce from "lodash-es/debounce";
-const getDisplayName = WrappedComponent => {
+const getDisplayName = (WrappedComponent) => {
     return WrappedComponent.displayName || WrappedComponent.name || "Component";
 };
 /*
@@ -24,8 +24,8 @@ const getDisplayName = WrappedComponent => {
 */
 const measureElement = (WrappedComponent, verbose = true) => {
     class MeasureElement extends React.Component {
-        constructor() {
-            super();
+        constructor(props) {
+            super(props);
             this.wrappedComponent = React.createRef();
             this.state = {
                 width: null,
@@ -45,19 +45,18 @@ const measureElement = (WrappedComponent, verbose = true) => {
             window.removeEventListener("resize", this.checkAndUpdateSizingWithDebounce);
         }
         checkAndUpdateSizing() {
+            var _a, _b;
             if (!this.wrappedComponent.current) {
                 return;
             }
             const refToUse = this.wrappedComponent.current.refToMeasure;
             const widthFromRef = refToUse
-                ? refToUse.current
-                    ? refToUse.current.clientWidth
-                    : refToUse.clientWidth
+                ? "current" in refToUse
+                    ? (_a = refToUse.current) === null || _a === void 0 ? void 0 : _a.clientWidth : refToUse.clientWidth
                 : undefined;
             const heightFromRef = refToUse
-                ? refToUse.current
-                    ? refToUse.current.clientHeight
-                    : refToUse.clientHeight
+                ? "current" in refToUse
+                    ? (_b = refToUse.current) === null || _b === void 0 ? void 0 : _b.clientHeight : refToUse.clientHeight
                 : undefined;
             const newWidth = widthFromRef || 0;
             const newHeight = heightFromRef || 0;

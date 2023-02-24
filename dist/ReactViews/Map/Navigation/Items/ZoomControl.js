@@ -113,7 +113,9 @@ class ZoomControl extends React.Component {
     render() {
         const { t, theme } = this.props;
         return (React.createElement(StyledZoomControl, null,
-            React.createElement(Ul, null,
+            React.createElement(Ul, { column: true, css: `
+            padding: 0;
+          ` },
                 React.createElement(Li, null,
                     React.createElement(RawButton, { type: "button", onClick: this.zoomIn.bind(this), title: t("zoomCotrol.zoomIn") },
                         React.createElement(Icon, { glyph: Icon.GLYPHS.zoomIn }))),
@@ -126,7 +128,7 @@ class ZoomControl extends React.Component {
     }
 }
 ZoomControl.displayName = "ZoomControl";
-const StyledZoomControl = styled(Box).attrs(props => ({
+const StyledZoomControl = styled(Box).attrs((props) => ({
     backgroundColor: props.theme.textLight,
     centered: true,
     column: true,
@@ -137,7 +139,7 @@ const StyledZoomControl = styled(Box).attrs(props => ({
   svg {
     height: 20px;
     width: 20px;
-    fill: ${props => props.theme.darkWithOverlay};
+    fill: ${(props) => props.theme.darkWithOverlay};
   }
 
   ${Li} {

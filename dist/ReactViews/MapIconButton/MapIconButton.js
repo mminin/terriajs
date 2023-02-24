@@ -15,13 +15,12 @@ const ButtonWrapper = styled(Box).attrs({
 `;
 // styles half ripped from nav.scss
 const StyledMapIconButton = styled(RawButton) `
-
   border-radius: 16px;
-  ${props => props.roundLeft && `border-radius: 16px 0 0 16px;`}
-  ${props => props.roundRight && `border-radius: 0 16px 16px 0;`}
+  ${(props) => props.roundLeft && `border-radius: 16px 0 0 16px;`}
+  ${(props) => props.roundRight && `border-radius: 0 16px 16px 0;`}
 
   background: #fff;
-  color: ${props => props.theme.textDarker};
+  color: ${(props) => props.theme.textDarker};
 
   height: 32px;
   min-width: 32px;
@@ -32,10 +31,10 @@ const StyledMapIconButton = styled(RawButton) `
     width: 20px;
     margin: 0 auto;
     vertical-align: middle;
-    fill: ${props => props.theme.textDarker};
+    fill: ${(props) => props.theme.textDarker};
   }
 
-  ${props => props.primary &&
+  ${(props) => props.primary &&
     `
     background: ${props.theme.colorPrimary};
     color: ${props.theme.textLight};
@@ -44,7 +43,7 @@ const StyledMapIconButton = styled(RawButton) `
       stroke: ${props.theme.textLight};
     }
   `}
-  ${props => props.splitter &&
+  ${(props) => props.splitter &&
     !props.disabled &&
     `
     background: ${props.theme.colorSecondary};
@@ -54,7 +53,7 @@ const StyledMapIconButton = styled(RawButton) `
     }
   `}
 
-  ${props => props.inverted &&
+  ${(props) => props.inverted &&
     `
     background: ${props.theme.charcoalGrey};
     color: ${props.theme.textLight};
@@ -64,7 +63,7 @@ const StyledMapIconButton = styled(RawButton) `
   `}
 
 
-  ${props => props.disabled &&
+  ${(props) => props.disabled &&
     `
     background-color: ${props.theme.grey};
     color: ${props.theme.grey};

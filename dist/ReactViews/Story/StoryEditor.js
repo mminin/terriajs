@@ -1,9 +1,11 @@
-import React from "react";
+import React, { Suspense } from "react";
 import PropTypes from "prop-types";
-import Editor from "../Generic/Editor.jsx";
 import classNames from "classnames";
 import Styles from "./story-editor.scss";
 import { withTranslation } from "react-i18next";
+import tinymce from "tinymce";
+// Lazy load the Editor component as the tinyMCE library is large
+const Editor = React.lazy(() => import("../Generic/Editor.jsx"));
 class StoryEditor extends React.Component {
     constructor(props) {
         super(props);
@@ -111,18 +113,28 @@ class StoryEditor extends React.Component {
             this.keys.ctrl = false;
         }
     }
+    handleChange(value) {
+        this.setState({ text: value });
+    }
     renderPopupEditor() {
         const { t } = this.props;
+        const maxImageHeight = "350px"; // TODO: where to put this to reduce coupling?
         return (React.createElement("div", { onKeyDown: this.onKeyDown, onKeyUp: this.onKeyUp, className: classNames(Styles.popupEditor, {
                 [Styles.isMounted]: this.state.inView
             }) },
             React.createElement("div", { className: Styles.inner },
                 React.createElement("div", { className: Styles.header },
-                    React.createElement("input", { ref: titleInput => (this.titleInput = titleInput), placeholder: t("story.editor.placeholder"), autoComplete: "off", className: Styles.field, type: "text", id: "title", value: this.state.title, onChange: this.updateTitle }),
+                    React.createElement("input", { ref: (titleInput) => (this.titleInput = titleInput), placeholder: t("story.editor.placeholder"), autoComplete: "off", className: Styles.field, type: "text", id: "title", value: this.state.title, onChange: this.updateTitle }),
                     React.createElement("button", { className: Styles.cancelBtn, onClick: this.cancelEditing, type: "button", title: t("story.editor.cancelBtn") }, t("story.editor.cancelEditing")),
                     React.createElement("button", { disabled: !this.state.title.length, className: Styles.saveBtn, onClick: this.saveStory, type: "button", title: t("story.editor.saveBtn") }, t("story.editor.saveStory"))),
                 React.createElement("div", { className: Styles.body },
-                    React.createElement(Editor, { html: this.state.text, onChange: text => this.setState({ text }) })))));
+                    React.createElement(Suspense, { fallback: React.createElement("div", null, "Loading...") },
+                        React.createElement(Editor, { html: this.state.text, onChange: (newValue, editor) => {
+                                // TODO: This makes StoryEditor tightly coupled to Editor. How to reduce coupling?
+                                tinymce.activeEditor.dom.setStyles(tinymce.activeEditor.dom.select("img"), { "max-height": `${maxImageHeight}`, width: "auto" });
+                                const text = editor.getBody().innerHTML;
+                                this.setState({ text });
+                            }, terria: this.props.terria }))))));
     }
     removeStory() {
         this.props.exitEditingMode();
@@ -139,7 +151,8 @@ StoryEditor.propTypes = {
     removeStory: PropTypes.func,
     saveStory: PropTypes.func,
     exitEditingMode: PropTypes.func,
-    t: PropTypes.func.isRequired
+    t: PropTypes.func.isRequired,
+    terria: PropTypes.object
 };
 StoryEditor.defaultProps = { story: { title: "", text: "", id: undefined } };
 export default withTranslation()(StoryEditor);

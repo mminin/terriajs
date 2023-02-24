@@ -54,12 +54,14 @@ export const GLYPHS = {
     opened: require("../../wwwroot/images/icons/opened.svg"),
     pause: require("../../wwwroot/images/icons/pause.svg"),
     play: require("../../wwwroot/images/icons/play.svg"),
+    playStory: require("../../wwwroot/images/icons/play-story.svg"),
     radioOff: require("../../wwwroot/images/icons/radio-off.svg"),
     radioOn: require("../../wwwroot/images/icons/radio-on.svg"),
     refresh: require("../../wwwroot/images/icons/refresh.svg"),
     remove: require("../../wwwroot/images/icons/remove.svg"),
     right: require("../../wwwroot/images/icons/right.svg"),
     right2: require("../../wwwroot/images/icons/right2.svg"),
+    revert: require("../../wwwroot/images/icons/revert.svg"),
     search: require("../../wwwroot/images/icons/search.svg"),
     selected: require("../../wwwroot/images/icons/selected.svg"),
     settings: require("../../wwwroot/images/icons/settings.svg"),
@@ -126,12 +128,17 @@ export const GLYPHS = {
     minimize: require("../../wwwroot/images/icons/minimize.svg"),
     maximize: require("../../wwwroot/images/icons/maximize.svg"),
     closeTool: require("../../wwwroot/images/icons/close-tool.svg"),
-    moreItems: require("../../wwwroot/images/icons/more-items.svg")
+    moreItems: require("../../wwwroot/images/icons/more-items.svg"),
+    info: require("../../wwwroot/images/icons/info.svg"),
+    spectral: require("../../wwwroot/images/icons/spectral.svg"),
+    spectralOn: require("../../wwwroot/images/icons/spectralOn.svg"),
+    band: require("../../wwwroot/images/icons/band.svg"),
+    bandOn: require("../../wwwroot/images/icons/bandOn.svg"),
 };
 export const Icon = (props) => {
-    var _a;
+    var _a, _b;
     return (React.createElement("svg", { viewBox: "0 0 100 100", className: classNames("icon", props.className), style: props.style, transform: `rotate(${(_a = props.rotation) !== null && _a !== void 0 ? _a : 0})` },
-        React.createElement("use", { xlinkHref: "#" + props.glyph.id })));
+        React.createElement("use", { xlinkHref: "#" + ((_b = props.glyph) === null || _b === void 0 ? void 0 : _b.id) })));
 };
 export const StyledIcon = styled(Icon) `
   display: ${props => (props.displayInline ? `inline` : `block`)};

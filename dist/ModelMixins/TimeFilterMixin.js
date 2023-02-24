@@ -69,7 +69,7 @@ function TimeFilterMixin(Base) {
                 return [];
             return filterOutUndefined(this.mapItems.map(
             // @ts-ignore
-            mapItem => ImageryParts.is(mapItem) && mapItem.imageryProvider.url));
+            (mapItem) => ImageryParts.is(mapItem) && mapItem.imageryProvider.url));
         }
         get featureTimesAsJulianDates() {
             var _a;
@@ -82,7 +82,7 @@ function TimeFilterMixin(Base) {
             if (!Array.isArray(featureTimes)) {
                 return;
             }
-            return filterOutUndefined(featureTimes.map(s => {
+            return filterOutUndefined(featureTimes.map((s) => {
                 try {
                     return s === undefined ? undefined : JulianDate.fromIso8601(s);
                 }
@@ -97,7 +97,7 @@ function TimeFilterMixin(Base) {
             if (featureTimes === undefined) {
                 return super.discreteTimesAsSortedJulianDates;
             }
-            return (_a = super.discreteTimesAsSortedJulianDates) === null || _a === void 0 ? void 0 : _a.filter(dt => featureTimes.some(d => d.equals(dt.time)));
+            return (_a = super.discreteTimesAsSortedJulianDates) === null || _a === void 0 ? void 0 : _a.filter((dt) => featureTimes.some((d) => d.equals(dt.time)));
         }
         get timeFilterFeature() {
             return this._currentTimeFilterFeature;
@@ -114,7 +114,7 @@ function TimeFilterMixin(Base) {
             }
             const position = feature.position.getValue(this.currentTimeAsJulianDate);
             const cartographic = Ellipsoid.WGS84.cartesianToCartographic(position);
-            const featureImageryUrl = this.imageryUrls.find(url => providerCoords[url]);
+            const featureImageryUrl = this.imageryUrls.find((url) => providerCoords[url]);
             const tileCoords = featureImageryUrl && providerCoords[featureImageryUrl];
             if (!tileCoords)
                 return;
@@ -172,7 +172,7 @@ const resolveFeature = action(async function (model, propertyName, position, til
     const { latitude, longitude, height } = position;
     const { x, y, level } = tileCoords;
     const providers = {};
-    model.mapItems.forEach(mapItem => {
+    model.mapItems.forEach((mapItem) => {
         if (ImageryParts.is(mapItem)) {
             // @ts-ignore
             providers[mapItem.imageryProvider.url] = { x, y, level };
@@ -180,7 +180,7 @@ const resolveFeature = action(async function (model, propertyName, position, til
     });
     const viewer = model.terria.mainViewer.currentViewer;
     const features = await viewer.getFeaturesAtLocation({ latitude, longitude, height }, providers);
-    const feature = (features || []).find(feature => {
+    const feature = (features || []).find((feature) => {
         if (!feature.properties) {
             return false;
         }

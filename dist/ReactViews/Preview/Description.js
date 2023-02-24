@@ -28,12 +28,12 @@ const Description = observer(createReactClass({
         const { t } = this.props;
         const catalogItem = this.props.item;
         // Make sure all data and metadata URLs have `url` set
-        const metadataUrls = (_a = catalogItem.metadataUrls) === null || _a === void 0 ? void 0 : _a.filter(m => m.url);
-        const dataUrls = (_b = catalogItem.dataUrls) === null || _b === void 0 ? void 0 : _b.filter(m => m.url);
+        const metadataUrls = (_a = catalogItem.metadataUrls) === null || _a === void 0 ? void 0 : _a.filter((m) => m.url);
+        const dataUrls = (_b = catalogItem.dataUrls) === null || _b === void 0 ? void 0 : _b.filter((m) => m.url);
         return (React.createElement("div", { className: Styles.description, css: `
             a,
             a:visited {
-              color: ${p => p.theme.colorPrimary};
+              color: ${(p) => p.theme.colorPrimary};
             }
           ` },
             React.createElement(If, { condition: catalogItem.isExperiencingIssues },
@@ -53,7 +53,7 @@ const Description = observer(createReactClass({
                 React.createElement(For, { each: "metadataUrl", index: "i", of: metadataUrls },
                     React.createElement(Box, { paddedVertically: true, key: metadataUrl.url },
                         React.createElement("a", { href: metadataUrl.url, target: "_blank", rel: "noopener noreferrer", className: `${Styles.link} description-metadataUrls`, css: `
-                    color: ${p => p.theme.colorPrimary};
+                    color: ${(p) => p.theme.colorPrimary};
                   ` },
                             React.createElement(If, { condition: metadataUrl.title },
                                 React.createElement(Button, { primary: true }, metadataUrl.title)),
@@ -87,7 +87,7 @@ const Description = observer(createReactClass({
                         React.createElement(When, { condition: this.props.printView },
                             React.createElement("code", null, catalogItem.url)),
                         React.createElement(Otherwise, null,
-                            React.createElement("input", { readOnly: true, className: Styles.field, type: "text", value: catalogItem.url, onClick: e => e.target.select() }))),
+                            React.createElement("input", { readOnly: true, className: Styles.field, type: "text", value: catalogItem.url, onClick: (e) => e.target.select() }))),
                     React.createElement(Choose, null,
                         React.createElement(When, { condition: catalogItem.type === "wms" ||
                                 (catalogItem.type === "esri-mapServer" &&
@@ -140,7 +140,7 @@ const Description = observer(createReactClass({
                                     })))),
                         React.createElement(Box, { paddedVertically: true, key: dataUrl.url },
                             React.createElement("a", { href: dataUrl.url, target: "_blank", rel: "noopener noreferrer", className: `${Styles.link} description-dataUrls`, css: `
-                      color: ${p => p.theme.colorPrimary};
+                      color: ${(p) => p.theme.colorPrimary};
                     ` },
                                 React.createElement(If, { condition: dataUrl.title },
                                     React.createElement(Button, { primary: true }, dataUrl.title)),

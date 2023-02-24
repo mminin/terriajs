@@ -46,7 +46,7 @@ export default class TextIndex {
             throw new Error(`Text index not loaded`);
         const miniSearchIndex = await this.miniSearchIndex;
         const results = miniSearchIndex.search(value, queryOptions);
-        const ids = new Set(results.map(r => r.id));
+        const ids = new Set(results.map((r) => r.id));
         return ids;
     }
 }

@@ -1,11 +1,11 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 import Box from "../../../../Styled/Box";
 import { RawButton } from "../../../../Styled/Button";
+import Icon from "../../../../Styled/Icon";
 import Ul, { Li } from "../../../../Styled/List";
 import MenuPanel from "../../../StandardUserInterface/customizable/MenuPanel";
 import Styles from "../../menu-bar.scss";
-import Icon from "../../../../Styled/Icon";
-import { useTranslation } from "react-i18next";
 const stripLangLocale = (lang = "") => lang.split("-")[0];
 export default (props) => {
     var _a;
@@ -22,7 +22,9 @@ export default (props) => {
             ? t("languagePanel.changeLanguage")
             : stripLangLocale(i18n.language), mobileIcon: Icon.GLYPHS.globe, smallScreen: props.smallScreen },
         React.createElement(Box, { styledPadding: "20px 10px 10px 10px" },
-            React.createElement(Ul, { spaced: true, lined: true, fullWidth: true }, Object.entries(props.terria.configParameters.languageConfiguration.languages).map(([key, value]) => (React.createElement(Li, { key: key },
+            React.createElement(Ul, { spaced: true, lined: true, fullWidth: true, column: true, css: `
+            padding-left: 0;
+          ` }, Object.entries(props.terria.configParameters.languageConfiguration.languages).map(([key, value]) => (React.createElement(Li, { key: key },
                 React.createElement(RawButton, { onClick: () => i18n.changeLanguage(key) }, value))))))));
 };
 //# sourceMappingURL=LangPanel.js.map

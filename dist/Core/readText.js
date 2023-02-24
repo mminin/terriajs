@@ -1,7 +1,6 @@
 "use strict";
 const i18next = require("i18next").default;
-const DeveloperError = require("terriajs-cesium/Source/Core/DeveloperError")
-    .default;
+const DeveloperError = require("terriajs-cesium/Source/Core/DeveloperError").default;
 function readText(file) {
     return new Promise((resolve, reject) => {
         if (typeof file === "undefined") {

@@ -33,13 +33,13 @@ export default class SearchState {
         });
         this._locationSearchDisposer = reaction(() => this.locationSearchText, () => {
             this.isWaitingToStartLocationSearch = true;
-            this.locationSearchResults = this.locationSearchProviders.map(provider => {
+            this.locationSearchResults = this.locationSearchProviders.map((provider) => {
                 return provider.search("");
             });
         });
         this._unifiedSearchDisposer = reaction(() => this.unifiedSearchText, () => {
             this.isWaitingToStartUnifiedSearch = true;
-            this.unifiedSearchResults = this.unifiedSearchProviders.map(provider => {
+            this.unifiedSearchResults = this.unifiedSearchProviders.map((provider) => {
                 return provider.search("");
             });
         });
@@ -72,19 +72,19 @@ export default class SearchState {
     searchLocations() {
         if (this.isWaitingToStartLocationSearch) {
             this.isWaitingToStartLocationSearch = false;
-            this.locationSearchResults.forEach(results => {
+            this.locationSearchResults.forEach((results) => {
                 results.isCanceled = true;
             });
-            this.locationSearchResults = this.locationSearchProviders.map(searchProvider => searchProvider.search(this.locationSearchText));
+            this.locationSearchResults = this.locationSearchProviders.map((searchProvider) => searchProvider.search(this.locationSearchText));
         }
     }
     searchUnified() {
         if (this.isWaitingToStartUnifiedSearch) {
             this.isWaitingToStartUnifiedSearch = false;
-            this.unifiedSearchResults.forEach(results => {
+            this.unifiedSearchResults.forEach((results) => {
                 results.isCanceled = true;
             });
-            this.unifiedSearchResults = this.unifiedSearchProviders.map(searchProvider => searchProvider.search(this.unifiedSearchText));
+            this.unifiedSearchResults = this.unifiedSearchProviders.map((searchProvider) => searchProvider.search(this.unifiedSearchText));
         }
     }
 }

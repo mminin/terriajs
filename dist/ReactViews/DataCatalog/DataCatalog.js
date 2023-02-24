@@ -25,7 +25,7 @@ export const DataCatalog = observer(createReactClass({
         const catalogSearchProvider = searchState.catalogSearchProvider;
         const unfilteredItems = isSearching &&
             catalogSearchProvider && ((_a = searchState.catalogSearchResults) === null || _a === void 0 ? void 0 : _a.results)
-            ? searchState.catalogSearchResults.results.map(result => result.catalogItem)
+            ? searchState.catalogSearchResults.results.map((result) => result.catalogItem)
             : this.props.items;
         const items = (unfilteredItems || []).filter(defined);
         const { t } = this.props;

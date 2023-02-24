@@ -14,8 +14,10 @@ import filterOutUndefined from "../Core/filterOutUndefined";
  * @param Traits10
  * @param Traits11
  * @param Traits12
+ * @param Traits13
+ * @param Traits14
  */
-export default function mixTraits(Traits1, Traits2, Traits3, Traits4, Traits5, Traits6, Traits7, Traits8, Traits9, Traits10, Traits11, Traits12) {
+export default function mixTraits(Traits1, Traits2, Traits3, Traits4, Traits5, Traits6, Traits7, Traits8, Traits9, Traits10, Traits11, Traits12, Traits13, Traits14) {
     const traitsClasses = filterOutUndefined([
         Traits1,
         Traits2,
@@ -28,11 +30,13 @@ export default function mixTraits(Traits1, Traits2, Traits3, Traits4, Traits5, T
         Traits9,
         Traits10,
         Traits11,
-        Traits12
+        Traits12,
+        Traits13,
+        Traits14
     ]);
-    const traitsInstances = traitsClasses.map(TraitsClass => new TraitsClass());
+    const traitsInstances = traitsClasses.map((TraitsClass) => new TraitsClass());
     const keysValues = traitsInstances.reduce((result, traitsInstance) => {
-        return result.concat(Object.keys(traitsInstance).map(property => ({
+        return result.concat(Object.keys(traitsInstance).map((property) => ({
             key: property,
             value: traitsInstance[property]
         })));
@@ -40,14 +44,14 @@ export default function mixTraits(Traits1, Traits2, Traits3, Traits4, Traits5, T
     class Mixed extends ModelTraits {
         constructor() {
             super();
-            keysValues.forEach(kv => {
+            keysValues.forEach((kv) => {
                 this[kv.key] = kv.value;
             });
         }
     }
     Mixed.traits = {};
-    traitsClasses.forEach(traitsClass => {
-        Object.keys(traitsClass.traits).forEach(trait => {
+    traitsClasses.forEach((traitsClass) => {
+        Object.keys(traitsClass.traits).forEach((trait) => {
             Mixed.traits[trait] = traitsClass.traits[trait];
         });
     });

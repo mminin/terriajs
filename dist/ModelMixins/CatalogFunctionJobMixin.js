@@ -192,17 +192,17 @@ function CatalogFunctionJobMixin(Base) {
                 !this.downloadingResults) {
                 this.downloadingResults = true;
                 this.results = (await this.downloadResults()) || [];
-                this.results.forEach(result => {
+                this.results.forEach((result) => {
                     if (MappableMixin.isMixedInto(result))
                         result.setTrait(CommonStrata.user, "show", true);
                     if (addResultsToWorkbench)
                         this.terria.workbench
                             .add(result)
-                            .then(r => r.raiseError(this.terria));
+                            .then((r) => r.raiseError(this.terria));
                     this.terria.addModel(result);
                 });
                 runInAction(() => {
-                    this.setTrait(CommonStrata.user, "members", filterOutUndefined(this.results.map(result => result.uniqueId)));
+                    this.setTrait(CommonStrata.user, "members", filterOutUndefined(this.results.map((result) => result.uniqueId)));
                     this.setTrait(CommonStrata.user, "downloadedResults", true);
                 });
                 this.downloadingResults = false;
@@ -216,9 +216,7 @@ function CatalogFunctionJobMixin(Base) {
             });
             const errorMessage = terriaError.highestImportanceError.message;
             this.setTrait(CommonStrata.user, "logs", [...this.logs, errorMessage]);
-            this.setTrait(CommonStrata.user, "shortReport", `${this.typeName ||
-                this
-                    .type} invocation failed. More details are available on the Info panel.`);
+            this.setTrait(CommonStrata.user, "shortReport", `${this.typeName || this.type} invocation failed. More details are available on the Info panel.`);
             const errorInfo = createStratumInstance(InfoSectionTraits, {
                 name: `${this.typeName || this.type} invocation failed.`,
                 content: errorMessage !== null && errorMessage !== void 0 ? errorMessage : "The reason for failure is unknown."

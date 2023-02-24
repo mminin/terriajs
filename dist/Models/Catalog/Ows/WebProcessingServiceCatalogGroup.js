@@ -8,7 +8,6 @@ import i18next from "i18next";
 import { action, computed, runInAction } from "mobx";
 import URI from "urijs";
 import filterOutUndefined from "../../../Core/filterOutUndefined";
-import { isJsonObject } from "../../../Core/Json";
 import replaceUnderscores from "../../../Core/replaceUnderscores";
 import runLater from "../../../Core/runLater";
 import TerriaError from "../../../Core/TerriaError";
@@ -94,7 +93,7 @@ class GetCapabilitiesStratum extends LoadableStratum(WebProcessingServiceCatalog
     }
     get members() {
         var _a, _b;
-        return filterOutUndefined((_b = (_a = this.capabilities.ProcessOfferings) === null || _a === void 0 ? void 0 : _a.map(process => this.getProcessId(process))) !== null && _b !== void 0 ? _b : []);
+        return filterOutUndefined((_b = (_a = this.capabilities.ProcessOfferings) === null || _a === void 0 ? void 0 : _a.map((process) => this.getProcessId(process))) !== null && _b !== void 0 ? _b : []);
     }
     getProcessId(process) {
         if (this.model.uniqueId !== undefined) {
@@ -103,7 +102,7 @@ class GetCapabilitiesStratum extends LoadableStratum(WebProcessingServiceCatalog
     }
     createMembersForProcesses() {
         var _a;
-        (_a = this.capabilities.ProcessOfferings) === null || _a === void 0 ? void 0 : _a.forEach(process => this.createMemberForProcess(process));
+        (_a = this.capabilities.ProcessOfferings) === null || _a === void 0 ? void 0 : _a.forEach((process) => this.createMemberForProcess(process));
     }
     createMemberForProcess(process) {
         const processId = this.getProcessId(process);
@@ -112,19 +111,11 @@ class GetCapabilitiesStratum extends LoadableStratum(WebProcessingServiceCatalog
         }
         const memberModel = this.getOrCreateWPSCatalogFunction(processId);
         // Replace the stratum inherited from the parent group.
-        const stratum = CommonStrata.underride;
-        memberModel.strata.delete(stratum);
-        memberModel.setTrait(stratum, "name", process.Title);
-        memberModel.setTrait(stratum, "url", this.model.url);
-        memberModel.setTrait(stratum, "identifier", process.Identifier);
-        memberModel.setTrait(stratum, "description", process.Abstract);
-        const itemProperties = this.model.itemProperties;
-        if (isJsonObject(itemProperties)) {
-            Object.keys(itemProperties).forEach((key) => {
-                if (key in memberModel.traits)
-                    memberModel.setTrait(stratum, key, itemProperties[key]);
-            });
-        }
+        memberModel.strata.delete(CommonStrata.definition);
+        memberModel.setTrait(CommonStrata.definition, "name", process.Title);
+        memberModel.setTrait(CommonStrata.definition, "url", this.model.url);
+        memberModel.setTrait(CommonStrata.definition, "identifier", process.Identifier);
+        memberModel.setTrait(CommonStrata.definition, "description", process.Abstract);
     }
     getOrCreateWPSCatalogFunction(id) {
         const terria = this.model.terria;

@@ -9,6 +9,10 @@ export default class CsvChartCustomComponent extends ChartCustomComponent {
         this.setTraitsFromBody = (item, csvString) => {
             item.setTrait(CommonStrata.user, "csvString", csvString);
         };
+        this.constructDownloadUrlFromBody = (body) => {
+            const blob = new Blob([body], { type: "text/csv;charset=utf-8" });
+            return URL.createObjectURL(blob);
+        };
     }
     get name() {
         // For backward compatibility reasons, since the original ChartCustomComponent assumed your catalog item was a Csv, we use the name "chart" even though "csv-chart" would be more correct
@@ -89,7 +93,7 @@ export default class CsvChartCustomComponent extends ChartCustomComponent {
         const chartStyle = item.addObject(CommonStrata.user, "styles", "chart");
         // Set chart type
         if (attrs.chartType !== undefined &&
-            SUPPORTED_CHART_TYPES.some(supported => supported === attrs.chartType)) {
+            SUPPORTED_CHART_TYPES.some((supported) => supported === attrs.chartType)) {
             item.setTrait(CommonStrata.user, "chartType", attrs.chartType);
         }
         if (attrs.chartGlyphStyle !== undefined) {
@@ -98,7 +102,7 @@ export default class CsvChartCustomComponent extends ChartCustomComponent {
         // Set chart axes
         if (attrs.xColumn || attrs.yColumns) {
             chartStyle.chart.setTrait(CommonStrata.user, "xAxisColumn", attrs.xColumn);
-            (attrs.yColumns || []).forEach(y => {
+            (attrs.yColumns || []).forEach((y) => {
                 chartStyle.chart.addObject(CommonStrata.user, "lines", y);
             });
             item.setTrait(CommonStrata.user, "activeStyle", "chart");

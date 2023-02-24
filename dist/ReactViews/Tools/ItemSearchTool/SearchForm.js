@@ -8,7 +8,7 @@ import Loading from "./Loading";
 import Text from "../../../Styled/Text";
 import Box from "../../../Styled/Box";
 import Button from "../../../Styled/Button";
-const SearchForm = props => {
+const SearchForm = (props) => {
     const { parameters, itemSearchProvider } = props;
     const [t] = useTranslation();
     const [state, setState] = useState({ is: "initial" });
@@ -34,11 +34,11 @@ const SearchForm = props => {
         setState({ is: "searching" });
         itemSearchProvider
             .search(parameterValues)
-            .then(results => {
+            .then((results) => {
             setState({ is: "results", results });
             props.onResults(query, results);
         })
-            .catch(error => {
+            .catch((error) => {
             console.warn(error);
             setState({ is: "error", error });
         });
@@ -58,7 +58,7 @@ const SearchForm = props => {
             state.is === "searching" && (React.createElement(Loading, null, t("itemSearchTool.searching"))),
             state.is === "error" && (React.createElement(ErrorComponent, null, t("itemSearchTool.searchError")))),
         React.createElement(FieldSet, { disabled: disabled },
-            parameters.map(p => {
+            parameters.map((p) => {
                 var _a;
                 return (React.createElement(Field, { key: p.id },
                     React.createElement(Parameter, { parameter: p, onChange: setParameterValue(p.id, p.type), value: (_a = query[p.id]) === null || _a === void 0 ? void 0 : _a.value, disabled: disabled, t: t })));
@@ -66,7 +66,7 @@ const SearchForm = props => {
             React.createElement(SearchButton, { primary: true, type: "submit", disabled: disabled }, t("itemSearchTool.searchBtnText")),
             React.createElement(Button, { secondary: true, type: "reset", onClick: clearForm, disabled: disabled }, t("itemSearchTool.resetBtnText")))));
 };
-const Parameter = props => {
+const Parameter = (props) => {
     const { parameter } = props;
     switch (parameter.type) {
         case "numeric":
@@ -77,7 +77,7 @@ const Parameter = props => {
             return React.createElement(TextParameter, Object.assign({}, props, { parameter: parameter }));
     }
 };
-export const NumericParameter = props => {
+export const NumericParameter = (props) => {
     var _a, _b;
     const { parameter, value, t } = props;
     const { min, max } = parameter.range;
@@ -104,14 +104,14 @@ export const NumericParameter = props => {
                     React.createElement(Text, { small: true }, t("itemSearchTool.numericParameter.maximum")),
                     React.createElement(Input, { type: "number", name: `${parameter.id}-max`, value: (_b = value === null || value === void 0 ? void 0 : value.end) !== null && _b !== void 0 ? _b : "", min: min, max: max, step: "any", placeholder: max.toString(), onChange: onChange("end") }))))));
 };
-const EnumParameter = props => {
+const EnumParameter = (props) => {
     const { parameter, disabled } = props;
     const options = parameter.values.map(({ id }) => ({
         value: id,
         label: id || "<empty>"
     }));
-    const value = options.filter(o => { var _a; return (_a = props.value) === null || _a === void 0 ? void 0 : _a.includes(o.value); });
-    const onChange = selectedOptions => {
+    const value = options.filter((o) => { var _a; return (_a = props.value) === null || _a === void 0 ? void 0 : _a.includes(o.value); });
+    const onChange = (selectedOptions) => {
         const values = selectedOptions === null || selectedOptions === void 0 ? void 0 : selectedOptions.map(({ value }) => value);
         props.onChange((values === null || values === void 0 ? void 0 : values.length) === 0 ? undefined : values);
     };
@@ -120,12 +120,12 @@ const EnumParameter = props => {
             React.createElement(ParameterName, null, parameter.name),
             React.createElement(Select, { name: parameter.id, options: options, isMulti: true, value: value, menuPosition: "fixed", onChange: onChange, isDisabled: disabled }))));
 };
-const TextParameter = props => {
+const TextParameter = (props) => {
     const { parameter, value, onChange } = props;
     return (React.createElement(Box, { column: true },
         React.createElement(Label, null,
             React.createElement(ParameterName, null, parameter.name),
-            React.createElement(Input, { type: "text", name: parameter.id, value: value || "", onChange: e => onChange(e.target.value ? e.target.value : undefined) }))));
+            React.createElement(Input, { type: "text", name: parameter.id, value: value || "", onChange: (e) => onChange(e.target.value ? e.target.value : undefined) }))));
 };
 const Form = styled.form `
   width: 100%;
@@ -154,7 +154,7 @@ const HalfWidthLabel = styled(Label) `
   }
 `;
 const Input = styled.input `
-  color: ${p => p.theme.dark};
+  color: ${(p) => p.theme.dark};
   box-sizing: border-box;
   width: 100%;
   height: 38px;
@@ -163,7 +163,7 @@ const Input = styled.input `
 const Select = styled(ReactSelect).attrs({
     classNamePrefix: "ReactSelect"
 }) `
-  color: ${p => p.theme.dark};
+  color: ${(p) => p.theme.dark};
   width: 100%;
   & .ReactSelect__control {
     border-radius: 0;

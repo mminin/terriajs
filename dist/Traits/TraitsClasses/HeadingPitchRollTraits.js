@@ -6,7 +6,27 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 };
 import ModelTraits from "../ModelTraits";
 import primitiveTrait from "../Decorators/primitiveTrait";
+import Quaternion from "terriajs-cesium/Source/Core/Quaternion";
+import HeadingPitchRoll from "terriajs-cesium/Source/Core/HeadingPitchRoll";
+import updateModelFromJson from "../../Models/Definition/updateModelFromJson";
+import CesiumMath from "terriajs-cesium/Source/Core/Math";
+// Scratch variables used to avoid repeated object instantiation
+const hprScratch = new HeadingPitchRoll();
+const quaternionScratch = new Quaternion();
 export default class HeadingPitchRollTraits extends ModelTraits {
+    static setFromRotationMatrix(model, stratumId, rotation) {
+        this.setFromHeadingPitchRoll(model, stratumId, HeadingPitchRoll.fromQuaternion(Quaternion.fromRotationMatrix(rotation, quaternionScratch), hprScratch));
+    }
+    static setFromQuaternion(model, stratumId, rotation) {
+        this.setFromHeadingPitchRoll(model, stratumId, HeadingPitchRoll.fromQuaternion(rotation, hprScratch));
+    }
+    static setFromHeadingPitchRoll(model, stratumId, hpr) {
+        updateModelFromJson(model, stratumId, {
+            heading: CesiumMath.toDegrees(hpr.heading),
+            pitch: CesiumMath.toDegrees(hpr.pitch),
+            roll: CesiumMath.toDegrees(hpr.roll)
+        }).logError("Error ocurred while setting heading, pitch and roll");
+    }
 }
 __decorate([
     primitiveTrait({

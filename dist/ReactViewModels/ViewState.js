@@ -7,7 +7,7 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 import { action, computed, observable, reaction, runInAction } from "mobx";
 import defined from "terriajs-cesium/Source/Core/defined";
 import addedByUser from "../Core/addedByUser";
-import { Category, HelpAction } from "../Core/AnalyticEvents/analyticEvents";
+import { Category, HelpAction, StoryAction } from "../Core/AnalyticEvents/analyticEvents";
 import Result from "../Core/Result";
 import triggerResize from "../Core/triggerResize";
 import CatalogMemberMixin, { getName } from "../ModelMixins/CatalogMemberMixin";
@@ -18,6 +18,7 @@ import CommonStrata from "../Models/Definition/CommonStrata";
 import { BaseModel } from "../Models/Definition/Model";
 import getAncestors from "../Models/getAncestors";
 import { SATELLITE_HELP_PROMPT_KEY } from "../ReactViews/HelpScreens/SatelliteHelpPrompt";
+import { animationDuration } from "../ReactViews/StandardUserInterface/StandardUserInterface";
 import { defaultTourPoints, RelativePosition } from "./defaultTourPoints";
 import DisclaimerHandler from "./DisclaimerHandler";
 import SearchState from "./SearchState";
@@ -49,6 +50,7 @@ export default class ViewState {
         this.mobileMenuVisible = false;
         this.explorerPanelAnimating = false;
         this.topElement = "FeatureInfo";
+        this.portals = new Map();
         this.lastUploadedFiles = [];
         this.storyBuilderShown = false;
         // Flesh out later
@@ -68,10 +70,55 @@ export default class ViewState {
         this.currentTrainerStepIndex = 0;
         this.printWindow = null;
         /**
+         * Toggles ActionBar visibility. Do not set manually, it is
+         * automatically set when rendering <ActionBar>
+         */
+        this.isActionBarVisible = false;
+        /**
+         * A global list of functions that generate a {@link ViewingControl} option
+         * for the given catalog item instance.  This is useful for plugins to extend
+         * the viewing control menu across catalog items.
+         *
+         * Use {@link ViewingControlsMenu.addMenuItem} instead of updating directly.
+         */
+        this.globalViewingControlOptions = [];
+        /**
+         * A global list of hooks for generating input controls for items in the workbench.
+         * The hooks in this list gets called once for each item in shown in the workbench.
+         * This is a mechanism for plugins to extend workbench input controls by adding new ones.
+         *
+         * Use {@link WorkbenchItem.Inputs.addInput} instead of updating directly.
+         */
+        this.workbenchItemInputGenerators = [];
+        /**
+         * A global list of generator functions for showing buttons in feature info panel.
+         * Use {@link FeatureInfoPanelButton.addButton} instead of updating directly.
+         */
+        this.featureInfoPanelButtonGenerators = [];
+        /* SPECTRAL PROFILE */
+        this.spectralProfileActive = false;
+        this.spectralLocationSelected = false;
+        this.currentSpectralImage = "";
+        this.spectralAtomic = false;
+        this.spectralDataObject = {
+            image_id: "",
+            lat: "",
+            lon: ""
+        };
+        this.spectralX = [];
+        this.spectralY = [];
+        this.currentSpectralArray = [];
+        this.spectralCounter = 0;
+        /* BAND PROFILE STATES */
+        this.bandProfileActive = false;
+        /**
          * Bottom dock state & action
          */
         this.bottomDockHeight = 0;
-        this.workbenchWithOpenControls = undefined;
+        /**
+         * ID of the workbench item whose ViewingControls menu is currently open.
+         */
+        this.workbenchItemWithOpenControls = undefined;
         this.errorProvider = null;
         // default value is null, because user has not made decision to show or
         // not show story
@@ -141,10 +188,20 @@ export default class ViewState {
          */
         this.feedbackFormIsVisible = false;
         /**
+         * Gets or sets a value indicating whether the catalog's modal share panel
+         * is currently visible.
+         */
+        this.shareModalIsVisible = false; // Small share modal inside StoryEditor
+        /**
          * Gets or sets a value indicating whether the catalog's model share panel
          * is currently visible.
          */
         this.shareModelIsVisible = false;
+        /**
+         * Used to indicate that the Share Panel should stay open even if it loses focus.
+         * This is used when clicking a help link in the Share Panel - The Help Panel will open, and when it is closed, the Share Panel should still be visible for the user to continue their task.
+         */
+        this.retainSharePanel = false; // The large share panel accessed via Share/Print button
         const terria = options.terria;
         this.searchState = new SearchState({
             terria: terria,
@@ -243,6 +300,53 @@ export default class ViewState {
     get previewedItem() {
         return this._previewedItem;
     }
+    setSpectralProfileActive(bool) {
+        this.spectralProfileActive = bool;
+    }
+    setSpectralLocationSelected(bool) {
+        this.spectralLocationSelected = bool;
+    }
+    setCurrentSpectralImage(str) {
+        this.currentSpectralImage = str;
+    }
+    setSpectralAtomic(bool) {
+        // console.log("setting atomic to: ", bool);
+        this.spectralAtomic = bool;
+    }
+    setSpectralDataObject(id, latitude, longitude) {
+        this.spectralDataObject = {
+            image_id: id,
+            lat: latitude,
+            lon: longitude
+        };
+    }
+    setSpectralX(arr) {
+        this.spectralX = [...arr];
+    }
+    setSpectralY(arr) {
+        this.spectralY = arr;
+    }
+    addObjectToSpectralArray(obj) {
+        this.currentSpectralArray.push(obj);
+    }
+    nullifyArray() {
+        this.currentSpectralArray.length = 0;
+    }
+    get getSpectralArrayObject() {
+        return (this.currentSpectralArray);
+    }
+    get getSpectralArrayLength() {
+        return (this.currentSpectralArray.length);
+    }
+    incrementSpectralCounter() {
+        this.spectralCounter += 1;
+        console.log("spectral counter ", this.spectralCounter);
+    }
+    nullifySpectralCounter() {
+        this.spectralCounter = 0;
+        console.log("spectral counter ", this.spectralCounter);
+    }
+    /* THE REMAINING STATES */
     setSelectedTrainerItem(trainerItem) {
         this.selectedTrainerItem = trainerItem;
     }
@@ -265,6 +369,9 @@ export default class ViewState {
     }
     setCurrentTrainerStepIndex(index) {
         this.currentTrainerStepIndex = index;
+    }
+    setActionBarVisible(visible) {
+        this.isActionBarVisible = visible;
     }
     setBottomDockHeight(height) {
         if (this.bottomDockHeight !== height) {
@@ -463,12 +570,22 @@ export default class ViewState {
         this.selectedHelpMenuItem = "";
         this.setTopElement("HelpPanel");
     }
+    openHelpPanelItemFromSharePanel(evt, itemName) {
+        evt.preventDefault();
+        evt.stopPropagation();
+        this.setRetainSharePanel(true);
+        this.showHelpPanel();
+        this.selectHelpMenuItem(itemName);
+    }
     selectHelpMenuItem(key) {
         this.selectedHelpMenuItem = key;
         this.helpPanelExpanded = true;
     }
     hideHelpPanel() {
         this.showHelpMenu = false;
+    }
+    setRetainSharePanel(retain) {
+        this.retainSharePanel = retain;
     }
     changeSearchState(newText) {
         this.searchState.catalogSearchText = newText;
@@ -535,6 +652,16 @@ export default class ViewState {
         this.setTopElement("mobileMenu");
         this.mobileMenuVisible = !this.mobileMenuVisible;
     }
+    runStories() {
+        var _a;
+        this.storyBuilderShown = false;
+        this.storyShown = true;
+        setTimeout(function () {
+            triggerResize();
+        }, animationDuration || 1);
+        this.terria.currentViewer.notifyRepaintRequired();
+        (_a = this.terria.analytics) === null || _a === void 0 ? void 0 : _a.logEvent(Category.story, StoryAction.runStory);
+    }
     get breadcrumbsShown() {
         return (this.previewedItem !== undefined ||
             this.userDataPreviewedItem !== undefined);
@@ -595,6 +722,9 @@ __decorate([
 ], ViewState.prototype, "topElement", void 0);
 __decorate([
     observable
+], ViewState.prototype, "portals", void 0);
+__decorate([
+    observable
 ], ViewState.prototype, "lastUploadedFiles", void 0);
 __decorate([
     observable
@@ -645,6 +775,87 @@ __decorate([
     observable
 ], ViewState.prototype, "printWindow", void 0);
 __decorate([
+    observable
+], ViewState.prototype, "isActionBarVisible", void 0);
+__decorate([
+    observable
+], ViewState.prototype, "globalViewingControlOptions", void 0);
+__decorate([
+    observable
+], ViewState.prototype, "workbenchItemInputGenerators", void 0);
+__decorate([
+    observable
+], ViewState.prototype, "featureInfoPanelButtonGenerators", void 0);
+__decorate([
+    observable
+], ViewState.prototype, "spectralProfileActive", void 0);
+__decorate([
+    observable
+], ViewState.prototype, "spectralLocationSelected", void 0);
+__decorate([
+    observable
+], ViewState.prototype, "currentSpectralImage", void 0);
+__decorate([
+    observable
+], ViewState.prototype, "spectralAtomic", void 0);
+__decorate([
+    action
+], ViewState.prototype, "setSpectralProfileActive", null);
+__decorate([
+    action
+], ViewState.prototype, "setSpectralLocationSelected", null);
+__decorate([
+    action
+], ViewState.prototype, "setCurrentSpectralImage", null);
+__decorate([
+    action
+], ViewState.prototype, "setSpectralAtomic", null);
+__decorate([
+    observable
+], ViewState.prototype, "spectralDataObject", void 0);
+__decorate([
+    action
+], ViewState.prototype, "setSpectralDataObject", null);
+__decorate([
+    observable
+], ViewState.prototype, "spectralX", void 0);
+__decorate([
+    action
+], ViewState.prototype, "setSpectralX", null);
+__decorate([
+    observable
+], ViewState.prototype, "spectralY", void 0);
+__decorate([
+    action
+], ViewState.prototype, "setSpectralY", null);
+__decorate([
+    observable
+], ViewState.prototype, "currentSpectralArray", void 0);
+__decorate([
+    action
+], ViewState.prototype, "addObjectToSpectralArray", null);
+__decorate([
+    action
+], ViewState.prototype, "nullifyArray", null);
+__decorate([
+    computed
+], ViewState.prototype, "getSpectralArrayObject", null);
+__decorate([
+    computed
+], ViewState.prototype, "getSpectralArrayLength", null);
+__decorate([
+    observable
+], ViewState.prototype, "spectralCounter", void 0);
+__decorate([
+    action
+], ViewState.prototype, "incrementSpectralCounter", null);
+__decorate([
+    action
+], ViewState.prototype, "nullifySpectralCounter", null);
+__decorate([
+    observable
+], ViewState.prototype, "bandProfileActive", void 0);
+__decorate([
     action
 ], ViewState.prototype, "setSelectedTrainerItem", null);
 __decorate([
@@ -663,6 +874,9 @@ __decorate([
     action
 ], ViewState.prototype, "setCurrentTrainerStepIndex", null);
 __decorate([
+    action
+], ViewState.prototype, "setActionBarVisible", null);
+__decorate([
     observable
 ], ViewState.prototype, "bottomDockHeight", void 0);
 __decorate([
@@ -670,7 +884,7 @@ __decorate([
 ], ViewState.prototype, "setBottomDockHeight", null);
 __decorate([
     observable
-], ViewState.prototype, "workbenchWithOpenControls", void 0);
+], ViewState.prototype, "workbenchItemWithOpenControls", void 0);
 __decorate([
     observable
 ], ViewState.prototype, "storyShown", void 0);
@@ -736,7 +950,13 @@ __decorate([
 ], ViewState.prototype, "feedbackFormIsVisible", void 0);
 __decorate([
     observable
+], ViewState.prototype, "shareModalIsVisible", void 0);
+__decorate([
+    observable
 ], ViewState.prototype, "shareModelIsVisible", void 0);
+__decorate([
+    observable
+], ViewState.prototype, "retainSharePanel", void 0);
 __decorate([
     observable
 ], ViewState.prototype, "currentTool", void 0);
@@ -778,10 +998,16 @@ __decorate([
 ], ViewState.prototype, "showHelpPanel", null);
 __decorate([
     action
+], ViewState.prototype, "openHelpPanelItemFromSharePanel", null);
+__decorate([
+    action
 ], ViewState.prototype, "selectHelpMenuItem", null);
 __decorate([
     action
 ], ViewState.prototype, "hideHelpPanel", null);
+__decorate([
+    action
+], ViewState.prototype, "setRetainSharePanel", null);
 __decorate([
     action
 ], ViewState.prototype, "changeSearchState", null);
@@ -818,6 +1044,9 @@ __decorate([
 __decorate([
     action
 ], ViewState.prototype, "toggleMobileMenu", null);
+__decorate([
+    action
+], ViewState.prototype, "runStories", null);
 __decorate([
     computed
 ], ViewState.prototype, "breadcrumbsShown", null);

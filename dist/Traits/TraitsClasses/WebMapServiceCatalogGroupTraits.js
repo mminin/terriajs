@@ -4,7 +4,6 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
-import anyTrait from "../Decorators/anyTrait";
 import objectTrait from "../Decorators/objectTrait";
 import primitiveTrait from "../Decorators/primitiveTrait";
 import mixTraits from "../mixTraits";
@@ -23,12 +22,6 @@ __decorate([
         description: "True to flatten the layers into a single list; false to use the layer hierarchy."
     })
 ], WebMapServiceCatalogGroupTraits.prototype, "flatten", void 0);
-__decorate([
-    anyTrait({
-        name: "Item Properties",
-        description: "Sets traits on child WebMapServiceCatalogItem's"
-    })
-], WebMapServiceCatalogGroupTraits.prototype, "itemProperties", void 0);
 __decorate([
     objectTrait({
         name: "Per layer WebCoverageService",

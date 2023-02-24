@@ -1,11 +1,13 @@
-import { action } from "mobx";
+import { action, runInAction } from "mobx";
+import Color from "terriajs-cesium/Source/Core/Color";
 import JulianDate from "terriajs-cesium/Source/Core/JulianDate";
 import Rectangle from "terriajs-cesium/Source/Core/Rectangle";
 import TimeInterval from "terriajs-cesium/Source/Core/TimeInterval";
 import ImageryLayerFeatureInfo from "terriajs-cesium/Source/Scene/ImageryLayerFeatureInfo";
 import isDefined from "../Core/isDefined";
-import MapboxVectorTileImageryProvider from "../Map/MapboxVectorTileImageryProvider";
-import getChartDetailsFn from "./getChartDetailsFn";
+import { isJsonNumber } from "../Core/Json";
+import MapboxVectorTileImageryProvider from "../Map/ImageryProvider/MapboxVectorTileImageryProvider";
+import { isConstantStyleMap } from "./TableStyleMap";
 export default function createRegionMappedImageryProvider(style, currentTime) {
     if (!style.isRegions()) {
         return undefined;
@@ -15,11 +17,11 @@ export default function createRegionMappedImageryProvider(style, currentTime) {
     if (regionType === undefined) {
         return undefined;
     }
-    const baseMapContrastColor = style.tableModel.terria.baseMapContrastColor;
     const colorColumn = style.colorColumn;
     const valueFunction = colorColumn !== undefined ? colorColumn.valueFunctionForType : () => null;
     const colorMap = style.colorMap;
     const valuesAsRegions = regionColumn.valuesAsRegions;
+    const outlineStyleMap = style.outlineStyleMap.styleMap;
     let currentTimeRows;
     // If time varying, get row indices which match
     if (currentTime && style.timeIntervals && style.moreThanOneTimeInterval) {
@@ -34,6 +36,7 @@ export default function createRegionMappedImageryProvider(style, currentTime) {
         url: regionType.server,
         layerName: regionType.layerName,
         styleFunc: function (feature) {
+            var _a, _b;
             const regionId = feature.properties[regionType.uniqueIdProp];
             let rowNumber = getImageryLayerFilteredRow(style, currentTimeRows, valuesAsRegions.regionIdToRowNumbersMap.get(regionId));
             let value = isDefined(rowNumber)
@@ -43,10 +46,14 @@ export default function createRegionMappedImageryProvider(style, currentTime) {
             if (color === undefined) {
                 return undefined;
             }
+            const outlineStyle = isConstantStyleMap(outlineStyleMap)
+                ? outlineStyleMap.style
+                : outlineStyleMap.mapValueToStyle(rowNumber !== null && rowNumber !== void 0 ? rowNumber : -1);
+            const outlineColorValue = Color.fromCssColorString((_a = outlineStyle.color) !== null && _a !== void 0 ? _a : runInAction(() => style.tableModel.terria.baseMapContrastColor));
             return {
                 fillStyle: color.toCssColorString(),
-                strokeStyle: value !== null ? baseMapContrastColor : "transparent",
-                lineWidth: 1,
+                strokeStyle: value !== null ? outlineColorValue.toCssColorString() : "transparent",
+                lineWidth: (_b = outlineStyle.width) !== null && _b !== void 0 ? _b : 1,
                 lineJoin: "miter"
             };
         },
@@ -75,7 +82,7 @@ const getImageryLayerFilteredRow = action((style, currentTimeRows, rowNumbers) =
         return rowNumbers;
     }
     else if (Array.isArray(rowNumbers)) {
-        const matchingTimeRows = rowNumbers.filter(row => currentTimeRows.includes(row));
+        const matchingTimeRows = rowNumbers.filter((row) => currentTimeRows.includes(row));
         if (matchingTimeRows.length <= 1) {
             return matchingTimeRows[0];
         }
@@ -108,7 +115,7 @@ const getImageryLayerFeatureInfo = action((style, feature, currentTimeRows) => {
             return;
         style.tableModel.tableColumns;
         const rowObject = style.tableModel.tableColumns.reduce((obj, column) => {
-            obj[column.title] = column.valueFunctionForType(rowId);
+            obj[column.name] = column.valueFunctionForType(rowId);
             return obj;
         }, {});
         // Preserve values from d and insert feature properties after entries from d
@@ -119,15 +126,13 @@ const getImageryLayerFeatureInfo = action((style, feature, currentTimeRows) => {
         }
         featureData.id = feature.properties[regionType.uniqueIdProp];
         featureInfo.properties = featureData;
+        const terriaFeatureData = {
+            rowIds: isJsonNumber(regionRows) ? [regionRows] : [...regionRows],
+            type: "terriaFeatureData"
+        };
+        featureInfo.data = terriaFeatureData;
         featureInfo.configureDescriptionFromProperties(featureData);
         featureInfo.configureNameFromProperties(featureData);
-        // If time-series region-mapping - show timeseries chart
-        if (!isDefined(featureData._terria_getChartDetails) &&
-            style.tableModel.discreteTimes &&
-            style.tableModel.discreteTimes.length > 1 &&
-            Array.isArray(regionRows)) {
-            featureInfo.properties._terria_getChartDetails = getChartDetailsFn(style, regionRows);
-        }
         return featureInfo;
     }
     return undefined;

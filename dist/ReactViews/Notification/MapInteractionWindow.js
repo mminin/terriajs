@@ -5,19 +5,18 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
-import React from "react";
-import PropTypes from "prop-types";
-import styled from "styled-components";
-const parseCustomHtmlToReact = require("../Custom/parseCustomHtmlToReact")
-    .default;
-import Styles from "./map-interaction-window.scss";
 import classNames from "classnames";
-import { observer } from "mobx-react";
-import { UIMode } from "../../Models/MapInteractionMode";
 import { observable, reaction } from "mobx";
+import { observer } from "mobx-react";
+import React from "react";
+import styled from "styled-components";
 import isDefined from "../../Core/isDefined";
+import { UIMode } from "../../Models/MapInteractionMode";
+import parseCustomHtmlToReact from "../Custom/parseCustomHtmlToReact";
+import { withViewState } from "../StandardUserInterface/ViewStateContext";
+import Styles from "./map-interaction-window.scss";
 const MapInteractionWindowWrapper = styled.div `
-  ${props => props.isDiffTool &&
+  ${(props) => props.isDiffTool &&
     `
     display: none;
     top: initial;
@@ -45,10 +44,10 @@ let MapInteractionWindow = class MapInteractionWindow extends React.Component {
         this.disposeMapInteractionObserver && this.disposeMapInteractionObserver();
     }
     componentDidMount() {
-        this.disposeMapInteractionObserver = reaction(() => this.props.terria.mapInteractionModeStack.length > 0 &&
-            this.props.terria.mapInteractionModeStack[this.props.terria.mapInteractionModeStack.length - 1], () => {
+        this.disposeMapInteractionObserver = reaction(() => this.props.viewState.terria.mapInteractionModeStack.length > 0 &&
+            this.props.viewState.terria.mapInteractionModeStack[this.props.viewState.terria.mapInteractionModeStack.length - 1], () => {
             var _a;
-            const mapInteractionMode = this.props.terria.mapInteractionModeStack[this.props.terria.mapInteractionModeStack.length - 1];
+            const mapInteractionMode = this.props.viewState.terria.mapInteractionModeStack[this.props.viewState.terria.mapInteractionModeStack.length - 1];
             if (mapInteractionMode !== this.currentInteractionMode) {
                 this.currentInteractionMode = mapInteractionMode;
             }
@@ -103,15 +102,11 @@ let MapInteractionWindow = class MapInteractionWindow extends React.Component {
             ((_c = this.currentInteractionMode) === null || _c === void 0 ? void 0 : _c.onCancel) && (React.createElement("button", { type: "button", onClick: this.currentInteractionMode.onCancel, className: Styles.btn }, this.currentInteractionMode.buttonText))));
     }
 };
-MapInteractionWindow.propTypes = {
-    terria: PropTypes.object,
-    viewState: PropTypes.object
-};
 __decorate([
     observable
 ], MapInteractionWindow.prototype, "currentInteractionMode", void 0);
 MapInteractionWindow = __decorate([
     observer
 ], MapInteractionWindow);
-export default MapInteractionWindow;
+export default withViewState(MapInteractionWindow);
 //# sourceMappingURL=MapInteractionWindow.js.map

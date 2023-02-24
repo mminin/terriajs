@@ -39,7 +39,7 @@ let DataCatalogTab = class DataCatalogTab extends React.Component {
             React.createElement(Box, { fullHeight: true, column: true },
                 React.createElement(Box, { fullHeight: true, overflow: "hidden" },
                     React.createElement(Box, { className: Styles.dataExplorer, styledWidth: "40%" },
-                        searchState.catalogSearchProvider && (React.createElement(SearchBox, { searchText: searchState.catalogSearchText, onSearchTextChanged: val => this.changeSearchText(val), onDoSearch: () => this.search(), placeholder: this.searchPlaceholder, debounceDuration: terria.catalogReferencesLoaded &&
+                        searchState.catalogSearchProvider && (React.createElement(SearchBox, { searchText: searchState.catalogSearchText, onSearchTextChanged: (val) => this.changeSearchText(val), onDoSearch: () => this.search(), placeholder: this.searchPlaceholder, debounceDuration: terria.catalogReferencesLoaded &&
                                 searchState.catalogSearchProvider
                                 ? searchState.catalogSearchProvider
                                     .debounceDurationOnceLoaded

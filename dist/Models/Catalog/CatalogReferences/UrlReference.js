@@ -45,7 +45,7 @@ export default class UrlReference extends UrlMixin(ReferenceMixin(CreateModel(Ur
             updateModelFromJson(item, urlRecordStratum, {
                 name: url,
                 url: url
-            });
+            }).logError();
             if (allowLoad && CatalogMemberMixin.isMixedInto(item)) {
                 const loadMetadataResult = await item.loadMetadata();
                 if (loadMetadataResult.error) {

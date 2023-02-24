@@ -1,6 +1,6 @@
 import defaultValue from "terriajs-cesium/Source/Core/defaultValue";
 import FunctionParameter from "./FunctionParameter";
-const Reproject = require("../../Map/Reproject");
+const Reproject = require("../../Map/Vector/Reproject");
 export default class RectangleParameter extends FunctionParameter {
     constructor(catalogFunction, options) {
         super(catalogFunction, options);

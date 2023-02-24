@@ -11,7 +11,7 @@ import primitiveArrayTrait from "../Decorators/primitiveArrayTrait";
 import primitiveTrait from "../Decorators/primitiveTrait";
 import mixTraits from "../mixTraits";
 import ModelTraits from "../ModelTraits";
-import DimensionTraits from "./DimensionTraits";
+import EnumDimensionTraits from "./DimensionTraits";
 export class MetadataUrlTraits extends ModelTraits {
 }
 __decorate([
@@ -167,7 +167,7 @@ __decorate([
     primitiveArrayTrait({
         type: "string",
         name: "InfoSectionOrder",
-        description: `An array of section titles definining the display order of info sections. If this property is not defined, {@link DataPreviewSections}'s DEFAULT_SECTION_ORDER is used`
+        description: `An array of section titles defining the display order of info sections. If this property is not defined, {@link DataPreviewSections}'s DEFAULT_SECTION_ORDER is used`
     })
 ], CatalogMemberTraits.prototype, "infoSectionOrder", void 0);
 __decorate([
@@ -231,10 +231,10 @@ __decorate([
 ], CatalogMemberTraits.prototype, "dataCustodian", void 0);
 __decorate([
     objectArrayTrait({
-        type: DimensionTraits,
+        type: EnumDimensionTraits,
         idProperty: "id",
         name: "Model dimensions",
-        description: "This provides ability to set model JSON through SelectableDimensions (a dropdown)."
+        description: "This provides ability to set model JSON through SelectableDimensions (a dropdown). When an option is selected, the `value` property will be used to call `updateModelFromJson()`. All string properties support Mustache templates (with the catalog member as context)"
     })
 ], CatalogMemberTraits.prototype, "modelDimensions", void 0);
 __decorate([

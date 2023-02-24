@@ -4,11 +4,10 @@ import retry from "retry";
 import formatError from "terriajs-cesium/Source/Core/formatError";
 import Rectangle from "terriajs-cesium/Source/Core/Rectangle";
 import Resource from "terriajs-cesium/Source/Core/Resource";
-import when from "terriajs-cesium/Source/ThirdParty/when";
 import TerriaError from "../Core/TerriaError";
-import getUrlForImageryTile from "../Map/getUrlForImageryTile";
-import CommonStrata from "../Models/Definition/CommonStrata";
+import getUrlForImageryTile from "../Map/ImageryProvider/getUrlForImageryTile";
 import CompositeCatalogItem from "../Models/Catalog/CatalogItems/CompositeCatalogItem";
+import CommonStrata from "../Models/Definition/CommonStrata";
 import DiscretelyTimeVaryingMixin from "./DiscretelyTimeVaryingMixin";
 /**
  * A mixin for handling tile errors in raster layers
@@ -48,13 +47,19 @@ function TileErrorHandlerMixin(Base) {
          */
         onTileLoadError(tileProviderError) {
             const operation = retry.operation(this.tileRetryOptions);
-            // Ideally this should be a `Promise` but we use a less ideal `when` for now
-            // because our cesium fork expects a when object here:
-            // https://github.com/TerriaJS/cesium/blob/terriajs/Source/Core/TileProviderError.js#L161
+            // Cesium's TileProviderError has a native Promise now, but the code
+            // below is adapted from when it had a when.js promise. That's why it's
+            // a bit unusual looking.
             //
             // result.reject = stop trying to load this tile
             // result.resolve = retry loading this tile
-            const result = when.defer();
+            let result;
+            const promise = new Promise((resolve, reject) => {
+                result = {
+                    resolve,
+                    reject
+                };
+            });
             const imageryProvider = tileProviderError.provider;
             const tile = {
                 x: tileProviderError.x,
@@ -131,7 +136,7 @@ function TileErrorHandlerMixin(Base) {
             // By setting retry to a promise, we tell cesium/leaflet to
             // reload the tile if the promise resolves successfully
             // https://github.com/TerriaJS/cesium/blob/terriajs/Source/Core/TileProviderError.js#L161
-            tileProviderError.retry = result;
+            tileProviderError.retry = promise;
             if (tileProviderError.timesRetried === 0) {
                 // There was an intervening success, so restart our count of the tile failures.
                 this.tileFailures = 0;

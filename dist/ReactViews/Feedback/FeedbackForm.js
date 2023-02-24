@@ -15,11 +15,12 @@ import Box from "../../Styled/Box";
 import Button, { RawButton } from "../../Styled/Button";
 import Checkbox from "../../Styled/Checkbox";
 import { GLYPHS, StyledIcon } from "../../Styled/Icon";
-import Input, { StyledInput } from "../../Styled/Input";
+import Input, { StyledTextArea } from "../../Styled/Input";
 import Spacing from "../../Styled/Spacing";
 import Text from "../../Styled/Text";
 import parseCustomMarkdownToReact, { parseCustomMarkdownToReactWithOptions } from "../Custom/parseCustomMarkdownToReact";
-import { useTranslationIfExists } from "./../../Language/languageHelpers";
+import { withViewState } from "../StandardUserInterface/ViewStateContext";
+import { applyTranslationIfExists } from "./../../Language/languageHelpers";
 let FeedbackForm = class FeedbackForm extends React.Component {
     constructor(props) {
         super(props);
@@ -31,7 +32,7 @@ let FeedbackForm = class FeedbackForm extends React.Component {
             comment: "",
             commentIsValid: false
         };
-        this.escKeyListener = e => {
+        this.escKeyListener = (e) => {
             if (e.keyCode === 27) {
                 this.onDismiss();
             }
@@ -131,17 +132,18 @@ let FeedbackForm = class FeedbackForm extends React.Component {
         }
     }
     render() {
-        const { t, viewState, theme } = this.props;
-        const preamble = parseCustomMarkdownToReact(useTranslationIfExists(viewState.terria.configParameters.feedbackPreamble));
+        const { t, i18n, viewState, theme } = this.props;
+        const preamble = parseCustomMarkdownToReact(applyTranslationIfExists(viewState.terria.configParameters.feedbackPreamble ||
+            "translate#feedback.feedbackPreamble", i18n));
         const postamble = viewState.terria.configParameters.feedbackPostamble
-            ? parseCustomMarkdownToReact(useTranslationIfExists(viewState.terria.configParameters.feedbackPostamble))
+            ? parseCustomMarkdownToReact(applyTranslationIfExists(viewState.terria.configParameters.feedbackPostamble, i18n))
             : undefined;
         return (React.createElement(FormWrapper, null,
             React.createElement(Box, { backgroundColor: theme.darkLighter, paddedRatio: 2 },
                 React.createElement(Text, { textLight: true, textAlignCenter: true, semiBold: true, as: "h4", fullWidth: true, css: `
               margin: 0;
             ` }, t("feedback.title")),
-                React.createElement(RawButton, { onClick: this.onDismiss },
+                React.createElement(RawButton, { onClick: this.onDismiss, title: t("feedback.close") },
                     React.createElement(StyledIcon, { styledWidth: "15px", light: true, glyph: GLYPHS.close }))),
             React.createElement(Form, { paddedRatio: 2, onSubmit: this.onSubmit.bind(this), column: true },
                 React.createElement(Text, { textDarker: true }, preamble),
@@ -189,42 +191,17 @@ const TextArea = (props) => {
     useEffect(() => {
         textAreaRef.current.style.setProperty("height", `${textAreaRef.current.scrollHeight + 2}px`);
     }, [value]);
-    const onChangeHandler = (event) => {
-        textAreaRef.current.style.setProperty("height", "auto");
-        if (props.onChange) {
-            props.onChange(event);
-        }
-    };
-    return (React.createElement(StyledTextArea, Object.assign({}, rest, { ref: textAreaRef, rows: 1, styledHeight: styledMinHeight, styledMinHeight: styledMinHeight, styledMaxHeight: styledMaxHeight, onChange: onChangeHandler, invalidValue: !valueIsValid })));
+    return (React.createElement(StyledTextArea, Object.assign({}, rest, { ref: textAreaRef, rows: 1, styledHeight: styledMinHeight, styledMinHeight: styledMinHeight, styledMaxHeight: styledMaxHeight, onChange: (event) => {
+            textAreaRef.current.style.setProperty("height", "auto");
+            if (props.onChange) {
+                props.onChange(event);
+            }
+        }, invalidValue: !valueIsValid })));
 };
-const StyledTextArea = styled(StyledInput).attrs({
-    as: "textarea"
-}) `
-  line-height: ${props => props.lineHeight};
-  padding-top: 5px;
-  padding-bottom: 5px;
-  cursor: auto;
-  -webkit-overflow-scrolling: touch;
-  min-width: 100%;
-  max-width: 100%;
-
-  &::-webkit-scrollbar {
-    width: 10px; /* for vertical scrollbars */
-    height: 8px; /* for horizontal scrollbars */
-  }
-
-  &::-webkit-scrollbar-track {
-    background: rgba(136, 136, 136, 0.1);
-  }
-
-  &::-webkit-scrollbar-thumb {
-    background: rgba(136, 136, 136, 0.6);
-  }
-`;
 const StyledLabel = (props) => {
     const { viewState, label, textProps } = props;
     const id = useUID();
-    const childrenWithId = React.Children.map(props.children, child => {
+    const childrenWithId = React.Children.map(props.children, (child) => {
         // checking isValidElement is the safe way and avoids a typescript error too
         if (React.isValidElement(child)) {
             return React.cloneElement(child, { id: id });
@@ -244,7 +221,7 @@ const Form = styled(Box).attrs({
     scroll: true,
     as: "form"
 }) ``;
-const FormWrapper = styled(Box).attrs(props => ({
+const FormWrapper = styled(Box).attrs((props) => ({
     column: true,
     position: "absolute",
     styledMaxHeight: "60vh",
@@ -252,14 +229,14 @@ const FormWrapper = styled(Box).attrs(props => ({
     styledWidth: "350px",
     backgroundColor: props.theme.textLight
 })) `
-  z-index: ${props => props.theme.notificationWindowZIndex};
+  z-index: ${(props) => props.theme.notificationWindowZIndex};
   border-radius: 5px;
-  @media (min-width: ${props => props.theme.sm}px) {
+  @media (min-width: ${(props) => props.theme.sm}px) {
     bottom: 75px;
     right: 20px;
     //max-height: 60vh;
   }
-  @media (max-width: ${props => props.theme.sm}px) {
+  @media (max-width: ${(props) => props.theme.sm}px) {
     right: 0;
     top: 50px;
     left: 0;
@@ -267,5 +244,5 @@ const FormWrapper = styled(Box).attrs(props => ({
     min-width: 100%;
   }
 `;
-export default withTranslation()(withTheme(FeedbackForm));
+export default withTranslation()(withViewState(withTheme(FeedbackForm)));
 //# sourceMappingURL=FeedbackForm.js.map

@@ -9,10 +9,10 @@ import { useTranslation } from "react-i18next";
 import Styles from "./guidance.scss";
 import Text from "../../Styled/Text";
 import GuidanceDot from "./GuidanceDot.jsx";
-const GuidanceProgress = props => {
-    const countArray = Array.from(Array(props.max).keys()).map(e => e++);
+const GuidanceProgress = (props) => {
+    const countArray = Array.from(Array(props.max).keys()).map((e) => e++);
     const countStep = props.step;
-    return (React.createElement("div", { className: Styles.indicatorWrapper }, countArray.map(count => {
+    return (React.createElement("div", { className: Styles.indicatorWrapper }, countArray.map((count) => {
         return (React.createElement("div", { key: count, className: classNames(Styles.indicator, {
                 [Styles.indicatorEnabled]: count < countStep
             }) }));

@@ -4,14 +4,13 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
-import FeatureInfoTraits from "./FeatureInfoTraits";
-import mixTraits from "../mixTraits";
-import ModelTraits from "../ModelTraits";
 import objectTrait from "../Decorators/objectTrait";
 import primitiveTrait from "../Decorators/primitiveTrait";
-import TableTraits from "./TableTraits";
-import UrlTraits from "./UrlTraits";
+import mixTraits from "../mixTraits";
+import ModelTraits from "../ModelTraits";
 import AutoRefreshingTraits from "./AutoRefreshingTraits";
+import TableTraits from "./Table/TableTraits";
+import UrlTraits from "./UrlTraits";
 class PollingTraits extends ModelTraits {
     constructor() {
         super(...arguments);
@@ -39,7 +38,7 @@ __decorate([
         type: "boolean"
     })
 ], PollingTraits.prototype, "shouldReplaceData", void 0);
-export default class CsvCatalogItemTraits extends mixTraits(AutoRefreshingTraits, FeatureInfoTraits, UrlTraits, TableTraits) {
+export default class CsvCatalogItemTraits extends mixTraits(AutoRefreshingTraits, UrlTraits, TableTraits) {
 }
 __decorate([
     primitiveTrait({

@@ -19,7 +19,7 @@ import styled from "styled-components";
 import i18next from "i18next";
 let FeatureInfoPanelChart = class FeatureInfoPanelChart extends React.Component {
     get chartItem() {
-        return this.props.item.chartItems.find(chartItem => chartItem.type === "line" || chartItem.type === "lineAndPoint");
+        return this.props.item.chartItems.find((chartItem) => chartItem.type === "line" || chartItem.type === "lineAndPoint");
     }
     async componentDidUpdate() {
         (await this.props.item.loadMapItems()).raiseError(this.props.item.terria, {
@@ -161,8 +161,8 @@ const ChartStatusText = styled.div `
   display: flex;
   align-items: center;
   justify-content: center;
-  width: ${p => p.width}px;
-  height: ${p => p.height}px;
+  width: ${(p) => p.width}px;
+  height: ${(p) => p.height}px;
 `;
 export default FeatureInfoPanelChart;
 //# sourceMappingURL=FeatureInfoPanelChart.js.map

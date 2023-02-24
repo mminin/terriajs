@@ -13,7 +13,7 @@ export const PEDESTRIAN_HEIGHT = 1.7;
 // Maximum up/down look angle in degrees
 export const MAX_VERTICAL_LOOK_ANGLE = 40;
 export const PEDESTRIAN_MODE_ID = "pedestrian-mode";
-const PedestrianMode = observer(props => {
+const PedestrianMode = observer((props) => {
     const { viewState } = props;
     const cesium = viewState.terria.currentViewer;
     const [isDropped, setIsDropped] = useState(false);
@@ -37,7 +37,7 @@ const PedestrianMode = observer(props => {
         };
     }, []);
     useEffect(function closeOnZoomTo() {
-        return reaction(() => cesium.isMapZooming, isMapZooming => {
+        return reaction(() => cesium.isMapZooming, (isMapZooming) => {
             if (isMapZooming)
                 viewState.closeTool();
         });

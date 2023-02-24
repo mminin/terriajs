@@ -38,7 +38,7 @@ export default class YDYRCatalogFunctionJob extends CatalogFunctionJobMixin(Crea
         }
         const tableCatalogItem = this.terria.workbench.items
             .filter(TableMixin.isMixedInto)
-            .filter(item => item.uniqueId === this.parameters["Input Layer"])[0];
+            .filter((item) => item.uniqueId === this.parameters["Input Layer"])[0];
         if (!isDefined(tableCatalogItem)) {
             throw `Layer ${this.parameters["Input Layer"]} is not a valid layer in the workbench`;
         }
@@ -54,7 +54,7 @@ export default class YDYRCatalogFunctionJob extends CatalogFunctionJobMixin(Crea
         const dataColumn = tableCatalogItem === null || tableCatalogItem === void 0 ? void 0 : tableCatalogItem.findColumnByName(dataColumnName);
         this.setTrait(CommonStrata.user, "name", `YDYR ${tableCatalogItem.name}: ${dataColumnName}`);
         const jobDetails = this.addObject(CommonStrata.user, "shortReportSections", "Job Details");
-        jobDetails === null || jobDetails === void 0 ? void 0 : jobDetails.setTrait(CommonStrata.user, "content", `${dataColumnName}: "${(_a = DATASETS.find(d => { var _a; return d.geographyName === ((_a = regionColumn === null || regionColumn === void 0 ? void 0 : regionColumn.regionType) === null || _a === void 0 ? void 0 : _a.regionType); })) === null || _a === void 0 ? void 0 : _a.title}" to "${outputGeographyName}"`);
+        jobDetails === null || jobDetails === void 0 ? void 0 : jobDetails.setTrait(CommonStrata.user, "content", `${dataColumnName}: "${(_a = DATASETS.find((d) => { var _a; return d.geographyName === ((_a = regionColumn === null || regionColumn === void 0 ? void 0 : regionColumn.regionType) === null || _a === void 0 ? void 0 : _a.regionType); })) === null || _a === void 0 ? void 0 : _a.title}" to "${outputGeographyName}"`);
         const data = {
             ids: regionColumn === null || regionColumn === void 0 ? void 0 : regionColumn.values,
             values: dataColumn === null || dataColumn === void 0 ? void 0 : dataColumn.valuesAsNumbers.values
@@ -70,11 +70,11 @@ export default class YDYRCatalogFunctionJob extends CatalogFunctionJobMixin(Crea
             data,
             data_column: dataColumnName,
             geom_column: regionColumnName,
-            side_data: (_d = DATASETS.find(d => d.title === outputGeographyName)) === null || _d === void 0 ? void 0 : _d.sideData,
-            dst_geom: (_e = DATASETS.find(d => d.title === outputGeographyName)) === null || _e === void 0 ? void 0 : _e.geographyName,
+            side_data: (_d = DATASETS.find((d) => d.title === outputGeographyName)) === null || _d === void 0 ? void 0 : _d.sideData,
+            dst_geom: (_e = DATASETS.find((d) => d.title === outputGeographyName)) === null || _e === void 0 ? void 0 : _e.geographyName,
             src_geom: (_g = (_f = tableCatalogItem === null || tableCatalogItem === void 0 ? void 0 : tableCatalogItem.activeTableStyle.regionColumn) === null || _f === void 0 ? void 0 : _f.regionType) === null || _g === void 0 ? void 0 : _g.regionType,
             averaged_counts: false,
-            algorithms: ALGORITHMS.filter(alg => this.parameters[alg[0]]).map(alg => alg[0])
+            algorithms: ALGORITHMS.filter((alg) => this.parameters[alg[0]]).map((alg) => alg[0])
         };
         const jobId = await loadWithXhr({
             url: proxyCatalogItemUrl(this, `${this.parameters["apiUrl"]}disaggregate.json`),
@@ -164,7 +164,7 @@ export default class YDYRCatalogFunctionJob extends CatalogFunctionJobMixin(Crea
             return [];
         }
         const csvResult = new CsvCatalogItem(`${this.uniqueId}-result`, this.terria, undefined);
-        let regionColumnSplit = (_a = DATASETS.find(d => { var _a; return d.title === ((_a = this.parameters) === null || _a === void 0 ? void 0 : _a["Output Geography"]); })) === null || _a === void 0 ? void 0 : _a.geographyName.split("_");
+        let regionColumnSplit = (_a = DATASETS.find((d) => { var _a; return d.title === ((_a = this.parameters) === null || _a === void 0 ? void 0 : _a["Output Geography"]); })) === null || _a === void 0 ? void 0 : _a.geographyName.split("_");
         let regionColumn = "";
         if (isDefined(regionColumnSplit) && regionColumnSplit.length === 2) {
             regionColumn = `${regionColumnSplit[0]}_code_${regionColumnSplit[1]}`;

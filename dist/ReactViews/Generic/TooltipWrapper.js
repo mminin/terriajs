@@ -132,13 +132,13 @@ class TooltipWrapperRaw extends React.Component {
     }
 }
 export const TooltipWrapper = withTheme(TooltipWrapperRaw);
-export const TooltipWithButtonLauncher = props => {
+export const TooltipWithButtonLauncher = (props) => {
     const { launcherComponent, children, dismissOnLeave, orientation, ...rest } = props;
     const idForAria = `ButtonLauncher-${useUID()}`;
     const idForChildAria = `ButtonLauncher-child-${useUID()}`;
     return (React.createElement(TooltipWrapper, Object.assign({ innerElementStyles: {
             width: "350px"
-        }, orientation: orientation || "below" }, rest, { disableEventListeners: true, launcher: launchObj => {
+        }, orientation: orientation || "below" }, rest, { disableEventListeners: true, launcher: (launchObj) => {
             const handleClose = () => {
                 if (launchObj.state.open) {
                     launchObj.forceSetState(false);
@@ -155,7 +155,7 @@ export const TooltipWithButtonLauncher = props => {
                         launchObj.launch();
                     }
                 } }, restButtonProps), launcherComponent()));
-        } }), applyAriaId => (React.createElement(TextSpan
+        } }), (applyAriaId) => (React.createElement(TextSpan
     // provide some base text styles as a textspan,
     // as this will be rendered outside the tree
     , Object.assign({ 

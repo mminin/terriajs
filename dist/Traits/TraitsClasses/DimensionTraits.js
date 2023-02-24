@@ -30,7 +30,7 @@ __decorate([
         description: "Value (if this is undefined, `id` will be used)"
     })
 ], DimensionOptionTraits.prototype, "value", void 0);
-export default class DimensionTraits extends ModelTraits {
+export default class EnumDimensionTraits extends ModelTraits {
 }
 __decorate([
     primitiveTrait({
@@ -38,14 +38,14 @@ __decorate([
         name: "ID",
         description: "Dimension ID"
     })
-], DimensionTraits.prototype, "id", void 0);
+], EnumDimensionTraits.prototype, "id", void 0);
 __decorate([
     primitiveTrait({
         type: "string",
         name: "Name",
         description: "Dimension name (human-readable)"
     })
-], DimensionTraits.prototype, "name", void 0);
+], EnumDimensionTraits.prototype, "name", void 0);
 __decorate([
     objectArrayTrait({
         type: DimensionOptionTraits,
@@ -53,26 +53,26 @@ __decorate([
         name: "Options",
         description: "Dimension options"
     })
-], DimensionTraits.prototype, "options", void 0);
+], EnumDimensionTraits.prototype, "options", void 0);
 __decorate([
     primitiveTrait({
         type: "string",
         name: "Selected ID",
         description: "Selected Option's ID"
     })
-], DimensionTraits.prototype, "selectedId", void 0);
+], EnumDimensionTraits.prototype, "selectedId", void 0);
 __decorate([
     primitiveTrait({
         type: "boolean",
         name: "Allow undefined",
         description: "Allow dimension to be undefined"
     })
-], DimensionTraits.prototype, "allowUndefined", void 0);
+], EnumDimensionTraits.prototype, "allowUndefined", void 0);
 __decorate([
     primitiveTrait({
         type: "boolean",
         name: "Disable dimension",
         description: "Hides dimension"
     })
-], DimensionTraits.prototype, "disable", void 0);
+], EnumDimensionTraits.prototype, "disable", void 0);
 //# sourceMappingURL=DimensionTraits.js.map

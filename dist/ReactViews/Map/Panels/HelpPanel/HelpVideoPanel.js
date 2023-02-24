@@ -33,16 +33,15 @@ let HelpVideoPanel = class HelpVideoPanel extends React.Component {
             // when the help entire video panel is invisible (hidden away to the right)
             [Styles.shiftedToRight]: !isExpanded ||
                 !this.props.viewState.showHelpMenu ||
-                this.props.viewState.topElement !== "HelpPanel",
-            [Styles.isHidden]: !itemSelected // when the item isn't selected
+                this.props.viewState.topElement !== "HelpPanel"
         });
-        return (React.createElement("div", { className: className },
-            React.createElement(VideoGuide, { viewState: this.props.viewState, videoLink: this.props.videoUrl, background: this.props.placeholderImage, videoName: HELP_VIDEO_NAME }),
+        return (itemSelected && (React.createElement("div", { className: className },
+            React.createElement(VideoGuide, { viewState: this.props.viewState, videoLink: this.props.videoUrl, background: this.props.placeholderImage, backgroundOpacity: this.props.videoCoverImageOpacity, videoName: HELP_VIDEO_NAME }),
             React.createElement(Box, { centered: true, fullWidth: true, fullHeight: true, displayInlineBlock: true, paddedHorizontally: 4, paddedVertically: 18, css: `
-            overflow: auto;
-            overflow-x: hidden;
-            overflow-y: auto;
-          `, scroll: true },
+              overflow: auto;
+              overflow-x: hidden;
+              overflow-y: auto;
+            `, scroll: true },
                 React.createElement(If, { condition: helpItemType === "videoAndContent" },
                     this.props.videoUrl && this.props.placeholderImage && (React.createElement("div", { key: "image" },
                         React.createElement("div", { className: Styles.videoLink, style: {
@@ -55,7 +54,7 @@ let HelpVideoPanel = class HelpVideoPanel extends React.Component {
                 React.createElement(If, { condition: helpItemType === "slider" },
                     React.createElement(SatelliteGuide, { terria: this.props.terria, viewState: this.props.viewState })),
                 React.createElement(If, { condition: helpItemType === "trainer" },
-                    React.createElement(TrainerPane, { content: this.props.content, terria: this.props.terria, viewState: this.props.viewState })))));
+                    React.createElement(TrainerPane, { content: this.props.content, terria: this.props.terria, viewState: this.props.viewState }))))));
     }
 };
 HelpVideoPanel.displayName = "HelpVideoPanel";
@@ -68,6 +67,7 @@ HelpVideoPanel.propTypes = {
     markdownContent: PropTypes.string,
     videoUrl: PropTypes.string,
     placeholderImage: PropTypes.string,
+    videoCoverImageOpacity: PropTypes.number,
     theme: PropTypes.object,
     t: PropTypes.func.isRequired,
     i18n: PropTypes.object.isRequired

@@ -1,59 +1,66 @@
 import Cartesian3 from "terriajs-cesium/Source/Core/Cartesian3";
-import Color from "terriajs-cesium/Source/Core/Color";
 import TimeIntervalCollection from "terriajs-cesium/Source/Core/TimeIntervalCollection";
+import BillboardGraphics from "terriajs-cesium/Source/DataSources/BillboardGraphics";
 import ConstantPositionProperty from "terriajs-cesium/Source/DataSources/ConstantPositionProperty";
-import ConstantProperty from "terriajs-cesium/Source/DataSources/ConstantProperty";
-import Entity from "terriajs-cesium/Source/DataSources/Entity";
+import LabelGraphics from "terriajs-cesium/Source/DataSources/LabelGraphics";
 import PointGraphics from "terriajs-cesium/Source/DataSources/PointGraphics";
 import PropertyBag from "terriajs-cesium/Source/DataSources/PropertyBag";
 import HeightReference from "terriajs-cesium/Source/Scene/HeightReference";
-import filterOutUndefined from "../Core/filterOutUndefined";
-export default function createLongitudeLatitudeFeaturePerRow(style) {
-    var _a;
-    const longitudes = style.longitudeColumn.valuesAsNumbers.values;
-    const latitudes = style.latitudeColumn.valuesAsNumbers.values;
-    const colorColumn = style.colorColumn;
-    const colorValueFunction = colorColumn !== undefined ? colorColumn.valueFunctionForType : () => null;
-    const pointSizeColumn = style.pointSizeColumn;
-    const pointSizeValueFunction = pointSizeColumn !== undefined
-        ? pointSizeColumn.valueFunctionForType
-        : () => null;
-    const colorMap = style.colorMap;
-    const pointSizeMap = style.pointSizeMap;
-    const outlineColor = Color.fromCssColorString("black" //this.terria.baseMapContrastColor;
-    );
+import TerriaFeature from "../Models/Feature/Feature";
+import { getFeatureStyle } from "./getFeatureStyle";
+export default function createLongitudeLatitudeFeaturePerRow(style, longitudes, latitudes) {
+    var _a, _b, _c;
+    if (longitudes === void 0) { longitudes = (_a = style.longitudeColumn) === null || _a === void 0 ? void 0 : _a.valuesAsNumbers.values; }
+    if (latitudes === void 0) { latitudes = (_b = style.latitudeColumn) === null || _b === void 0 ? void 0 : _b.valuesAsNumbers.values; }
+    if (!longitudes || !latitudes)
+        return [];
     const tableColumns = style.tableModel.tableColumns;
     const intervals = style.moreThanOneTimeInterval
-        ? (_a = style.timeIntervals) !== null && _a !== void 0 ? _a : [] : [];
+        ? (_c = style.timeIntervals) !== null && _c !== void 0 ? _c : [] : [];
     const rowIds = style.tableModel.rowIds;
-    return filterOutUndefined(rowIds.map(rowId => {
+    const features = [];
+    for (let i = 0; i < rowIds.length; i++) {
+        const rowId = rowIds[i];
         const longitude = longitudes[rowId];
         const latitude = latitudes[rowId];
         if (longitude === null || latitude === null) {
-            return;
+            continue;
         }
-        const colorValue = colorValueFunction(rowId);
-        const pointSizeValue = pointSizeValueFunction(rowId);
-        const feature = new Entity({
+        const { pointGraphicsOptions, billboardGraphicsOptions, labelGraphicsOptions, usePointGraphics } = getFeatureStyle(style, rowId);
+        const feature = new TerriaFeature({
             position: new ConstantPositionProperty(Cartesian3.fromDegrees(longitude, latitude, 0.0)),
-            point: new PointGraphics({
-                color: new ConstantProperty(colorMap.mapValueToColor(colorValue)),
-                pixelSize: new ConstantProperty(pointSizeMap.mapValueToPointSize(pointSizeValue)),
-                outlineWidth: new ConstantProperty(1),
-                outlineColor: new ConstantProperty(outlineColor),
-                heightReference: new ConstantProperty(HeightReference.CLAMP_TO_GROUND)
-            })
+            point: pointGraphicsOptions && usePointGraphics
+                ? new PointGraphics({
+                    ...pointGraphicsOptions,
+                    heightReference: HeightReference.CLAMP_TO_GROUND
+                })
+                : undefined,
+            billboard: billboardGraphicsOptions && !usePointGraphics
+                ? new BillboardGraphics({
+                    ...billboardGraphicsOptions,
+                    heightReference: HeightReference.CLAMP_TO_GROUND
+                })
+                : undefined,
+            label: labelGraphicsOptions
+                ? new LabelGraphics({
+                    ...labelGraphicsOptions,
+                    heightReference: HeightReference.CLAMP_TO_GROUND
+                })
+                : undefined
+            // Note: we don't add path/PathGraphicsOptions here as it is only relevant to time-series (see `createLongitudeLatitudeFeaturePerId.ts`)
         });
         const timeInterval = intervals[rowId];
         if (timeInterval)
             feature.availability = new TimeIntervalCollection([timeInterval]);
         feature.properties = new PropertyBag(getRowValues(rowId, tableColumns));
-        return feature;
-    }));
+        feature.data = { rowIds: [rowId], type: "terriaFeatureData" };
+        features.push(feature);
+    }
+    return features;
 }
 export function getRowValues(index, tableColumns) {
     const result = {};
-    tableColumns.forEach(column => {
+    tableColumns.forEach((column) => {
         result[column.name] = column.valueFunctionForType(index);
     });
     return result;

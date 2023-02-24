@@ -7,7 +7,7 @@ const readText = require("./readText");
  * @return {Promise<JsonObject>} The JSON or json5 object described by the file.
  */
 function readJson(file) {
-    return readText(file).then(s => {
+    return readText(file).then((s) => {
         try {
             return JSON.parse(s);
         }

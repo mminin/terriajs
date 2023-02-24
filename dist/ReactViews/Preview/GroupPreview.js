@@ -7,7 +7,7 @@ import DataPreviewUrl from "./DataPreviewUrl";
 import measureElement from "../HOCs/measureElement";
 import Styles from "./mappable-preview.scss";
 import parseCustomMarkdownToReact from "../Custom/parseCustomMarkdownToReact";
-import SharePanel from "../Map/Panels/SharePanel/SharePanel.jsx";
+import SharePanel from "../Map/Panels/SharePanel/SharePanel";
 import { withTranslation } from "react-i18next";
 import WarningBox from "./WarningBox";
 /**
@@ -30,7 +30,7 @@ const GroupPreview = observer(createReactClass({
         const metadataItem = this.props.previewed.nowViewingCatalogItem || this.props.previewed;
         const { t } = this.props;
         return (React.createElement("div", null,
-            React.createElement("div", { className: Styles.titleAndShareWrapper, ref: component => (this.refToMeasure = component) },
+            React.createElement("div", { className: Styles.titleAndShareWrapper, ref: (component) => (this.refToMeasure = component) },
                 React.createElement("h3", null, this.props.previewed.name),
                 React.createElement("div", { className: Styles.shareLinkWrapper },
                     React.createElement(SharePanel, { catalogShare: true, modalWidth: this.props.widthFromMeasureElementHOC, terria: this.props.terria, viewState: this.props.viewState }))),

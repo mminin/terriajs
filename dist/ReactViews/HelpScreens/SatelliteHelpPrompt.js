@@ -1,10 +1,12 @@
+import { observer } from "mobx-react";
 import React from "react";
 import { useTranslation } from "react-i18next";
-import { observer } from "mobx-react";
+import { useViewState } from "../StandardUserInterface/ViewStateContext";
 import HelpPrompt from "./HelpPrompt";
 export const SATELLITE_HELP_PROMPT_KEY = "satelliteGuidance";
-export const SatelliteHelpPrompt = observer(({ viewState }) => {
+export const SatelliteHelpPrompt = observer(() => {
     const { t } = useTranslation();
+    const viewState = useViewState();
     const showHelp = viewState.showSatelliteGuidance;
     const dismissSatellitePrompt = () => {
         viewState.toggleFeaturePrompt(SATELLITE_HELP_PROMPT_KEY, true, true);

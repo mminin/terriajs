@@ -72,7 +72,7 @@ __decorate([
     primitiveTrait({
         name: "Response data path",
         type: "string",
-        description: "Path to relevent data in JSON response."
+        description: "Path to relevent data in JSON response. eg: `some.user.name`, `some.users[0].name` or `some.users[].name`"
     })
 ], ApiRequestTraits.prototype, "responseDataPath", void 0);
 //# sourceMappingURL=ApiRequestTraits.js.map

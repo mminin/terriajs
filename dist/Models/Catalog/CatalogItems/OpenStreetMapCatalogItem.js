@@ -37,6 +37,7 @@ export default class OpenStreetMapCatalogItem extends MappableMixin(CatalogMembe
         ];
     }
     get imageryProvider() {
+        var _a;
         if (!isDefined(this.templateUrl)) {
             return;
         }
@@ -44,7 +45,10 @@ export default class OpenStreetMapCatalogItem extends MappableMixin(CatalogMembe
             url: cleanAndProxyUrl(this, this.templateUrl),
             subdomains: this.subdomains.slice(),
             credit: this.attribution,
-            maximumLevel: this.maximumLevel
+            maximumLevel: (_a = this.maximumLevel) !== null && _a !== void 0 ? _a : 25,
+            minimumLevel: this.minimumLevel,
+            tileHeight: this.tileHeight,
+            tileWidth: this.tileWidth
         });
     }
     get templateUrl() {

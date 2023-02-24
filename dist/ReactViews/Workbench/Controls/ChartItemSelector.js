@@ -1,17 +1,18 @@
 import { runInAction } from "mobx";
 import { observer } from "mobx-react";
-import PropTypes from "prop-types";
 import React from "react";
+import { useTranslation } from "react-i18next";
+import { useTheme } from "styled-components";
 import ChartView from "../../../Charts/ChartView";
 import ChartableMixin, { axesMatch } from "../../../ModelMixins/ChartableMixin";
-import Icon from "../../../Styled/Icon";
-import Styles from "./chart-item-selector.scss";
-export const ChartItem = observer(({ item, chartItem }) => {
+import Checkbox from "../../../Styled/Checkbox/Checkbox";
+import { Li, Ul } from "../../../Styled/List";
+import { TextSpan } from "../../../Styled/Text";
+export const ChartItem = observer(({ chartItem }) => {
+    const { t } = useTranslation();
     const lineColor = chartItem.isSelectedInWorkbench
         ? chartItem.getColor()
         : "#fff";
-    const colorStyle = lineColor && { color: lineColor };
-    const fillStyle = lineColor && { fill: lineColor };
     const toggleActive = () => {
         const catalogItem = chartItem.item;
         runInAction(() => {
@@ -22,32 +23,31 @@ export const ChartItem = observer(({ item, chartItem }) => {
             }
         });
     };
-    return (React.createElement("div", null,
-        React.createElement("button", { type: "button", onClick: toggleActive, style: colorStyle, className: Styles.button, title: "select variable" },
-            chartItem.isSelectedInWorkbench && (React.createElement(Icon, { style: fillStyle, glyph: Icon.GLYPHS.checkboxOn })),
-            !chartItem.isSelectedInWorkbench && (React.createElement(Icon, { style: fillStyle, glyph: Icon.GLYPHS.checkboxOff }))),
-        React.createElement("span", null, chartItem.name)));
+    return (React.createElement(Checkbox, { id: "depthTestAgainstTerrain", isChecked: chartItem.isSelectedInWorkbench, title: t("chart.showItemInChart", { value: chartItem.name }), onChange: toggleActive, css: `
+          color: ${lineColor};
+        ` },
+        React.createElement(TextSpan, null, chartItem.name)));
 });
-const ChartItemSelector = observer(function ({ item }) {
+const ChartItemSelector = observer(({ item }) => {
+    const theme = useTheme();
     const chartView = new ChartView(item.terria);
     // We don't need to show selectors for moment datasets. They are part of
     // discretelytimevarying items and have a separate chart button to enable/disable.
     const chartItems = chartView.chartItems
-        .filter(c => c.item === item)
-        .filter(c => c.type !== "momentPoints" && c.type !== "momentLines")
+        .filter((c) => c.item === item)
+        .filter((c) => c.type !== "momentPoints" && c.type !== "momentLines")
         .sort((a, b) => (a.name >= b.name ? 1 : -1));
-    return (React.createElement("ul", { className: Styles.root },
-        React.createElement(For, { each: "chartItem", index: "i", of: chartItems },
-            React.createElement("li", { key: `li-${chartItem.key}`, className: Styles.item },
-                React.createElement(ChartItem, { chartItem: chartItem })))));
+    if (chartItems && chartItems.length === 0)
+        return null;
+    return (React.createElement(Ul, { fullWidth: true, spaced: true, padded: true, column: true, rounded: true, backgroundColor: theme === null || theme === void 0 ? void 0 : theme.overlay, css: `
+          margin: 10px 0;
+        ` }, chartItems.map((chartItem) => (React.createElement(Li, { key: `li-${chartItem.key}` },
+        React.createElement(ChartItem, { chartItem: chartItem }))))));
 });
-ChartItemSelector.propTypes = {
-    item: PropTypes.object.isRequired
-};
 function unselectChartItemsWithXAxisNotMatching(items, requiredAxis) {
-    items.forEach(item => {
+    items.forEach((item) => {
         if (ChartableMixin.isMixedInto(item)) {
-            item.chartItems.forEach(chartItem => {
+            item.chartItems.forEach((chartItem) => {
                 if (!axesMatch(chartItem.xAxis, requiredAxis)) {
                     chartItem.updateIsSelectedInWorkbench(false);
                 }

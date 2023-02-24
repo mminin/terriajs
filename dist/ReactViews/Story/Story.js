@@ -1,15 +1,15 @@
+import classNames from "classnames";
 import React, { useEffect, useRef } from "react";
+import { sortable } from "react-anything-sortable";
 import { useTranslation } from "react-i18next";
 import styled, { useTheme } from "styled-components";
-import { sortable } from "react-anything-sortable";
-import classNames from "classnames";
 import Box from "../../Styled/Box";
 import { RawButton } from "../../Styled/Button";
-import Ul from "../../Styled/List";
-import Text from "../../Styled/Text";
-import Spacing from "../../Styled/Spacing";
-import parseCustomHtmlToReact from "../Custom/parseCustomHtmlToReact";
 import Icon, { StyledIcon } from "../../Styled/Icon";
+import Ul from "../../Styled/List";
+import Spacing from "../../Styled/Spacing";
+import Text from "../../Styled/Text";
+import parseCustomHtmlToReact from "../Custom/parseCustomHtmlToReact";
 const findTextContent = (content) => {
     if (typeof content === "string") {
         return content;
@@ -31,15 +31,15 @@ const StoryControl = styled(Box).attrs({
     justifySpaceBetween: true
 }) ``;
 const StoryMenuButton = styled(RawButton) `
-  color: ${props => props.theme.textDarker};
-  background-color: ${props => props.theme.textLight};
+  color: ${(props) => props.theme.textDarker};
+  background-color: ${(props) => props.theme.textLight};
 
   ${StyledIcon} {
     width: 35px;
   }
 
   svg {
-    fill: ${props => props.theme.textDarker};
+    fill: ${(props) => props.theme.textDarker};
     width: 18px;
     height: 18px;
   }
@@ -53,12 +53,12 @@ const StoryMenuButton = styled(RawButton) `
 
   &:hover,
   &:focus {
-    color: ${props => props.theme.textLight};
-    background-color: ${props => props.theme.colorPrimary};
+    color: ${(props) => props.theme.textLight};
+    background-color: ${(props) => props.theme.colorPrimary};
 
     svg {
-      fill: ${props => props.theme.textLight};
-      stroke: ${props => props.theme.textLight};
+      fill: ${(props) => props.theme.textLight};
+      stroke: ${(props) => props.theme.textLight};
     }
   }
 `;
@@ -68,26 +68,26 @@ const getTruncatedContent = (text) => {
     const except = findTextContent(content);
     return except.slice(0, 100);
 };
-const toggleMenu = (props) => event => {
+const toggleMenu = (props) => (event) => {
     event.stopPropagation();
     props.openMenu();
 };
-const viewStory = (props) => event => {
+const viewStory = (props) => (event) => {
     event.stopPropagation();
     props.viewStory();
     hideList(props);
 };
-const deleteStory = (props) => event => {
+const deleteStory = (props) => (event) => {
     event.stopPropagation();
     props.deleteStory();
     hideList(props);
 };
-const editStory = (props) => event => {
+const editStory = (props) => (event) => {
     event.stopPropagation();
     props.editStory();
     hideList(props);
 };
-const recaptureStory = (props) => event => {
+const recaptureStory = (props) => (event) => {
     event.stopPropagation();
     props.recaptureStory();
     hideList(props);
@@ -105,7 +105,7 @@ const calculateOffset = (props) => (storyRef) => {
 };
 const renderMenu = (props) => {
     const { t } = props;
-    return (React.createElement(Ul, null,
+    return (React.createElement(Ul, { column: true },
         React.createElement("li", null,
             React.createElement(StoryMenuButton, { onClick: viewStory(props), title: t("story.viewStory") },
                 React.createElement(StoryControl, null,
@@ -180,13 +180,13 @@ const Story = (props) => {
 const MenuButton = styled(RawButton) `
   padding: 0 10px 0 10px;
   min-height: 40px;
-  border-radius: ${props => props.theme.radiusLarge};
+  border-radius: ${(props) => props.theme.radiusLarge};
   background: transparent;
 
   &:hover,
   &:focus {
     opacity: 0.9;
-    background-color: ${props => props.theme.dark};
+    background-color: ${(props) => props.theme.dark};
   }
 `;
 export default sortable(Story);

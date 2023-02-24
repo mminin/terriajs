@@ -68,7 +68,7 @@ class RotatableIcon {
         this.canvas = document.createElement("canvas");
         this.ctx = (_a = this.canvas.getContext("2d")) !== null && _a !== void 0 ? _a : undefined;
         this.image.src = iconUrl;
-        this.loadPromise = new Promise(resolve => {
+        this.loadPromise = new Promise((resolve) => {
             this.image.addEventListener("load", () => {
                 this.canvas.width = width !== null && width !== void 0 ? width : this.image.width;
                 this.canvas.height = height !== null && height !== void 0 ? height : this.image.height;

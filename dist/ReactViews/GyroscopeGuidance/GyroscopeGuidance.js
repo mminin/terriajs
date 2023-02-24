@@ -28,7 +28,7 @@ const CompassWrapper = styled(Box).attrs({
   flex-shrink: 0;
 
   svg {
-    fill: ${props => props.theme.textDarker};
+    fill: ${(props) => props.theme.textDarker};
   }
 `;
 const CompassPositioning = `
@@ -39,7 +39,7 @@ const CompassIcon = styled(Icon) `
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  ${props => props.inner
+  ${(props) => props.inner
     ? `
       fill: ${props.theme.textDarker};
       width: 26px;
@@ -50,7 +50,7 @@ const CompassIcon = styled(Icon) `
       width: 64px;
       height: 64px;
     `}
-  ${props => props.darken &&
+  ${(props) => props.darken &&
     `
       opacity: 0.2;
     `}
@@ -90,7 +90,7 @@ function GyroscopeGuidancePanel(props) {
             React.createElement(Text, null, t("compass.guidance.ctrlDragDescription")),
             React.createElement(Spacing, { bottom: 4 }),
             React.createElement(RawButton, { onClick: props.onClose },
-                React.createElement(Text, { displayBlock: true, primary: true, isLink: true }, t("compass.guidance.dismissText"))))));
+                React.createElement(TextSpan, { displayBlock: true, primary: true, isLink: true }, t("compass.guidance.dismissText"))))));
 }
 GyroscopeGuidancePanel.propTypes = {
     onClose: PropTypes.func.isRequired
@@ -110,7 +110,7 @@ export default function GyroscopeGuidance(props) {
               height: 25px;
             }
           ` }),
-            React.createElement("div", { onClick: e => e.preventDefault(), css: `
+            React.createElement("div", { onClick: (e) => e.preventDefault(), css: `
             position: relative;
           ` },
                 React.createElement(CleanDropdownPanel
@@ -135,7 +135,7 @@ export default function GyroscopeGuidance(props) {
               opacity: 0.85;
               .tjs-sc-InnerPanel,
               .tjs-sc-InnerPanel__caret {
-                background: ${p => p.theme.textBlack};
+                background: ${(p) => p.theme.textBlack};
               }
             `, refForCaret: controlsMapIcon, isOpen: controlPanelOpen, onOpenChanged: () => controlPanelOpen, 
                     // onDismissed={() => setControlPanelOpen(false)}

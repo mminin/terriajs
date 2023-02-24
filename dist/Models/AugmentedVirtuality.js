@@ -9,8 +9,7 @@ import CesiumCartesian3 from "terriajs-cesium/Source/Core/Cartesian3";
 import EllipsoidTerrainProvider from "terriajs-cesium/Source/Core/EllipsoidTerrainProvider";
 import CesiumMath from "terriajs-cesium/Source/Core/Math";
 import CesiumMatrix3 from "terriajs-cesium/Source/Core/Matrix3";
-const sampleTerrainMostDetailed = require("terriajs-cesium/Source/Core/sampleTerrainMostDetailed")
-    .default;
+const sampleTerrainMostDetailed = require("terriajs-cesium/Source/Core/sampleTerrainMostDetailed").default;
 export default class AugmentedVirtuality {
     constructor(terria) {
         this.terria = terria;

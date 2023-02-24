@@ -3,15 +3,16 @@ import { observer } from "mobx-react";
 import React from "react";
 import isDefined from "../../Core/isDefined";
 import parseCustomHtmlToReact from "../Custom/parseCustomHtmlToReact";
+import { withViewState } from "../StandardUserInterface/ViewStateContext";
 const DEFAULT_BRANDING = '<a target="_blank" href="http://terria.io"><img src="images/terria_logo.png" height="52" title="Version: {{ version }}" /></a>';
-export default observer((props) => {
+export default withViewState(observer((props) => {
     var _a, _b, _c;
     // Set brandingHtmlElements to brandBarElements or default Terria branding as default
-    let brandingHtmlElements = (_a = props.terria.configParameters
+    let brandingHtmlElements = (_a = props.viewState.terria.configParameters
         .brandBarElements) !== null && _a !== void 0 ? _a : [DEFAULT_BRANDING];
     if (props.viewState.useSmallScreenInterface) {
-        const brandBarSmallElements = props.terria.configParameters.brandBarSmallElements;
-        const displayOne = props.terria.configParameters.displayOneBrand;
+        const brandBarSmallElements = props.viewState.terria.configParameters.brandBarSmallElements;
+        const displayOne = props.viewState.terria.configParameters.displayOneBrand;
         // Use brandBarSmallElements if it exists
         if (brandBarSmallElements)
             brandingHtmlElements = brandBarSmallElements;
@@ -20,7 +21,7 @@ export default observer((props) => {
         else if (isDefined(displayOne))
             brandingHtmlElements = [
                 (_b = (brandingHtmlElements[displayOne] ||
-                    brandingHtmlElements.find(item => item.length > 0))) !== null && _b !== void 0 ? _b : DEFAULT_BRANDING
+                    brandingHtmlElements.find((item) => item.length > 0))) !== null && _b !== void 0 ? _b : DEFAULT_BRANDING
             ];
     }
     const version = (_c = props.version) !== null && _c !== void 0 ? _c : "Unknown";
@@ -67,5 +68,5 @@ export default observer((props) => {
             }
           }
         ` }, brandingHtmlElements.map((element, idx) => (React.createElement(React.Fragment, { key: idx }, parseCustomHtmlToReact(element.replace(/\{\{\s*version\s*\}\}/g, version), { disableExternalLinkIcon: true }))))));
-});
+}));
 //# sourceMappingURL=Branding.js.map

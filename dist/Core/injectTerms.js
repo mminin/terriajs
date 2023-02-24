@@ -1,14 +1,13 @@
 import i18next from "i18next";
-import { useTranslationIfExists } from "../Language/languageHelpers";
+import { applyTranslationIfExists } from "../Language/languageHelpers";
 const findFirstTerm = (text, terms, fromIndex) => {
     let termIndex = Infinity;
     let termLength = 0;
     let termToReplace;
     let ignore = false;
     terms.forEach((_, term) => {
-        const foundIndex = text
-            .toLowerCase()
-            .indexOf(useTranslationIfExists(term).toLowerCase(), fromIndex);
+        const foundIndex = text.toLowerCase().indexOf(applyTranslationIfExists(term, i18next).toLowerCase(), // TODO: remove use of global i18next, and use i18n from react-i18next instead
+        fromIndex);
         if (foundIndex !== -1 &&
             (foundIndex < termIndex ||
                 (foundIndex <= termIndex && term.length > termLength))) {
@@ -54,14 +53,14 @@ const injectTerms = (string, termDictionary) => {
     const injectedBoldSet = new Set();
     while (1) {
         let tooltipTerms = new Map();
-        termDictionary.forEach((item) => tooltipTerms.set(useTranslationIfExists(item.term).toLowerCase(), item));
+        termDictionary.forEach((item) => tooltipTerms.set(applyTranslationIfExists(item.term, i18next).toLowerCase(), item));
         // some help content things will have aliases / variants
-        termDictionary.forEach(term => {
+        termDictionary.forEach((term) => {
             const termAliases = term.aliases;
             if (!termAliases) {
                 return;
             }
-            const addAliasesToTooltipTerms = (aliases) => aliases.forEach(alias => {
+            const addAliasesToTooltipTerms = (aliases) => aliases.forEach((alias) => {
                 tooltipTerms.set(alias.toLowerCase(), term);
             });
             if (Array.isArray(termAliases)) {
@@ -86,7 +85,7 @@ const injectTerms = (string, termDictionary) => {
                  */
                 const translated = i18next.t(termAliases, { returnObjects: true });
                 if (Array.isArray(translated) &&
-                    translated.every(item => typeof item === "string")) {
+                    translated.every((item) => typeof item === "string")) {
                     addAliasesToTooltipTerms(translated);
                 }
             }
@@ -98,7 +97,7 @@ const injectTerms = (string, termDictionary) => {
             const currentText = string;
             const termObj = tooltipTerms.get(termToReplace.toLowerCase());
             const description = termObj
-                ? useTranslationIfExists(termObj.content)
+                ? applyTranslationIfExists(termObj.content, i18next)
                 : i18next.t("term.missingContent");
             // const injectedLink = `**${termToReplace}**`;
             const injectedLink = `<terriatooltip title="${termToReplace}">${description}</terriatooltip>`;

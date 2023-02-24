@@ -9,12 +9,11 @@ import mixTraits from "../mixTraits";
 import CatalogMemberTraits from "./CatalogMemberTraits";
 import LegendOwnerTraits from "./LegendOwnerTraits";
 import MappableTraits from "./MappableTraits";
-import RasterLayerTraits from "./RasterLayerTraits";
-export default class MapboxMapCatalogItemTraits extends mixTraits(RasterLayerTraits, CatalogMemberTraits, MappableTraits, LegendOwnerTraits) {
+import ImageryProviderTraits from "./ImageryProviderTraits";
+export default class MapboxMapCatalogItemTraits extends mixTraits(ImageryProviderTraits, CatalogMemberTraits, MappableTraits, LegendOwnerTraits) {
     constructor() {
         super(...arguments);
         this.url = "https://api.mapbox.com/v4/";
-        this.maximumLevel = 25;
         this.format = "png";
     }
 }
@@ -39,13 +38,6 @@ __decorate([
         type: "string"
     })
 ], MapboxMapCatalogItemTraits.prototype, "accessToken", void 0);
-__decorate([
-    primitiveTrait({
-        name: "maximumLevel",
-        description: "The maximum level-of-detail supported by the imagery provider, or undefined if there is no limit.",
-        type: "number"
-    })
-], MapboxMapCatalogItemTraits.prototype, "maximumLevel", void 0);
 __decorate([
     primitiveTrait({
         name: "format",

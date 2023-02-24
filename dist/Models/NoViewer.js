@@ -2,12 +2,14 @@
 import Rectangle from "terriajs-cesium/Source/Core/Rectangle";
 import CameraView from "./CameraView";
 import GlobeOrMap from "./GlobeOrMap";
+import { observable } from "mobx";
 class NoViewer extends GlobeOrMap {
     constructor(terriaViewer) {
         super();
         this.type = "none";
         this.canShowSplitter = false;
         this._currentView = new CameraView(Rectangle.MAX_VALUE);
+        this.dataAttributions = observable([]);
         this.terria = terriaViewer.terria;
     }
     destroy() { }

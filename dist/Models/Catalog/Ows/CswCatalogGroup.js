@@ -104,9 +104,9 @@ class CswStratum extends LoadableStratum(CswCatalogGroupTraits) {
                 });
             }
             // Get flat listOfValues
-            const listOfValues = flatten((_a = toArray(domainResponse.DomainValues)) === null || _a === void 0 ? void 0 : _a.map(d => { var _a; return toArray((_a = d === null || d === void 0 ? void 0 : d.ListOfValues) === null || _a === void 0 ? void 0 : _a.Value); })).filter(v => typeof v === "string");
+            const listOfValues = flatten((_a = toArray(domainResponse.DomainValues)) === null || _a === void 0 ? void 0 : _a.map((d) => { var _a; return toArray((_a = d === null || d === void 0 ? void 0 : d.ListOfValues) === null || _a === void 0 ? void 0 : _a.Value); })).filter((v) => typeof v === "string");
             // Create metadataGroups from listOfValues
-            listOfValues.forEach(value => {
+            listOfValues.forEach((value) => {
                 const keys = value.split(catalogGroup.domainSpecification.hierarchySeparator);
                 // recursively find the group that the last key in keys should belong to and add that key
                 addMetadataGroups(keys, 0, metadataGroups, catalogGroup.domainSpecification.hierarchySeparator, catalogGroup.domainSpecification.queryPropertyName);
@@ -170,7 +170,7 @@ class CswStratum extends LoadableStratum(CswCatalogGroupTraits) {
         }
         // If we have metadataGroups, add records to them
         if (metadataGroups.length > 0) {
-            records.forEach(record => {
+            records.forEach((record) => {
                 var _a;
                 (_a = findGroup(metadataGroups, record)) === null || _a === void 0 ? void 0 : _a.records.push(record);
             });
@@ -183,18 +183,18 @@ class CswStratum extends LoadableStratum(CswCatalogGroupTraits) {
     get members() {
         // If no metadataGroups - return flat list of record ids
         if (this.metadataGroups.length === 0) {
-            return this.records.map(r => `${this.catalogGroup.uniqueId}/${r.identifier}`);
+            return this.records.map((r) => `${this.catalogGroup.uniqueId}/${r.identifier}`);
         }
-        return this.metadataGroups.map(g => `${this.catalogGroup.uniqueId}/${g.groupName}`);
+        return this.metadataGroups.map((g) => `${this.catalogGroup.uniqueId}/${g.groupName}`);
     }
     createMembersFromLayers() {
         // If no metadata groups -> just create all records
         if (this.metadataGroups.length === 0) {
-            this.records.forEach(record => this.createRecord(this.catalogGroup.uniqueId, record));
+            this.records.forEach((record) => this.createRecord(this.catalogGroup.uniqueId, record));
             // If metadata groups -> create them (records will then be created for each group)
         }
         else {
-            this.metadataGroups.forEach(metadataGroup => this.createMetadataGroup(this.catalogGroup.uniqueId, metadataGroup));
+            this.metadataGroups.forEach((metadataGroup) => this.createMetadataGroup(this.catalogGroup.uniqueId, metadataGroup));
         }
     }
     createMetadataGroup(parentId, metadataGroup) {
@@ -209,12 +209,11 @@ class CswStratum extends LoadableStratum(CswCatalogGroupTraits) {
             model = existingModel;
         }
         // Replace the stratum inherited from the parent group.
-        const stratum = CommonStrata.underride;
-        model.strata.delete(stratum);
-        model.setTrait(CommonStrata.underride, "name", metadataGroup.groupName);
-        model.setTrait(CommonStrata.underride, "members", filterOutUndefined([
-            ...metadataGroup.children.map(childMetadataGroup => this.createMetadataGroup(layerId, childMetadataGroup).uniqueId),
-            ...metadataGroup.records.map(record => { var _a; return (_a = this.createRecord(layerId, record)) === null || _a === void 0 ? void 0 : _a.uniqueId; })
+        model.strata.delete(CommonStrata.definition);
+        model.setTrait(CommonStrata.definition, "name", metadataGroup.groupName);
+        model.setTrait(CommonStrata.definition, "members", filterOutUndefined([
+            ...metadataGroup.children.map((childMetadataGroup) => this.createMetadataGroup(layerId, childMetadataGroup).uniqueId),
+            ...metadataGroup.records.map((record) => { var _a; return (_a = this.createRecord(layerId, record)) === null || _a === void 0 ? void 0 : _a.uniqueId; })
         ]));
         return model;
     }
@@ -236,12 +235,12 @@ class CswStratum extends LoadableStratum(CswCatalogGroupTraits) {
          */
         const downloadUrls = [];
         let legendUri = undefined;
-        const filteredResourceFormats = this.resourceFormats.filter(f => f.enabled);
+        const filteredResourceFormats = this.resourceFormats.filter((f) => f.enabled);
         for (let m = 0; m < uris.length; m++) {
             const uri = uris[m];
             if (!uri)
                 return;
-            const resourceIndex = filteredResourceFormats.findIndex(f => { var _a, _b; return (_b = ((_a = uri.protocol) !== null && _a !== void 0 ? _a : uri.scheme)) === null || _b === void 0 ? void 0 : _b.match(f.regex); });
+            const resourceIndex = filteredResourceFormats.findIndex((f) => { var _a, _b; return (_b = ((_a = uri.protocol) !== null && _a !== void 0 ? _a : uri.scheme)) === null || _b === void 0 ? void 0 : _b.match(f.regex); });
             // If matching resource is found, and an acceptable URL hasn't been set for it -> add it
             if (resourceIndex !== -1 && !acceptableUris[resourceIndex]) {
                 acceptableUris[resourceIndex] = uri;
@@ -257,7 +256,7 @@ class CswStratum extends LoadableStratum(CswCatalogGroupTraits) {
             }
         }
         const layerId = `${parentId}/${record.identifier}`;
-        const urlIndex = acceptableUris.findIndex(url => isDefined(url));
+        const urlIndex = acceptableUris.findIndex((url) => isDefined(url));
         if (urlIndex !== -1) {
             const modelConstructor = this.resourceFormats[urlIndex].contructor;
             const existingModel = this.catalogGroup.terria.getModelById(modelConstructor, layerId);
@@ -270,16 +269,15 @@ class CswStratum extends LoadableStratum(CswCatalogGroupTraits) {
                 model = existingModel;
             }
             // Replace the stratum inherited from the parent group.
-            const stratum = CommonStrata.underride;
-            model.strata.delete(stratum);
-            model.setTrait(stratum, "name", (_b = record.title) !== null && _b !== void 0 ? _b : record.identifier);
+            model.strata.delete(CommonStrata.definition);
+            model.setTrait(CommonStrata.definition, "name", (_b = record.title) !== null && _b !== void 0 ? _b : record.identifier);
             const uri = acceptableUris[urlIndex];
-            model.setTrait(stratum, "url", uri.toString());
+            model.setTrait(CommonStrata.definition, "url", uri.toString());
             if (record.abstract) {
-                model.setTrait(stratum, "description", (_c = toArray(record.abstract)) === null || _c === void 0 ? void 0 : _c.join("\n\n"));
+                model.setTrait(CommonStrata.definition, "description", (_c = toArray(record.abstract)) === null || _c === void 0 ? void 0 : _c.join("\n\n"));
             }
             else if (record.description) {
-                model.setTrait(stratum, "description", (_d = toArray(record.description)) === null || _d === void 0 ? void 0 : _d.join("\n\n"));
+                model.setTrait(CommonStrata.definition, "description", (_d = toArray(record.description)) === null || _d === void 0 ? void 0 : _d.join("\n\n"));
             }
             const infoSections = [];
             if (record.contributor && toArray(record.contributor).length > 0) {
@@ -291,11 +289,11 @@ class CswStratum extends LoadableStratum(CswCatalogGroupTraits) {
             infoSections.push({
                 name: i18next.t("models.csw.links"),
                 content: downloadUrls
-                    .map(d => `[${d.description}](${d.url})`)
+                    .map((d) => `[${d.description}](${d.url})`)
                     .join("\n\n")
             });
-            model.setTrait(stratum, "info", infoSections);
-            model.setTrait(stratum, "metadataUrls", [
+            model.setTrait(CommonStrata.definition, "info", infoSections);
+            model.setTrait(CommonStrata.definition, "metadataUrls", [
                 {
                     title: i18next.t("models.csw.metadataURL"),
                     url: new URI(proxyCatalogItemUrl(this.catalogGroup, this.catalogGroup.url))
@@ -311,25 +309,23 @@ class CswStratum extends LoadableStratum(CswCatalogGroupTraits) {
                 }
             ]);
             if (legendUri) {
-                model.setTrait(stratum, "legends", [{ url: legendUri.toString() }]);
+                model.setTrait(CommonStrata.definition, "legends", [
+                    { url: legendUri.toString() }
+                ]);
             }
             // If this is a WMS item, we MUST set `layers` trait to `uri.name`
             if (model instanceof WebMapServiceCatalogItem) {
                 if (!uri.name) {
                     return;
                 }
-                model.setTrait(stratum, "layers", uri.name);
+                model.setTrait(CommonStrata.definition, "layers", uri.name);
             }
             // Same with ArcGis MapServer
             if (model instanceof ArcGisMapServerCatalogItem) {
                 if (!uri.name) {
                     return;
                 }
-                model.setTrait(stratum, "layers", uri.name);
-            }
-            // Copy over itemProperties
-            if (this.catalogGroup.itemProperties !== undefined) {
-                Object.keys(this.catalogGroup.itemProperties).map((k) => model.setTrait(stratum, k, this.catalogGroup.itemProperties[k]));
+                model.setTrait(CommonStrata.definition, "layers", uri.name);
             }
             return model;
         }
@@ -389,7 +385,7 @@ __decorate([
 function addMetadataGroups(keys, index, group, separator, queryField) {
     if (index > keys.length - 1)
         return;
-    let groupIndex = group.findIndex(g => g.groupName === keys[index]);
+    let groupIndex = group.findIndex((g) => g.groupName === keys[index]);
     if (groupIndex === -1) {
         // not found so add it
         let value;
@@ -422,7 +418,7 @@ function findGroup(metadataGroups, record) {
         const group = metadataGroups[i];
         if (group.field) {
             const fields = filterOutUndefined((_a = toArray(record[group.field])) !== null && _a !== void 0 ? _a : []);
-            if (fields.find(f => matchValue(group.value, f, group.regex))) {
+            if (fields.find((f) => matchValue(group.value, f, group.regex))) {
                 if (group.children) {
                     // recurse to see if it fits into any of the children
                     const childGroup = findGroup(group.children, record);

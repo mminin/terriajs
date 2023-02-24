@@ -1,298 +1,70 @@
-"use strict";
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
 import classNames from "classnames";
-import createReactClass from "create-react-class";
 import { observer } from "mobx-react";
-import PropTypes from "prop-types";
 import React from "react";
-import { Trans, withTranslation } from "react-i18next";
-import defined from "terriajs-cesium/Source/Core/defined";
-import Clipboard from "../../../Clipboard";
-import Icon from "../../../../Styled/Icon";
-import Loader from "../../../Loader";
-import MenuPanel from "../../../StandardUserInterface/customizable/MenuPanel";
-import Input from "../../../Styled/Input/Input.jsx";
-import DropdownStyles from "../panel.scss";
-import { buildShareLink, buildShortShareLink, canShorten, isShareable } from "./BuildShareLink";
+import { withTranslation } from "react-i18next";
+import Box from "../../../../Styled/Box";
+import Spacing from "../../../../Styled/Spacing";
+import Text from "../../../../Styled/Text";
+import { canShorten } from "./BuildShareLink";
 import Styles from "./share-panel.scss";
-import StorySharePanel from "./StorySharePanel";
-import { Category, ShareAction } from "../../../../Core/AnalyticEvents/analyticEvents";
-import { downloadImg } from "./Print/PrintView";
-const SharePanel = observer(createReactClass({
-    displayName: "SharePanel",
-    propTypes: {
-        terria: PropTypes.object,
-        userPropWhiteList: PropTypes.array,
-        advancedIsOpen: PropTypes.bool,
-        shortenUrls: PropTypes.bool,
-        storyShare: PropTypes.bool,
-        catalogShare: PropTypes.bool,
-        catalogShareWithoutText: PropTypes.bool,
-        modalWidth: PropTypes.number,
-        viewState: PropTypes.object.isRequired,
-        onUserClick: PropTypes.func,
-        btnDisabled: PropTypes.bool,
-        t: PropTypes.func.isRequired
-    },
-    getDefaultProps() {
-        return {
-            advancedIsOpen: false,
-            shortenUrls: false
+import { SharePanelContent } from "./SharePanelContent";
+import { ShareUrl } from "./ShareUrl";
+const MenuPanel = require("../../../StandardUserInterface/customizable/MenuPanel").default;
+const StorySharePanel = require("./StorySharePanel").default;
+let SharePanel = class SharePanel extends React.Component {
+    constructor(props) {
+        super(props);
+        this.changeOpenState = this.changeOpenState.bind(this);
+        this.closePanel = this.closePanel.bind(this);
+        this.state = {
+            isOpen: false
         };
-    },
-    getInitialState() {
-        return {
-            isOpen: false,
-            shortenUrls: this.props.shortenUrls &&
-                this.props.terria.getLocalProperty("shortenShareUrls"),
-            shareUrl: "",
-            isDownloading: false
-        };
-    },
-    componentDidMount() {
-        if (this.props.terria.configParameters.interceptBrowserPrint) {
-            window.addEventListener("beforeprint", this.beforeBrowserPrint, false);
-            window.addEventListener("afterprint", this.afterBrowserPrint, false);
-            const handlePrintMediaChange = evt => {
-                if (evt.matches) {
-                    this.beforeBrowserPrint();
-                }
-                else {
-                    this.afterBrowserPrint();
-                }
-            };
-            if (window.matchMedia) {
-                const matcher = window.matchMedia("print");
-                matcher.addListener(handlePrintMediaChange);
-                this._unsubscribeFromPrintMediaChange = function () {
-                    matcher.removeListener(handlePrintMediaChange);
-                };
-            }
-            this._oldPrint = window.print;
-            window.print = () => {
-                this.print();
-            };
-        }
-    },
-    componentWillUnmount() {
-        window.removeEventListener("beforeprint", this.beforeBrowserPrint, false);
-        window.removeEventListener("afterprint", this.afterBrowserPrint, false);
-        if (this._unsubscribeFromPrintMediaChange) {
-            this._unsubscribeFromPrintMediaChange();
-        }
-        if (this._oldPrint) {
-            window.print = this._oldPrint;
-        }
-    },
-    beforeBrowserPrint() {
-        const { t } = this.props;
-        this.afterBrowserPrint();
-        this._message = document.createElement("div");
-        this._message.innerText = t("share.browserPrint", {
-            appName: this.props.terria.appName
-        });
-        window.document.body.insertBefore(this._message, window.document.body.childNodes[0]);
-    },
-    afterBrowserPrint() {
-        if (this._message) {
-            window.document.body.removeChild(this._message);
-            this._message = undefined;
-        }
-        this.changeOpenState(true);
-    },
-    advancedIsOpen() {
-        return this.state.advancedIsOpen;
-    },
-    toggleAdvancedOptions(e) {
-        this.setState(prevState => ({
-            advancedIsOpen: !prevState.advancedIsOpen
-        }));
-    },
-    updateForShortening() {
-        const { t } = this.props;
-        this.setState({
-            shareUrl: ""
-        });
-        if (this.shouldShorten()) {
-            this.setState({
-                placeholder: t("share.shortLinkShortening")
-            });
-            buildShortShareLink(this.props.terria, this.props.viewState)
-                .then(shareUrl => this.setState({ shareUrl }))
-                .catch(() => {
-                this.setUnshortenedUrl();
-                this.setState({
-                    errorMessage: t("share.shortLinkError")
-                });
-            });
-        }
-        else {
-            this.setUnshortenedUrl();
-        }
-    },
-    setUnshortenedUrl() {
-        this.setState({
-            shareUrl: buildShareLink(this.props.terria, this.props.viewState)
-        });
-    },
-    isUrlShortenable() {
-        return canShorten(this.props.terria);
-    },
-    shouldShorten() {
-        const localStoragePref = this.props.terria.getLocalProperty("shortenShareUrls");
-        return (this.isUrlShortenable() &&
-            (localStoragePref || !defined(localStoragePref)));
-    },
-    onShortenClicked(e) {
-        if (this.shouldShorten()) {
-            this.props.terria.setLocalProperty("shortenShareUrls", false);
-        }
-        else if (this.isUrlShortenable()) {
-            this.props.terria.setLocalProperty("shortenShareUrls", true);
-        }
-        else {
-            return;
-        }
-        this.updateForShortening();
-        this.forceUpdate();
-    },
+    }
     changeOpenState(open) {
         this.setState({
             isOpen: open
         });
         if (open) {
-            this.updateForShortening();
             if (this.props.catalogShare || this.props.storyShare) {
                 this.props.viewState.shareModalIsVisible = true;
             }
         }
-    },
-    getShareUrlInput(theme) {
-        return (React.createElement(Input, { className: Styles.shareUrlfield, light: theme === "light", dark: theme === "dark", large: true, type: "text", value: this.state.shareUrl, placeholder: this.state.placeholder, readOnly: true, onClick: e => e.target.select(), id: "share-url" }));
-    },
-    getShareUrlInputStory(theme) {
-        return (React.createElement(Input, { className: Styles.shareUrlfield, light: theme === "light", dark: theme === "dark", large: true, type: "text", value: this.state.shareUrl, placeholder: this.state.placeholder, readOnly: true, onClick: e => e.target.select(), id: "share-url", css: `
-            border-radius: 32px 0 0 32px;
-          ` }));
-    },
-    onAddWebDataClicked() {
+    }
+    closePanel() {
         this.setState({
             isOpen: false
         });
-        this.props.viewState.openUserData();
-    },
-    hasUserAddedData() {
-        return this.props.terria.catalog.userAddedDataGroup.members.length > 0;
-    },
-    renderWarning() {
-        const unshareableItems = this.props.terria.catalog.userAddedDataGroup.memberModels.filter(model => !isShareable(this.props.terria)(model.uniqueId));
-        return (React.createElement(If, { condition: unshareableItems.length > 0 },
-            React.createElement("div", { className: Styles.warning },
-                React.createElement(Trans, { i18nKey: "share.localDataNote" },
-                    React.createElement("p", { className: Styles.paragraph },
-                        React.createElement("strong", null, "Note:")),
-                    React.createElement("p", { className: Styles.paragraph },
-                        "The following data sources will NOT be shared because they include data from this local system. To share these data sources, publish their data on a web server and",
-                        " ",
-                        React.createElement("a", { className: Styles.warningLink, onClick: this.onAddWebDataClicked }, "add them using a url"),
-                        ".")),
-                React.createElement("ul", { className: Styles.paragraph }, unshareableItems.map((item, i) => {
-                    return (React.createElement("li", { key: i },
-                        React.createElement("strong", null, item.name)));
-                })))));
-    },
+    }
     renderContent() {
+        const { terria, viewState, t } = this.props;
         if (this.props.catalogShare) {
-            return this.renderContentForCatalogShare();
+            return (React.createElement(Box, { fullWidth: true, column: true, paddedRatio: 3 },
+                React.createElement(Text, { medium: true, textDark: true }, t("clipboard.shareURL")),
+                React.createElement(Spacing, { bottom: 1 }),
+                React.createElement(ShareUrl, { terria: terria, viewState: viewState, includeStories: true, shouldShorten: shouldShorten(terria), theme: "light", inputTheme: "light" })));
         }
         else if (this.props.storyShare) {
-            return this.renderContentForStoryShare();
+            return (React.createElement(Box, { fullWidth: true, column: true, paddedRatio: 3 },
+                React.createElement(Text, { medium: true }, t("clipboard.shareURL")),
+                React.createElement(Spacing, { bottom: 1 }),
+                React.createElement(ShareUrl, { terria: terria, viewState: viewState, includeStories: true, shouldShorten: shouldShorten(terria), theme: "dark", inputTheme: "light", rounded: true })));
         }
         else {
-            return this.renderContentWithPrintAndEmbed();
+            return (React.createElement(SharePanelContent, { terria: terria, viewState: viewState, closePanel: this.closePanel }));
         }
-    },
-    renderContentForStoryShare() {
-        const { t, terria } = this.props;
-        return (React.createElement(Choose, null,
-            React.createElement(When, { condition: this.state.shareUrl === "" },
-                React.createElement(Loader, { message: t("share.generatingUrl") })),
-            React.createElement(Otherwise, null,
-                React.createElement("div", { className: Styles.clipboardForCatalogShare },
-                    React.createElement(Clipboard, { theme: "dark", text: this.state.shareUrl, source: this.getShareUrlInputStory("light"), id: "share-url", rounded: true, onCopy: text => { var _a; return (_a = terria.analytics) === null || _a === void 0 ? void 0 : _a.logEvent(Category.share, ShareAction.storyCopy, text); } }),
-                    this.renderWarning()))));
-    },
-    renderContentForCatalogShare() {
-        const { t, terria } = this.props;
-        return (React.createElement(Choose, null,
-            React.createElement(When, { condition: this.state.shareUrl === "" },
-                React.createElement(Loader, { message: t("share.generatingUrl") })),
-            React.createElement(Otherwise, null,
-                React.createElement("div", { className: Styles.clipboardForCatalogShare },
-                    React.createElement(Clipboard, { theme: "light", text: this.state.shareUrl, source: this.getShareUrlInput("light"), id: "share-url", onCopy: text => { var _a; return (_a = terria.analytics) === null || _a === void 0 ? void 0 : _a.logEvent(Category.share, ShareAction.catalogCopy, text); } }),
-                    this.renderWarning()))));
-    },
-    renderContentWithPrintAndEmbed() {
-        const { t, terria } = this.props;
-        const iframeCode = this.state.shareUrl.length
-            ? `<iframe style="width: 720px; height: 600px; border: none;" src="${this.state.shareUrl}" allowFullScreen mozAllowFullScreen webkitAllowFullScreen></iframe>`
-            : "";
-        return (React.createElement("div", null,
-            React.createElement("div", { className: DropdownStyles.section },
-                React.createElement(Clipboard, { source: this.getShareUrlInput("dark"), id: "share-url", onCopy: text => { var _a; return (_a = terria.analytics) === null || _a === void 0 ? void 0 : _a.logEvent(Category.share, ShareAction.shareCopy, text); } }),
-                this.renderWarning()),
-            React.createElement("div", { className: DropdownStyles.section },
-                React.createElement("div", null, t("share.printTitle")),
-                React.createElement("div", { className: Styles.explanation }, t("share.printExplanation")),
-                React.createElement("div", null,
-                    React.createElement("button", { className: Styles.printButton, disabled: this.state.isDownloading, onClick: () => {
-                            this.setState({
-                                isDownloading: true
-                            });
-                            this.props.terria.currentViewer
-                                .captureScreenshot()
-                                .then(dataString => {
-                                downloadImg(dataString);
-                            })
-                                .finally(() => this.setState({
-                                isDownloading: false
-                            }));
-                        } }, t("share.downloadMap")),
-                    React.createElement("button", { className: Styles.printButton, onClick: () => {
-                            const newWindow = window.open();
-                            this.props.viewState.setPrintWindow(newWindow);
-                        } }, t("share.printViewButton")))),
-            React.createElement("div", { className: classNames(DropdownStyles.section, Styles.shortenUrl) },
-                React.createElement("div", { className: Styles.btnWrapper },
-                    React.createElement("button", { type: "button", onClick: this.toggleAdvancedOptions, className: Styles.btnAdvanced },
-                        React.createElement("span", null, t("share.btnAdvanced")),
-                        this.advancedIsOpen() ? (React.createElement(Icon, { glyph: Icon.GLYPHS.opened })) : (React.createElement(Icon, { glyph: Icon.GLYPHS.closed })))),
-                React.createElement(If, { condition: this.advancedIsOpen() },
-                    React.createElement("div", { className: DropdownStyles.section },
-                        React.createElement("p", { className: Styles.paragraph }, t("share.embedTitle")),
-                        React.createElement(Input, { large: true, dark: true, className: Styles.field, type: "text", readOnly: true, placeholder: this.state.placeholder, value: iframeCode, onClick: e => e.target.select() })),
-                    React.createElement(If, { condition: this.isUrlShortenable() },
-                        React.createElement("div", { className: classNames(DropdownStyles.section, Styles.shortenUrl) },
-                            React.createElement("button", { onClick: this.onShortenClicked },
-                                this.shouldShorten() ? (React.createElement(Icon, { glyph: Icon.GLYPHS.checkboxOn })) : (React.createElement(Icon, { glyph: Icon.GLYPHS.checkboxOff })),
-                                t("share.shortenUsingService"))))))));
-    },
-    renderDownloadFormatButton(format) {
-        return (React.createElement("button", { key: format.name, className: Styles.formatButton, onClick: this.download }, format.name));
-    },
-    openWithUserClick() {
-        if (this.props.onUserClick) {
-            this.props.onUserClick();
-        }
-        this.changeOpenState();
-        this.renderContentForStoryShare();
-    },
+    }
     render() {
         const { t } = this.props;
         const { catalogShare, storyShare, catalogShareWithoutText, modalWidth } = this.props;
         const dropdownTheme = {
             btn: classNames({
                 [Styles.btnCatalogShare]: catalogShare,
-                [Styles.btnStoryShare]: storyShare,
                 [Styles.btnWithoutText]: catalogShareWithoutText
             }),
             outer: classNames(Styles.sharePanel, {
@@ -318,13 +90,30 @@ const SharePanel = observer(createReactClass({
         return !storyShare ? (React.createElement(MenuPanel, { theme: dropdownTheme, btnText: catalogShareWithoutText ? null : btnText, viewState: this.props.viewState, btnTitle: btnTitle, isOpen: this.state.isOpen, onOpenChanged: this.changeOpenState, showDropdownAsModal: catalogShare, modalWidth: modalWidth, smallScreen: this.props.viewState.useSmallScreenInterface, onDismissed: () => {
                 if (catalogShare)
                     this.props.viewState.shareModalIsVisible = false;
-            }, onUserClick: this.props.onUserClick },
-            React.createElement(If, { condition: this.state.isOpen }, this.renderContent()))) : (React.createElement(StorySharePanel, { btnText: catalogShareWithoutText ? null : btnText, viewState: this.props.viewState, btnTitle: btnTitle, isOpen: this.state.isOpen, onOpenChanged: this.changeOpenState, showDropdownAsModal: storyShare, modalWidth: modalWidth, smallScreen: this.props.viewState.useSmallScreenInterface, btnDisabled: this.props.btnDisabled, onDismissed: () => {
+            }, onUserClick: this.props.onUserClick, disableCloseOnFocusLoss: this.props.viewState.retainSharePanel }, this.state.isOpen && this.renderContent())) : (React.createElement(StorySharePanel, { btnText: catalogShareWithoutText ? null : btnText, viewState: this.props.viewState, btnTitle: btnTitle, isOpen: this.state.isOpen, onOpenChanged: this.changeOpenState, showDropdownAsModal: storyShare, modalWidth: modalWidth, smallScreen: this.props.viewState.useSmallScreenInterface, btnDisabled: this.props.btnDisabled, onDismissed: () => {
                 if (storyShare)
                     this.props.viewState.shareModalIsVisible = false;
-            }, onUserClick: this.props.onUserClick },
-            React.createElement(If, { condition: this.state.isOpen }, this.renderContent())));
+            }, onUserClick: this.props.onUserClick }, this.state.isOpen && this.renderContent()));
     }
-}));
+};
+SharePanel.displayName = "SharePanel";
+SharePanel = __decorate([
+    observer
+], SharePanel);
 export default withTranslation()(SharePanel);
+export function shouldShorten(terria) {
+    var _a;
+    return ((_a = stringToBool(terria.getLocalProperty("shortenShareUrls"))) !== null && _a !== void 0 ? _a : !!canShorten(terria));
+}
+function stringToBool(s) {
+    if (s === true)
+        return true;
+    if (s === false)
+        return false;
+    if (s === "true")
+        return true;
+    if (s === "false")
+        return false;
+    return undefined;
+}
 //# sourceMappingURL=SharePanel.js.map

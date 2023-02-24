@@ -33,7 +33,7 @@ export class ObjectTrait extends Trait {
             return new Result(jsonValue);
         }
         const errors = [];
-        Object.keys(jsonValue).forEach(propertyName => {
+        Object.keys(jsonValue).forEach((propertyName) => {
             const trait = ResultType.traits[propertyName];
             if (trait === undefined) {
                 errors.push(new TerriaError({

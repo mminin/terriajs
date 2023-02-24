@@ -15,7 +15,7 @@ export default class ChartView {
         this.terria = terria;
     }
     get chartableItems() {
-        return (this.terria.workbench.items.filter(item => ChartableMixin.isMixedInto(item) && item.chartItems.length > 0));
+        return (this.terria.workbench.items.filter((item) => ChartableMixin.isMixedInto(item) && item.chartItems.length > 0));
     }
     /**
      * Returns the common x-axis for the chart.
@@ -40,7 +40,7 @@ export default class ChartView {
      */
     get chartItems() {
         return this.chartableItems.reduce((acc, item) => {
-            return acc.concat(item.chartItems.map(chartItem => {
+            return acc.concat(item.chartItems.map((chartItem) => {
                 if (this.xAxis && !axesMatch(this.xAxis, chartItem.xAxis)) {
                     chartItem = {
                         ...chartItem,

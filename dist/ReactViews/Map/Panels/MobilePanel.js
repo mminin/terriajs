@@ -19,7 +19,7 @@ const MobilePanel = createReactClass({
             React.createElement(MobileMenuItem, { onClick: this.openPanel, caption: this.props.btnText, icon: this.props.mobileIcon }),
             React.createElement(If, { condition: this.isOpen() },
                 React.createElement("div", { className: Styles.overlay }),
-                React.createElement(InnerPanel, { theme: this.props.theme, caretOffset: "15px", doNotCloseFlag: this.getDoNotCloseFlag(), onDismissed: this.onDismissed }, this.props.children))));
+                React.createElement(InnerPanel, { theme: this.props.theme, caretOffset: "15px", doNotCloseFlag: this.getDoNotCloseFlag(), onDismissed: this.onDismissed, disableCloseOnFocusLoss: this.disableCloseOnFocusLoss }, this.props.children))));
     }
 });
 export default MobilePanel;

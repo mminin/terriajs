@@ -15,19 +15,18 @@ import loadWithXhr from "../../../Core/loadWithXhr";
 import TerriaError from "../../../Core/TerriaError";
 import CatalogMemberMixin from "../../../ModelMixins/CatalogMemberMixin";
 import TableMixin from "../../../ModelMixins/TableMixin";
-import TableAutomaticStylesStratum, { ColorStyleLegend } from "../../../Table/TableAutomaticStylesStratum";
+import TableAutomaticStylesStratum from "../../../Table/TableAutomaticStylesStratum";
 import TableColumnType from "../../../Table/TableColumnType";
 import xml2json from "../../../ThirdParty/xml2json";
 import SensorObservationServiceCatalogItemTraits from "../../../Traits/TraitsClasses/SensorObservationCatalogItemTraits";
-import TableChartStyleTraits, { TableChartLineStyleTraits } from "../../../Traits/TraitsClasses/TableChartStyleTraits";
-import TableColorStyleTraits from "../../../Traits/TraitsClasses/TableColorStyleTraits";
-import TablePointSizeStyleTraits from "../../../Traits/TraitsClasses/TablePointSizeStyleTraits";
-import TableStyleTraits from "../../../Traits/TraitsClasses/TableStyleTraits";
+import TableChartStyleTraits, { TableChartLineStyleTraits } from "../../../Traits/TraitsClasses/Table/ChartStyleTraits";
+import TablePointSizeStyleTraits from "../../../Traits/TraitsClasses/Table/PointSizeStyleTraits";
+import TableStyleTraits from "../../../Traits/TraitsClasses/Table/StyleTraits";
 import CommonStrata from "../../Definition/CommonStrata";
 import CreateModel from "../../Definition/CreateModel";
 import createStratumInstance from "../../Definition/createStratumInstance";
-import proxyCatalogItemUrl from "../proxyCatalogItemUrl";
 import StratumOrder from "../../Definition/StratumOrder";
+import proxyCatalogItemUrl from "../proxyCatalogItemUrl";
 StratumOrder.addLoadStratum(TableAutomaticStylesStratum.stratumName);
 class SosAutomaticStylesStratum extends TableAutomaticStylesStratum {
     constructor(catalogItem) {
@@ -37,14 +36,15 @@ class SosAutomaticStylesStratum extends TableAutomaticStylesStratum {
     duplicateLoadableStratum(newModel) {
         return new SosAutomaticStylesStratum(newModel);
     }
+    get activeStyle() {
+        var _a;
+        return (_a = this.catalogItem.procedures[0]) === null || _a === void 0 ? void 0 : _a.identifier;
+    }
     get styles() {
-        return this.catalogItem.procedures.map(p => {
+        return this.catalogItem.procedures.map((p) => {
             return createStratumInstance(TableStyleTraits, {
                 id: p.identifier,
                 title: p.title,
-                color: createStratumInstance(TableColorStyleTraits, {
-                    legend: new ColorStyleLegend(this.catalogItem, 0)
-                }),
                 pointSize: createStratumInstance(TablePointSizeStyleTraits, {
                     pointSizeColumn: p.identifier
                 }),
@@ -56,8 +56,8 @@ class SosAutomaticStylesStratum extends TableAutomaticStylesStratum {
         });
     }
     get defaultChartStyle() {
-        const timeColumn = this.catalogItem.tableColumns.find(column => column.type === TableColumnType.time);
-        const valueColumn = this.catalogItem.tableColumns.find(column => column.type === TableColumnType.scalar);
+        const timeColumn = this.catalogItem.tableColumns.find((column) => column.type === TableColumnType.time);
+        const valueColumn = this.catalogItem.tableColumns.find((column) => column.type === TableColumnType.scalar);
         if (timeColumn && valueColumn) {
             return createStratumInstance(TableStyleTraits, {
                 chart: createStratumInstance(TableChartStyleTraits, {
@@ -74,6 +74,9 @@ class SosAutomaticStylesStratum extends TableAutomaticStylesStratum {
 }
 __decorate([
     computed
+], SosAutomaticStylesStratum.prototype, "activeStyle", null);
+__decorate([
+    computed
 ], SosAutomaticStylesStratum.prototype, "styles", null);
 __decorate([
     computed
@@ -87,11 +90,11 @@ class GetFeatureOfInterestRequest {
         return this.catalogItem.url;
     }
     get observedProperties() {
-        return filterOutUndefined(this.catalogItem.observableProperties.map(p => p.identifier));
+        return filterOutUndefined(this.catalogItem.observableProperties.map((p) => p.identifier));
     }
     get procedures() {
         if (this.catalogItem.filterByProcedures) {
-            return filterOutUndefined(this.catalogItem.procedures.map(p => p.identifier));
+            return filterOutUndefined(this.catalogItem.procedures.map((p) => p.identifier));
         }
     }
     async perform() {
@@ -258,7 +261,7 @@ export default class SensorObservationServiceCatalogItem extends TableMixin(Cata
             : [response.featureMember];
         const whiteList = runInAction(() => this.stationIdWhitelist);
         if (whiteList) {
-            featureMembers = featureMembers.filter(m => {
+            featureMembers = featureMembers.filter((m) => {
                 var _a;
                 return ((_a = m.MonitoringPoint) === null || _a === void 0 ? void 0 : _a.identifier) &&
                     whiteList.indexOf(String(m.MonitoringPoint.identifier)) >= 0;
@@ -266,7 +269,7 @@ export default class SensorObservationServiceCatalogItem extends TableMixin(Cata
         }
         const blackList = runInAction(() => this.stationIdBlacklist);
         if (blackList) {
-            featureMembers = featureMembers.filter(m => m.MonitoringPoint &&
+            featureMembers = featureMembers.filter((m) => m.MonitoringPoint &&
                 blackList.indexOf(String(m.MonitoringPoint.identifier)) < 0);
         }
         const identifierCols = ["identifier"];
@@ -276,7 +279,7 @@ export default class SensorObservationServiceCatalogItem extends TableMixin(Cata
         const idCols = ["id"];
         const typeCols = ["type"];
         const chartCols = ["chart"];
-        featureMembers.forEach(member => {
+        featureMembers.forEach((member) => {
             var _a, _b, _c, _d;
             const pointShape = (_b = (_a = member.MonitoringPoint) === null || _a === void 0 ? void 0 : _a.shape) === null || _b === void 0 ? void 0 : _b.Point;
             if (!pointShape) {
@@ -339,13 +342,13 @@ export default class SensorObservationServiceCatalogItem extends TableMixin(Cata
                     return;
                 if (!Array.isArray(points))
                     points = [points];
-                var measurements = points.map(point => point.MeasurementTVP); // TVP = Time value pairs, I think.
+                var measurements = points.map((point) => point.MeasurementTVP); // TVP = Time value pairs, I think.
                 var featureIdentifier = observation.featureOfInterest["xlink:href"] || "";
-                datesCol.push(...measurements.map(measurement => typeof measurement.time === "object" ? "" : measurement.time));
-                valuesCol.push(...measurements.map(measurement => typeof measurement.value === "object" ? "" : measurement.value));
-                identifiersCol.push(...measurements.map(_ => featureIdentifier));
-                proceduresCol.push(...measurements.map(_ => procedure.identifier || ""));
-                observedPropertiesCol.push(...measurements.map(_ => observableProperty.identifier || ""));
+                datesCol.push(...measurements.map((measurement) => typeof measurement.time === "object" ? "" : measurement.time));
+                valuesCol.push(...measurements.map((measurement) => typeof measurement.value === "object" ? "" : measurement.value));
+                identifiersCol.push(...measurements.map((_) => featureIdentifier));
+                proceduresCol.push(...measurements.map((_) => procedure.identifier || ""));
+                observedPropertiesCol.push(...measurements.map((_) => observableProperty.identifier || ""));
             };
             const observationData = response.observationData === undefined ||
                 Array.isArray(response.observationData)
@@ -354,8 +357,8 @@ export default class SensorObservationServiceCatalogItem extends TableMixin(Cata
             if (!observationData) {
                 return [];
             }
-            const observations = observationData.map(o => o.OM_Observation);
-            observations.forEach(observation => {
+            const observations = observationData.map((o) => o.OM_Observation);
+            observations.forEach((observation) => {
                 if (observation) {
                     addObservationToColumns(observation);
                 }
@@ -391,7 +394,7 @@ export default class SensorObservationServiceCatalogItem extends TableMixin(Cata
     get selectableDimensions() {
         return filterOutUndefined([
             // Filter out proceduresSelector - as it duplicates TableMixin.styleDimensions
-            ...super.selectableDimensions.filter(dim => { var _a; return dim.id !== ((_a = this.proceduresSelector) === null || _a === void 0 ? void 0 : _a.id); }),
+            ...super.selectableDimensions.filter((dim) => { var _a; return dim.id !== ((_a = this.proceduresSelector) === null || _a === void 0 ? void 0 : _a.id); }),
             this.proceduresSelector,
             this.observablesSelector
         ]);
@@ -421,7 +424,7 @@ export default class SensorObservationServiceCatalogItem extends TableMixin(Cata
                 return item.observablePropertiesName;
             },
             get options() {
-                return filterOutUndefined(item.observableProperties.map(p => {
+                return filterOutUndefined(item.observableProperties.map((p) => {
                     if (p.identifier && p.title) {
                         return {
                             id: p.identifier,
@@ -443,10 +446,10 @@ export default class SensorObservationServiceCatalogItem extends TableMixin(Cata
         return (super.selectedObservableId || ((_a = this.observableProperties[0]) === null || _a === void 0 ? void 0 : _a.identifier));
     }
     get selectedObservable() {
-        return this.observableProperties.find(p => p.identifier === this.selectedObservableId);
+        return this.observableProperties.find((p) => p.identifier === this.selectedObservableId);
     }
     get selectedProcedure() {
-        return this.procedures.find(p => p.identifier === this.activeTableStyle.id);
+        return this.procedures.find((p) => p.identifier === this.activeTableStyle.id);
     }
 }
 SensorObservationServiceCatalogItem.type = "sos";

@@ -6,7 +6,7 @@ import ViewerMode from "../../../Models/ViewerMode";
 import TerriaViewer from "../../../ViewModels/TerriaViewer";
 import Marker from "./Marker";
 const minimapNavIcon = require("../../../../wwwroot/images/minimap-nav.svg");
-const MiniMap = props => {
+const MiniMap = (props) => {
     const { terria, baseMap, view } = props;
     const container = useRef(null);
     const [miniMapViewer, setMiniMapViewer] = useState();

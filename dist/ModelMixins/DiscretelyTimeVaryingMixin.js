@@ -11,10 +11,11 @@ import getChartColorForId from "../Charts/getChartColorForId";
 import filterOutUndefined from "../Core/filterOutUndefined";
 import isDefined from "../Core/isDefined";
 import TerriaError from "../Core/TerriaError";
-import { calculateDomain } from "../ModelMixins/ChartableMixin";
+import ChartableMixin, { calculateDomain } from "../ModelMixins/ChartableMixin";
 import CommonStrata from "../Models/Definition/CommonStrata";
+import { DATE_SECONDS_PRECISION } from "./TimeVarying";
 function DiscretelyTimeVaryingMixin(Base) {
-    class DiscretelyTimeVaryingMixin extends Base {
+    class DiscretelyTimeVaryingMixin extends ChartableMixin(Base) {
         get hasDiscreteTimes() {
             return true;
         }
@@ -22,7 +23,7 @@ function DiscretelyTimeVaryingMixin(Base) {
             const time = super.currentTime;
             if (time === undefined || time === null) {
                 if (this.initialTimeSource === "now") {
-                    return JulianDate.toIso8601(JulianDate.now());
+                    return JulianDate.toIso8601(JulianDate.now(), DATE_SECONDS_PRECISION);
                 }
                 else if (this.initialTimeSource === "start") {
                     return this.startTime;
@@ -56,9 +57,9 @@ function DiscretelyTimeVaryingMixin(Base) {
         }
         get objectifiedDates() {
             if (!isDefined(this.discreteTimesAsSortedJulianDates)) {
-                return { indice: [], dates: [] };
+                return { index: [], dates: [] };
             }
-            const jsDates = this.discreteTimesAsSortedJulianDates.map(julianDate => JulianDate.toDate(julianDate.time));
+            const jsDates = this.discreteTimesAsSortedJulianDates.map((julianDate) => JulianDate.toDate(julianDate.time));
             return objectifyDates(jsDates);
         }
         get discreteTimesAsSortedJulianDates() {
@@ -173,7 +174,7 @@ function DiscretelyTimeVaryingMixin(Base) {
             if (time === undefined &&
                 this.discreteTimesAsSortedJulianDates &&
                 this.discreteTimesAsSortedJulianDates.length > 0) {
-                return JulianDate.toIso8601(this.discreteTimesAsSortedJulianDates[0].time);
+                return JulianDate.toIso8601(this.discreteTimesAsSortedJulianDates[0].time, DATE_SECONDS_PRECISION);
             }
             return time;
         }
@@ -182,7 +183,7 @@ function DiscretelyTimeVaryingMixin(Base) {
             if (time === undefined &&
                 this.discreteTimesAsSortedJulianDates &&
                 this.discreteTimesAsSortedJulianDates.length > 0) {
-                return JulianDate.toIso8601(this.discreteTimesAsSortedJulianDates[this.discreteTimesAsSortedJulianDates.length - 1].time);
+                return JulianDate.toIso8601(this.discreteTimesAsSortedJulianDates[this.discreteTimesAsSortedJulianDates.length - 1].time, DATE_SECONDS_PRECISION);
             }
             return time;
         }
@@ -212,19 +213,19 @@ function DiscretelyTimeVaryingMixin(Base) {
             if (index === undefined) {
                 return;
             }
-            this.setTrait(stratumId, "currentTime", JulianDate.toIso8601(this.discreteTimesAsSortedJulianDates[index].time));
+            this.setTrait(stratumId, "currentTime", JulianDate.toIso8601(this.discreteTimesAsSortedJulianDates[index].time, DATE_SECONDS_PRECISION));
         }
         moveToNextDiscreteTime(stratumId) {
             const index = this.nextDiscreteTimeIndex;
             if (index === undefined) {
                 return;
             }
-            this.setTrait(stratumId, "currentTime", JulianDate.toIso8601(this.discreteTimesAsSortedJulianDates[index].time));
+            this.setTrait(stratumId, "currentTime", JulianDate.toIso8601(this.discreteTimesAsSortedJulianDates[index].time, DATE_SECONDS_PRECISION));
         }
         get momentChart() {
             if (!this.showInChartPanel || !this.discreteTimesAsSortedJulianDates)
                 return;
-            const points = this.discreteTimesAsSortedJulianDates.map(dt => ({
+            const points = this.discreteTimesAsSortedJulianDates.map((dt) => ({
                 x: JulianDate.toDate(dt.time),
                 y: 0.5,
                 isSelected: this.currentDiscreteJulianDate &&
@@ -360,7 +361,7 @@ function toJulianDate(time) {
  *   whose values are objects whose keys are days, whose values are arrays of all the datetimes on that day.
  */
 function objectifyDates(dates) {
-    let result = { indice: [], dates };
+    let result = { index: [], dates };
     for (let i = 0; i < dates.length; i++) {
         let date = dates[i];
         let year = date.getFullYear();
@@ -370,32 +371,32 @@ function objectifyDates(dates) {
         let hour = date.getHours();
         // ObjectifiedDates
         if (!result[century]) {
-            result[century] = { indice: [], dates: [] };
-            result.indice.push(century);
+            result[century] = { index: [], dates: [] };
+            result.index.push(century);
         }
         result[century].dates.push(date);
         // ObjectifiedYears
         if (!result[century][year]) {
-            result[century][year] = { indice: [], dates: [] };
-            result[century].indice.push(year);
+            result[century][year] = { index: [], dates: [] };
+            result[century].index.push(year);
         }
         result[century][year].dates.push(date);
         // ObjectifiedMonths
         if (!result[century][year][month]) {
-            result[century][year][month] = { indice: [], dates: [] };
-            result[century][year].indice.push(month);
+            result[century][year][month] = { index: [], dates: [] };
+            result[century][year].index.push(month);
         }
         result[century][year][month].dates.push(date);
         // ObjectifiedDays
         if (!result[century][year][month][day]) {
-            result[century][year][month][day] = { indice: [], dates: [] };
-            result[century][year][month].indice.push(day);
+            result[century][year][month][day] = { index: [], dates: [] };
+            result[century][year][month].index.push(day);
         }
         result[century][year][month][day].dates.push(date);
         // ObjectifiedHours
         if (!result[century][year][month][day][hour]) {
             result[century][year][month][day][hour] = [];
-            result[century][year][month][day].indice.push(hour);
+            result[century][year][month][day].index.push(hour);
         }
         result[century][year][month][day][hour].push(date);
     }

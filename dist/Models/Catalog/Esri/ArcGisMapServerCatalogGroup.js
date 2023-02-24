@@ -92,13 +92,13 @@ export class MapServerStratum extends LoadableStratum(ArcGisMapServerCatalogGrou
     }
     get members() {
         return filterOutUndefined(this.layers
-            .map(layer => {
+            .map((layer) => {
             if (!isDefined(layer.id) || layer.parentLayerId !== -1) {
                 return undefined;
             }
             return this._catalogGroup.uniqueId + "/" + layer.id;
         })
-            .concat(this.subLayers.map(subLayer => {
+            .concat(this.subLayers.map((subLayer) => {
             if (!isDefined(subLayer.id)) {
                 return undefined;
             }
@@ -112,7 +112,7 @@ export class MapServerStratum extends LoadableStratum(ArcGisMapServerCatalogGrou
         return this._mapServer.subLayers || [];
     }
     createMembersFromLayers() {
-        this.layers.forEach(layer => this.createMemberFromLayer(layer));
+        this.layers.forEach((layer) => this.createMemberFromLayer(layer));
     }
     createMemberFromLayer(layer) {
         if (!isDefined(layer.id)) {
@@ -148,14 +148,10 @@ export class MapServerStratum extends LoadableStratum(ArcGisMapServerCatalogGrou
             }
         }
         // Replace the stratum inherited from the parent group.
-        const stratum = CommonStrata.underride;
-        model.strata.delete(stratum);
-        model.setTrait(stratum, "name", replaceUnderscores(layer.name));
+        model.strata.delete(CommonStrata.definition);
+        model.setTrait(CommonStrata.definition, "name", replaceUnderscores(layer.name));
         var uri = new URI(this._catalogGroup.url).segment(layer.id + ""); // Convert layer id to string as segment(0) means sthg different.
-        model.setTrait(stratum, "url", uri.toString());
-        if (this._catalogGroup.itemProperties !== undefined) {
-            Object.keys(this._catalogGroup.itemProperties).map((k) => model.setTrait(stratum, k, this._catalogGroup.itemProperties[k]));
-        }
+        model.setTrait(CommonStrata.definition, "url", uri.toString());
     }
 }
 MapServerStratum.stratumName = "mapServer";
@@ -198,7 +194,7 @@ export default class ArcGisMapServerCatalogGroup extends UrlMixin(GroupMixin(Cat
         return "1d";
     }
     forceLoadMetadata() {
-        return MapServerStratum.load(this).then(stratum => {
+        return MapServerStratum.load(this).then((stratum) => {
             runInAction(() => {
                 this.strata.set(MapServerStratum.stratumName, stratum);
             });

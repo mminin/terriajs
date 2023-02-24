@@ -9,7 +9,9 @@ import CatalogGroup from "./CatalogGroup";
 import CatalogItem, { ButtonState } from "./CatalogItem";
 import toggleItemOnMapFromCatalog, { Op as ToggleOnMapOp } from "./toggleItemOnMapFromCatalog";
 export default observer(function DataCatalogReference({ reference, viewState, onActionButtonClicked, isTopLevel }) {
-    const setPreviewedItem = () => viewState.viewCatalogMember(reference);
+    const setPreviewedItem = () => viewState
+        .viewCatalogMember(reference)
+        .then((result) => result.raiseError(viewState.terria));
     const add = async (event) => {
         const keepCatalogOpen = event.shiftKey || event.ctrlKey;
         if (onActionButtonClicked) {

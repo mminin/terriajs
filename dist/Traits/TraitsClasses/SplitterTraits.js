@@ -4,13 +4,13 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
-import ImagerySplitDirection from "terriajs-cesium/Source/Scene/ImagerySplitDirection";
+import SplitDirection from "terriajs-cesium/Source/Scene/SplitDirection";
 import ModelTraits from "../ModelTraits";
 import primitiveTrait from "../Decorators/primitiveTrait";
 export default class SplitterTraits extends ModelTraits {
     constructor() {
         super(...arguments);
-        this.splitDirection = ImagerySplitDirection.NONE;
+        this.splitDirection = SplitDirection.NONE;
         this.disableSplitter = false;
     }
 }

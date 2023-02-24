@@ -4,11 +4,11 @@
 import styled from "styled-components";
 export const Spacing = styled.div `
   // Unsure how to deal with 1px right now
-  ${props => props.marginRight && `margin-right: ${props.marginRight}px;`}
-  ${props => props.marginBottom && `margin-bottom: ${props.marginBottom}px;`}
+  ${(props) => props.marginRight && `margin-right: ${props.marginRight}px;`}
+  ${(props) => props.marginBottom && `margin-bottom: ${props.marginBottom}px;`}
 
-  ${props => props.bottom && `margin-bottom: ${props.bottom * 5}px;`}
-  ${props => props.right && `margin-right: ${props.right * 5}px;`}
+  ${(props) => props.bottom && `margin-bottom: ${props.bottom * 5}px;`}
+  ${(props) => props.right && `margin-right: ${props.right * 5}px;`}
 `;
 export const SpacingSpan = styled(Spacing).attrs({
     as: "span"

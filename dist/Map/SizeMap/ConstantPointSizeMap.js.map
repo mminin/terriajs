@@ -1,0 +1,1 @@
+{"version":3,"file":"ConstantPointSizeMap.js","sourceRoot":"","sources":["../../../lib/Map/SizeMap/ConstantPointSizeMap.ts"],"names":[],"mappings":"AAAA,OAAO,YAAY,MAAM,gBAAgB,CAAC;AAE1C,MAAM,CAAC,OAAO,OAAO,oBAAqB,SAAQ,YAAY;IAC5D,YAAqB,SAAiB;QACpC,KAAK,EAAE,CAAC;QADW,cAAS,GAAT,SAAS,CAAQ;IAEtC,CAAC;IAED,mBAAmB,CAAC,KAAyC;QAC3D,OAAO,IAAI,CAAC,SAAS,CAAC;IACxB,CAAC;CACF"}

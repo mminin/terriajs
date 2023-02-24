@@ -197,7 +197,7 @@ export default class YDYRCatalogFunction extends CatalogFunctionMixin(CreateMode
         }
         const layer = this.terria.workbench.items
             .filter(TableMixin.isMixedInto)
-            .filter(item => item.uniqueId === this.inputLayers.value)[0];
+            .filter((item) => item.uniqueId === this.inputLayers.value)[0];
         return layer;
     }
     get apiUrl() {
@@ -209,9 +209,9 @@ export default class YDYRCatalogFunction extends CatalogFunctionMixin(CreateMode
     }
     get inputLayers() {
         const possibleValues = this.terria.workbench.items
-            .filter(item => TableMixin.isMixedInto(item) && item.activeTableStyle.isRegions())
-            .filter(item => item.uniqueId)
-            .map(item => {
+            .filter((item) => TableMixin.isMixedInto(item) && item.activeTableStyle.isRegions())
+            .filter((item) => item.uniqueId)
+            .map((item) => {
             return {
                 id: item.uniqueId,
                 name: CatalogMemberMixin.isMixedInto(item) ? item.name : undefined
@@ -248,8 +248,8 @@ export default class YDYRCatalogFunction extends CatalogFunctionMixin(CreateMode
         if (!this.inputLayers.isValid) {
             return;
         }
-        const possibleValues = ((_a = this.selectedTableCatalogMember) === null || _a === void 0 ? void 0 : _a.tableColumns.filter(col => col.type === TableColumnType.region &&
-            isDefined(DATASETS.find(d => { var _a; return d.dataCol === ((_a = col.regionType) === null || _a === void 0 ? void 0 : _a.regionProp); }))).map(col => {
+        const possibleValues = ((_a = this.selectedTableCatalogMember) === null || _a === void 0 ? void 0 : _a.tableColumns.filter((col) => col.type === TableColumnType.region &&
+            isDefined(DATASETS.find((d) => { var _a; return d.dataCol === ((_a = col.regionType) === null || _a === void 0 ? void 0 : _a.regionProp); }))).map((col) => {
             return { id: col.name };
         })) || [];
         return new EnumerationParameter(this, {
@@ -270,7 +270,7 @@ export default class YDYRCatalogFunction extends CatalogFunctionMixin(CreateMode
 The region mapping can be set in the Workbench.
 
 **Supported regions:**
-${DATASETS.map(d => `\n- ${d.title}`)}`
+${DATASETS.map((d) => `\n- ${d.title}`)}`
             });
         }
     }
@@ -279,7 +279,7 @@ ${DATASETS.map(d => `\n- ${d.title}`)}`
         if (!this.inputLayers.isValid) {
             return;
         }
-        const possibleValues = ((_a = this.selectedTableCatalogMember) === null || _a === void 0 ? void 0 : _a.tableColumns.filter(col => col.type === TableColumnType.scalar).map(col => {
+        const possibleValues = ((_a = this.selectedTableCatalogMember) === null || _a === void 0 ? void 0 : _a.tableColumns.filter((col) => col.type === TableColumnType.scalar).map((col) => {
             return { id: col.name };
         })) || [];
         if (possibleValues.length === 0) {
@@ -310,7 +310,7 @@ ${DATASETS.map(d => `\n- ${d.title}`)}`
         return new EnumerationParameter(this, {
             id: "Output Geography",
             description: "The output geography to be converted to.",
-            options: DATASETS.map(d => {
+            options: DATASETS.map((d) => {
                 return { id: d.title };
             }),
             isRequired: true
@@ -332,7 +332,7 @@ ${DATASETS.map(d => `\n- ${d.title}`)}`
             !((_c = this.availableRegions) === null || _c === void 0 ? void 0 : _c.isValid)) {
             return [];
         }
-        return ALGORITHMS.map(alg => new BooleanParameter(this, {
+        return ALGORITHMS.map((alg) => new BooleanParameter(this, {
             id: alg[0]
         }));
     }

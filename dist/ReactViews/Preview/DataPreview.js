@@ -14,6 +14,7 @@ import Styles from "./data-preview.scss";
 import Description from "./Description";
 import GroupPreview from "./GroupPreview";
 import MappablePreview from "./MappablePreview";
+import WarningBox from "./WarningBox";
 /**
  * Data preview section, for the preview map see DataPreviewMap
  */
@@ -79,10 +80,11 @@ const DataPreview = observer(createReactClass({
         return (React.createElement("div", { className: Styles.preview },
             React.createElement("div", { className: Styles.previewInner },
                 isLoading && React.createElement(Loader, null),
-                !isLoading && !hasTarget && (React.createElement("div", { className: Styles.placeholder },
-                    React.createElement("h2", null, "Unable to resolve reference"),
-                    React.createElement("p", null, ((_a = this.props.previewed.loadReferenceResult) === null || _a === void 0 ? void 0 : _a.error) ? (_c = (_b = this.props.previewed.loadReferenceResult) === null || _b === void 0 ? void 0 : _b.error) === null || _c === void 0 ? void 0 : _c.message : `This reference could not be resolved because it is invalid or
-                  because it points to something that cannot be visualised.`))))));
+                !isLoading && !hasTarget && (React.createElement(React.Fragment, null,
+                    React.createElement("div", { className: Styles.placeholder },
+                        React.createElement("h2", null, "Unable to resolve reference"),
+                        !((_a = this.props.previewed.loadReferenceResult) === null || _a === void 0 ? void 0 : _a.error) ? (React.createElement("p", null, "This reference could not be resolved because it is invalid or because it points to something that cannot be visualised.")) : null),
+                    ((_b = this.props.previewed.loadReferenceResult) === null || _b === void 0 ? void 0 : _b.error) ? (React.createElement(WarningBox, { error: (_c = this.props.previewed.loadReferenceResult) === null || _c === void 0 ? void 0 : _c.error, viewState: this.props.viewState })) : null)))));
     }
 }));
 module.exports = withTranslation()(DataPreview);

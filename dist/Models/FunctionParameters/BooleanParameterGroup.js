@@ -52,7 +52,9 @@ function formatAsArrayOfObjects(value) {
     return value;
 }
 function formatAsStringOfKeyEqualsBoolean(value) {
-    return value.map(param => param.id + "=" + param.value.toString()).join("&");
+    return value
+        .map((param) => param.id + "=" + param.value.toString())
+        .join("&");
 }
 function makeBooleanEditorFromJson(object, inTerria, inCatalogFunction) {
     if (!isEmpty(object) && object.id) {
@@ -88,7 +90,7 @@ BooleanParameterGroup.defaultUpdaters.ParameterList = function (functionParamete
     functionParameter.ParameterList = makeBooleanEditorArrayFromJson(json[propertyName], functionParameter.terria, functionParameter.catalogFunction);
 };
 BooleanParameterGroup.prototype.getValue = function () {
-    var param_values = this.ParameterList.map(parameter => parameter.value
+    var param_values = this.ParameterList.map((parameter) => parameter.value
         ? {
             id: parameter.id,
             value: parameter.value
@@ -114,7 +116,7 @@ BooleanParameterGroup.prototype.getValue = function () {
         [this.OneForAll.id] : this.OneForAll.value
       } : undefined
       );*/
-    return param_values.filter(item => item !== undefined);
+    return param_values.filter((item) => item !== undefined);
 };
 Object.defineProperties(BooleanParameterGroup.prototype, {
     /**

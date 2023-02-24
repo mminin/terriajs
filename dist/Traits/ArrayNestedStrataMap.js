@@ -87,8 +87,7 @@ export default class ArrayNestedStrataMap {
         return this.strata.toString();
     }
     get strata() {
-        const strataTopToBottom = this.parentModel
-            .strataTopToBottom;
+        const strataTopToBottom = this.parentModel.strataTopToBottom;
         const result = new Map();
         // Find the strata that go into this object.
         for (let stratumId of strataTopToBottom.keys()) {

@@ -59,10 +59,10 @@ const NotificationWindow = createReactClass({
         const isStory = type === "story";
         return (React.createElement("div", { className: classNames(Styles.wrapper, `${type}`) },
             React.createElement("div", { className: Styles.notification, isStory: isStory, css: `
-            background: ${p => p.isStory ? p.theme.colorPrimary : p.theme.dark};
+            background: ${(p) => p.isStory ? p.theme.colorPrimary : p.theme.dark};
             a,
             a:visited {
-              color: ${p => p.theme.primary};
+              color: ${(p) => p.theme.primary};
             }
           ` },
                 React.createElement("div", { className: Styles.inner, style: divStyle },

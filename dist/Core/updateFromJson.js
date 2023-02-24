@@ -1,7 +1,6 @@
 "use strict";
 var defaultValue = require("terriajs-cesium/Source/Core/defaultValue").default;
 var defined = require("terriajs-cesium/Source/Core/defined").default;
-var when = require("terriajs-cesium/Source/ThirdParty/when").default;
 /**
  * Updates an object from a JSON representation of the object.  Only properties that actually exist on the object are read from the JSON,
  * and the object has the opportunity to inject specialized deserialization logic by providing an `updaters` property.
@@ -24,7 +23,7 @@ function updateFromJson(target, json, options) {
             }
         }
     }
-    return when.all(promises);
+    return Promise.all(promises);
 }
 /**
  * Determines whether this property is valid for updating.

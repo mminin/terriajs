@@ -1,9 +1,9 @@
+import i18next from "i18next";
 import defaultValue from "terriajs-cesium/Source/Core/defaultValue";
-import DeveloperError from "terriajs-cesium/Source/Core/DeveloperError";
+import { isJsonObject } from "../Core/Json";
 import loadJson from "../Core/loadJson";
 import loadWithXhr from "../Core/loadWithXhr";
 import TerriaError from "../Core/TerriaError";
-import i18next from "i18next";
 /**
  * Interface to the terriajs-server service for creating short share links.
  * @param {*} options
@@ -31,42 +31,49 @@ export default class ShareDataService {
      * @param shareData JSON to store.
      * @return A promise for the token (which can later be resolved at /share/TOKEN).
      */
-    getShareToken(shareData) {
+    async getShareToken(shareData) {
         if (!this.isUsable) {
-            throw new DeveloperError("ShareDataService is not usable.");
+            throw TerriaError.from("`ShareDataService` is not usable");
         }
-        return loadWithXhr({
-            url: this.url,
-            method: "POST",
-            data: JSON.stringify(shareData),
-            headers: { "Content-Type": "application/json" },
-            responseType: "json"
-        })
-            .then((result) => {
+        try {
+            const result = await loadWithXhr({
+                url: this.url,
+                method: "POST",
+                data: JSON.stringify(shareData),
+                headers: { "Content-Type": "application/json" },
+                responseType: "json"
+            });
             const json = typeof result === "string" ? JSON.parse(result) : result;
             return json.id;
-        })
-            .catch((error) => {
-            console.log(error);
-            this.terria.raiseErrorToUser(new TerriaError({
-                title: i18next.t("models.shareData.generateErrorTitle"),
-                message: i18next.t("models.shareData.generateErrorMessage")
-            }));
-        });
-    }
-    resolveData(token) {
-        if (!this.isUsable) {
-            throw new DeveloperError("ShareDataService is not usable because ###");
         }
-        return loadJson(this.url + "/" + token).catch(() => {
-            this.terria.raiseErrorToUser(new TerriaError({
+        catch (error) {
+            throw TerriaError.from(error, {
+                title: i18next.t("models.shareData.generateErrorTitle"),
+                message: i18next.t("models.shareData.generateErrorMessage"),
+                importance: 1
+            });
+        }
+    }
+    async resolveData(token) {
+        if (!this.isUsable) {
+            throw TerriaError.from("`ShareDataService` is not usable");
+        }
+        try {
+            const shareJson = await loadJson(this.url + "/" + token);
+            if (!isJsonObject(shareJson, false)) {
+                throw TerriaError.from(`Invalid server response for share ${this.url + "/" + token}\n\`${JSON.stringify(shareJson)}\``);
+            }
+            return shareJson;
+        }
+        catch (error) {
+            throw TerriaError.from(error, {
                 title: i18next.t("models.shareData.expandErrorTitle"),
                 message: i18next.t("models.shareData.expandErrorMessage", {
                     appName: this.terria.appName
-                })
-            }));
-            return undefined;
-        });
+                }),
+                importance: 1
+            });
+        }
     }
 }
 //# sourceMappingURL=ShareDataService.js.map

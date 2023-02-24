@@ -25,6 +25,13 @@ __decorate([
 ], LegendOwnerTraits.prototype, "legends", void 0);
 __decorate([
     primitiveTrait({
+        type: "string",
+        name: "Legend background color",
+        description: "Apply background color to all legends. This can be useful if legends are transparent and clash with Terria colours"
+    })
+], LegendOwnerTraits.prototype, "legendBackgroundColor", void 0);
+__decorate([
+    primitiveTrait({
         type: "boolean",
         name: "Hide legend in workbench",
         description: "Whether the legend is hidden in the workbench for this catalog member."

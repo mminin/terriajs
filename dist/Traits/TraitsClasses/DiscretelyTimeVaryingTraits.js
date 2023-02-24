@@ -7,9 +7,8 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 import primitiveTrait from "../Decorators/primitiveTrait";
 import mixTraits from "../mixTraits";
 import ChartTraits from "./ChartTraits";
-import MappableTraits from "./MappableTraits";
 import TimeVaryingTraits from "./TimeVaryingTraits";
-export default class DiscretelyTimeVaryingTraits extends mixTraits(ChartTraits, TimeVaryingTraits, MappableTraits) {
+export default class DiscretelyTimeVaryingTraits extends mixTraits(ChartTraits, TimeVaryingTraits) {
     constructor() {
         super(...arguments);
         this.fromContinuous = "nearest";

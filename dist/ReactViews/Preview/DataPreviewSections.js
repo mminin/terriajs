@@ -43,7 +43,7 @@ const DataPreviewSections = observer(createReactClass({
             }
             return aIndex - bIndex;
         });
-        return items.filter(item => {
+        return items.filter((item) => {
             var _a, _b;
             return isDefined((_a = item.content) !== null && _a !== void 0 ? _a : item.contentAsObject) &&
                 ((_b = item.content) !== null && _b !== void 0 ? _b : item.contentAsObject) !== null &&
@@ -52,7 +52,7 @@ const DataPreviewSections = observer(createReactClass({
     },
     clickInfoSection(reportName, isOpen) {
         const info = this.props.metadataItem.info;
-        const clickedInfo = info.find(report => report.name === reportName);
+        const clickedInfo = info.find((report) => report.name === reportName);
         if (isDefined(clickedInfo)) {
             runInAction(() => {
                 clickedInfo.setTrait(CommonStrata.user, "show", isOpen);
@@ -66,7 +66,7 @@ const DataPreviewSections = observer(createReactClass({
         const items = metadataItem.hideSource
             ? metadataItem.infoWithoutSources
             : metadataItem.info.slice();
-        const renderSection = item => {
+        const renderSection = (item) => {
             let content = item.content;
             try {
                 content = Mustache.render(content, metadataItem);
@@ -82,7 +82,7 @@ const DataPreviewSections = observer(createReactClass({
         return (React.createElement("div", null,
             React.createElement(For, { each: "item", index: "i", of: this.sortInfoSections(items) },
                 React.createElement(Box, { paddedVertically: true, displayInlineBlock: true, fullWidth: true, key: i },
-                    React.createElement(Collapsible, { key: i, light: false, title: item.name, isOpen: item.show, onToggle: show => this.clickInfoSection.bind(this, item.name, show)(), bodyTextProps: { medium: true } },
+                    React.createElement(Collapsible, { key: i, light: false, title: item.name, isOpen: item.show, onToggle: (show) => this.clickInfoSection.bind(this, item.name, show)(), bodyTextProps: { medium: true } },
                         React.createElement(Choose, null,
                             React.createElement(When, { condition: ((_a = item.content) === null || _a === void 0 ? void 0 : _a.length) > 0 }, renderSection(item)),
                             React.createElement(When, { condition: item.contentAsObject !== undefined },

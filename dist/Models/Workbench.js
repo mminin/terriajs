@@ -37,19 +37,19 @@ export default class Workbench {
      * Gets the unique IDs of the items in the workbench.
      */
     get itemIds() {
-        return filterOutUndefined(this._items.map(item => item.uniqueId));
+        return filterOutUndefined(this._items.map((item) => item.uniqueId));
     }
     /**
      * Gets the unique IDs of the items in the workbench.
      */
     get shouldExpandAll() {
-        return this._items.every(item => !item.isOpenInWorkbench);
+        return this._items.every((item) => !item.isOpenInWorkbench);
     }
     /**
      * Checks if the workbench contains time-based WMS
      */
     get hasTimeWMS() {
-        return this._items.some(item => {
+        return this._items.some((item) => {
             var _a;
             return item.type === "wms" &&
                 TimeFilterMixin.isMixedInto(item) && ((_a = item.discreteTimesAsSortedJulianDates) === null || _a === void 0 ? void 0 : _a.length);
@@ -75,7 +75,7 @@ export default class Workbench {
      * Collapses all models from the workbench.
      */
     collapseAll() {
-        this._items.map(item => {
+        this._items.map((item) => {
             item.setTrait(CommonStrata.user, "isOpenInWorkbench", false);
         });
     }
@@ -83,7 +83,7 @@ export default class Workbench {
      * Expands all models from the workbench.
      */
     expandAll() {
-        this._items.map(item => {
+        this._items.map((item) => {
             item.setTrait(CommonStrata.user, "isOpenInWorkbench", true);
         });
     }
@@ -144,7 +144,7 @@ export default class Workbench {
      */
     async add(item) {
         if (Array.isArray(item)) {
-            const results = await Promise.all(item.reverse().map(i => this.add(i)));
+            const results = await Promise.all(item.reverse().map((i) => this.add(i)));
             return Result.combine(results, {
                 title: i18next.t("workbench.addItemErrorTitle"),
                 message: i18next.t("workbench.addItemErrorMessage"),
@@ -198,7 +198,7 @@ export default class Workbench {
      * @returns The index of the model or its dereferenced equivalent, or -1 if neither exist on the workbench.
      */
     indexOf(item) {
-        return this.items.findIndex(model => model === item || dereferenceModel(model) === dereferenceModel(item));
+        return this.items.findIndex((model) => model === item || dereferenceModel(model) === dereferenceModel(item));
     }
     /**
      * Used to re-order the workbench list.

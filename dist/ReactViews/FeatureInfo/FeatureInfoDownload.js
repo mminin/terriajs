@@ -1,66 +1,47 @@
 import React from "react";
-import PropTypes from "prop-types";
-import createReactClass from "create-react-class";
 import { withTranslation } from "react-i18next";
-import FeatureDetection from "terriajs-cesium/Source/Core/FeatureDetection";
 import DataUri from "../../Core/DataUri";
-import Dropdown from "../Generic/Dropdown";
+import filterOutUndefined from "../../Core/filterOutUndefined";
 import Icon from "../../Styled/Icon";
+import { withViewState } from "../StandardUserInterface/ViewStateContext";
 import Styles from "./feature-info-download.scss";
-const FeatureInfoDownload = createReactClass({
-    propTypes: {
-        data: PropTypes.object.isRequired,
-        name: PropTypes.string.isRequired,
-        viewState: PropTypes.object.isRequired,
-        canUseDataUri: PropTypes.bool,
-        t: PropTypes.func.isRequired
-    },
-    getDefaultProps() {
-        return {
-            canUseDataUri: !(FeatureDetection.isInternetExplorer() ||
-                /Edge/.exec(navigator.userAgent))
-        };
-    },
+const Dropdown = require("../Generic/Dropdown");
+class FeatureInfoDownload extends React.Component {
     getLinks() {
-        return [
-            {
-                href: DataUri.make("csv", generateCsvData(this.props.data)),
-                download: `${this.props.name}.csv`,
-                label: "CSV"
-            },
+        const csv = generateCsvData(this.props.data);
+        return filterOutUndefined([
+            csv
+                ? {
+                    href: DataUri.make("csv", csv),
+                    download: `${this.props.name}.csv`,
+                    label: "CSV"
+                }
+                : undefined,
             {
                 href: DataUri.make("json", JSON.stringify(this.props.data)),
                 download: `${this.props.name}.json`,
                 label: "JSON"
             }
-        ].filter(download => !!download.href);
-    },
+        ]);
+    }
     render() {
         const { t } = this.props;
         const links = this.getLinks();
         const icon = (React.createElement("span", { className: Styles.iconDownload },
             React.createElement(Icon, { glyph: Icon.GLYPHS.opened })));
-        if (DataUri.checkCompatibility()) {
-            return (React.createElement(Dropdown, { options: links, textProperty: "label", theme: {
-                    dropdown: Styles.download,
-                    list: Styles.dropdownList,
-                    button: Styles.dropdownButton,
-                    icon: icon
-                }, buttonClassName: Styles.btn }, t("featureInfo.download")));
-        }
-        else {
-            return null;
-        }
+        return (React.createElement(Dropdown, { options: links, textProperty: "label", theme: {
+                dropdown: Styles.download,
+                list: Styles.dropdownList,
+                button: Styles.dropdownButton,
+                icon: icon
+            }, buttonClassName: Styles.btn }, t("featureInfo.download")));
     }
-});
+}
 /**
  * Turns a 2-dimensional javascript object into a CSV string, with the first row being the property names and the second
  * row being the data. If the object is too hierarchical to be made into a CSV, returns undefined.
  */
 function generateCsvData(data) {
-    if (!data) {
-        return;
-    }
     const row1 = [];
     const row2 = [];
     const keys = Object.keys(data);
@@ -89,5 +70,5 @@ function makeSafeForCsv(value) {
     value = value ? `${value}` : "";
     return '"' + value.replace(/"/g, '""') + '"';
 }
-export default withTranslation()(FeatureInfoDownload);
+export default withTranslation()(withViewState(FeatureInfoDownload));
 //# sourceMappingURL=FeatureInfoDownload.js.map

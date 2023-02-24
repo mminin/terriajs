@@ -16,7 +16,7 @@ const MapEffects = ({ item, results, effect }) => {
     }
 };
 export default MapEffects;
-export const HideAllResults = props => {
+export const HideAllResults = (props) => {
     const { item, results } = props;
     useEffect(() => {
         const disposer = item.hideFeaturesNotInItemSearchResults(results);
@@ -24,7 +24,7 @@ export const HideAllResults = props => {
     }, [item, results]);
     return null;
 };
-export const HighlightResults = props => {
+export const HighlightResults = (props) => {
     useEffect(() => {
         const item = props.item;
         const results = Array.isArray(props.results)

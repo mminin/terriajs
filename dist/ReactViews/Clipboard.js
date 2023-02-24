@@ -13,7 +13,7 @@ var CopyStatus;
     CopyStatus[CopyStatus["Error"] = 1] = "Error";
     CopyStatus[CopyStatus["NotCopiedOrWaiting"] = 2] = "NotCopiedOrWaiting"; // Copy button hasn't been clicked or clipboard.js hasn't copied the data yet
 })(CopyStatus || (CopyStatus = {}));
-const Clipboard = props => {
+const Clipboard = (props) => {
     const { id, source, theme, rounded } = props;
     const { t } = useTranslation();
     const [status, setStatus] = useState(CopyStatus.NotCopiedOrWaiting);
@@ -33,7 +33,7 @@ const Clipboard = props => {
                 setStatus(CopyStatus.NotCopiedOrWaiting);
             }, 3000);
         }
-        clipboardBtn.on("success", evt => {
+        clipboardBtn.on("success", (evt) => {
             var _a;
             (_a = props.onCopy) === null || _a === void 0 ? void 0 : _a.call(props, evt.text);
             setStatus(CopyStatus.Success);
@@ -50,10 +50,6 @@ const Clipboard = props => {
     }, [id]);
     const isLightTheme = theme === "light";
     return (React.createElement(ClipboardDiv, null,
-        React.createElement("span", null, t("clipboard.shareURL")),
-        React.createElement(Spacing, { bottom: 2 }),
-        React.createElement(Explanation, null, t("clipboard.shareExplanation")),
-        React.createElement(Spacing, { bottom: 3 }),
         React.createElement(Box, null,
             source,
             React.createElement(Button, { primary: true, css: `
@@ -80,9 +76,6 @@ const Clipboard = props => {
 export default Clipboard;
 const ClipboardDiv = styled.div `
   position: relative;
-`;
-const Explanation = styled.div `
-  opacity: 0.8;
 `;
 const TooltipText = styled.span `
   ${verticalAlign("absolute")}

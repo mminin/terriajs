@@ -10,17 +10,16 @@ import BoundingSphere from "terriajs-cesium/Source/Core/BoundingSphere";
 import Cartesian2 from "terriajs-cesium/Source/Core/Cartesian2";
 import Cartographic from "terriajs-cesium/Source/Core/Cartographic";
 import sampleTerrainMostDetailed from "terriajs-cesium/Source/Core/sampleTerrainMostDetailed";
-import makeRealPromise from "../../../Core/makeRealPromise";
-import PickedFeatures from "../../../Map/PickedFeatures";
+import PickedFeatures from "../../../Map/PickedFeatures/PickedFeatures";
 import CatalogMemberMixin from "../../../ModelMixins/CatalogMemberMixin";
 import Cesium3dTilesMixin from "../../../ModelMixins/Cesium3dTilesMixin";
-import FeatureInfoMixin from "../../../ModelMixins/FeatureInfoMixin";
+import FeatureInfoUrlTemplateMixin from "../../../ModelMixins/FeatureInfoUrlTemplateMixin";
 import SearchableItemMixin from "../../../ModelMixins/SearchableItemMixin";
 import Cesium3DTilesCatalogItemTraits from "../../../Traits/TraitsClasses/Cesium3DTilesCatalogItemTraits";
 import CreateModel from "../../Definition/CreateModel";
 // A property name used for tagging a search result feature for highlighting/hiding.
 const SEARCH_RESULT_TAG = "terriajs_search_result";
-export default class Cesium3DTilesCatalogItem extends SearchableItemMixin(FeatureInfoMixin(Cesium3dTilesMixin(CatalogMemberMixin(CreateModel(Cesium3DTilesCatalogItemTraits))))) {
+export default class Cesium3DTilesCatalogItem extends SearchableItemMixin(FeatureInfoUrlTemplateMixin(Cesium3dTilesMixin(CatalogMemberMixin(CreateModel(Cesium3DTilesCatalogItemTraits))))) {
     constructor() {
         super(...arguments);
         this.type = Cesium3DTilesCatalogItem.type;
@@ -34,7 +33,7 @@ export default class Cesium3DTilesCatalogItem extends SearchableItemMixin(Featur
             const camera = scene.camera;
             const { latitudeDegrees, longitudeDegrees, featureHeight } = result.featureCoordinate;
             const cartographic = Cartographic.fromDegrees(longitudeDegrees, latitudeDegrees);
-            const [terrainCartographic] = await makeRealPromise(sampleTerrainMostDetailed(scene.terrainProvider, [cartographic])).catch(() => [cartographic]);
+            const [terrainCartographic] = await sampleTerrainMostDetailed(scene.terrainProvider, [cartographic]).catch(() => [cartographic]);
             if (featureHeight < 20) {
                 // for small features we show a top-down view so that it is visible even
                 // if surrounded by larger features
@@ -71,7 +70,7 @@ export default class Cesium3DTilesCatalogItem extends SearchableItemMixin(Featur
         if (tileset === undefined || results.length === 0) {
             return () => { }; // empty disposer
         }
-        const resultIds = new Set(results.map(r => r.id));
+        const resultIds = new Set(results.map((r) => r.id));
         const idPropertyName = results[0].idPropertyName;
         const highligtedFeatures = new Set();
         let disposeFeatureInfoPanel;
@@ -101,7 +100,7 @@ export default class Cesium3DTilesCatalogItem extends SearchableItemMixin(Featur
             disposeWatch();
             disposeFeatureInfoPanel === null || disposeFeatureInfoPanel === void 0 ? void 0 : disposeFeatureInfoPanel();
             this.removeColorExpression(colorExpression);
-            highligtedFeatures.forEach(feature => {
+            highligtedFeatures.forEach((feature) => {
                 try {
                     feature.setProperty(SEARCH_RESULT_TAG, undefined);
                 }
@@ -124,7 +123,7 @@ export default class Cesium3DTilesCatalogItem extends SearchableItemMixin(Featur
         if (tileset === undefined || results.length == 0) {
             return () => { }; // empty disposer
         }
-        const resultIds = new Set(results.map(r => r.id));
+        const resultIds = new Set(results.map((r) => r.id));
         const idPropertyName = results[0].idPropertyName;
         const hiddenFeatures = new Set();
         // Tag newly visible features with SEARCH_RESULT_TAG
@@ -143,7 +142,7 @@ export default class Cesium3DTilesCatalogItem extends SearchableItemMixin(Featur
         const disposer = action(() => {
             disposeWatch();
             this.removeShowExpression(showExpression);
-            hiddenFeatures.forEach(feature => {
+            hiddenFeatures.forEach((feature) => {
                 try {
                     feature.setProperty(SEARCH_RESULT_TAG, undefined);
                 }

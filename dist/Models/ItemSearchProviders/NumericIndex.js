@@ -51,8 +51,8 @@ export default class NumericIndex {
         const idValuePairs = await this.idValuePairs;
         const startValue = value.start === undefined ? range.min : value.start;
         const endValue = value.end === undefined ? range.max : value.end;
-        const startIndex = sortedIndexBy(idValuePairs, { dataRowId: 0, value: startValue }, entry => entry.value);
-        const endIndex = sortedLastIndexBy(idValuePairs, { dataRowId: 0, value: endValue }, entry => entry.value);
+        const startIndex = sortedIndexBy(idValuePairs, { dataRowId: 0, value: startValue }, (entry) => entry.value);
+        const endIndex = sortedLastIndexBy(idValuePairs, { dataRowId: 0, value: endValue }, (entry) => entry.value);
         const matchingIds = idValuePairs
             .slice(startIndex, endIndex)
             .map(({ dataRowId }) => dataRowId);

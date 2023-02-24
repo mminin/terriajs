@@ -6,7 +6,7 @@ const TourIndicator = styled(RawButton) `
   width: 14px;
   height: 14px;
   border-radius: 50%;
-  background-color: ${p => p.theme.colorPrimary};
+  background-color: ${(p) => p.theme.colorPrimary};
 `;
 export default TourIndicator;
 //# sourceMappingURL=TourIndicator.js.map

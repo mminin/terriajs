@@ -11,10 +11,13 @@ import defined from "terriajs-cesium/Source/Core/defined";
 import Resource from "terriajs-cesium/Source/Core/Resource";
 import URI from "urijs";
 import isDefined from "../../../Core/isDefined";
+import { getMakiIcon } from "../../../Map/Icons/Maki/MakiIcons";
 import MinMaxLevelMixin from "../../../ModelMixins/MinMaxLevelMixin";
 import TableMixin from "../../../ModelMixins/TableMixin";
 import proxyCatalogItemUrl from "../../../Models/Catalog/proxyCatalogItemUrl";
 import hasTraits from "../../../Models/Definition/hasTraits";
+import Button from "../../../Styled/Button";
+import Icon, { StyledIcon } from "../../../Styled/Icon";
 import LegendOwnerTraits from "../../../Traits/TraitsClasses/LegendOwnerTraits";
 import Styles from "./legend.scss";
 /* A lookup map for displayable mime types */
@@ -88,14 +91,14 @@ let Legend = class Legend extends React.Component {
             return null;
         if (isImage) {
             return (React.createElement("li", { key: proxiedUrl },
-                React.createElement("a", { href: proxiedUrl, className: Styles.imageAnchor, target: "_blank", rel: "noreferrer noopener" },
+                React.createElement("a", { href: proxiedUrl, className: Styles.imageAnchor, target: "_blank", rel: "noreferrer noopener", css: { backgroundColor: legend.backgroundColor } },
                     React.createElement("img", { src: proxiedUrl, 
                         // Set maxWidth to 100% if no scaling required (otherwise - see onImageLoad)
                         style: {
                             maxWidth: !isDefined(legend.imageScaling) || legend.imageScaling === 1
                                 ? "100%"
                                 : undefined
-                        }, onError: evt => this.onImageLoad.bind(this, evt, legend)(), onLoad: evt => this.onImageLoad.bind(this, evt, legend)() }))));
+                        }, onError: (evt) => this.onImageLoad.bind(this, evt, legend)(), onLoad: (evt) => this.onImageLoad.bind(this, evt, legend)() }))));
         }
         return (React.createElement("li", { key: proxiedUrl },
             React.createElement("a", { href: proxiedUrl, target: "_blank", rel: "noreferrer noopener", className: Styles.legendOpenExternally }, "Open legend in a separate tab")));
@@ -103,24 +106,34 @@ let Legend = class Legend extends React.Component {
     renderGeneratedLegend(legend, i) {
         if (isDefined(legend.items) && legend.items.length > 0) {
             return (React.createElement("li", { key: i, className: Styles.generatedLegend },
-                React.createElement("table", null,
+                React.createElement("table", { css: { backgroundColor: legend.backgroundColor } },
                     React.createElement("tbody", null, legend.items.map(this.renderLegendItem.bind(this))))));
         }
         return null;
     }
     renderLegendItem(legendItem, i) {
+        var _a, _b, _c;
+        let imageUrl = legendItem.imageUrl;
+        if (legendItem.marker) {
+            imageUrl = (_b = getMakiIcon(legendItem.marker, (_a = legendItem.color) !== null && _a !== void 0 ? _a : "#fff", // We have to have a fallback color here for `getMakiIcon`
+            legendItem.outlineWidth, legendItem.outlineColor, legendItem.imageHeight, legendItem.imageWidth)) !== null && _b !== void 0 ? _b : 
+            // If getMakiIcons returns nothing, we assume legendItem.marker is a URL
+            legendItem.marker;
+        }
+        // Set boxStyle border to solid black if we aren't showing an image AND this legend item has space above it
         let boxStyle = {
-            border: legendItem.addSpacingAbove ? "1px solid black" : undefined
+            border: !imageUrl && legendItem.addSpacingAbove ? "1px solid black" : undefined
         };
-        if (legendItem.outlineColor) {
-            boxStyle.border = `1px solid ${legendItem.outlineColor}`;
+        // Override the boxStyle border if we have outlineColor and outlineWidth defined for this legend item
+        if (!imageUrl && legendItem.outlineColor && legendItem.outlineWidth) {
+            boxStyle.border = `${legendItem.outlineWidth}px solid ${legendItem.outlineColor}`;
         }
         let boxContents = React.createElement(React.Fragment, null);
         // Browsers don't print background colors by default, so we render things a little differently.
         // Chrome and Firefox let you override this, but not IE and Edge. So...
         if (this.props.forPrint) {
-            if (legendItem.imageUrl) {
-                boxContents = (React.createElement("img", { width: "20px", height: "16px", src: legendItem.imageUrl }));
+            if (imageUrl) {
+                boxContents = (React.createElement("img", { width: "20px", height: "16px", src: imageUrl, style: { transform: `rotate(${(_c = legendItem.rotation) !== null && _c !== void 0 ? _c : 0}deg)` } }));
             }
             else {
                 boxContents = React.createElement(React.Fragment, null, "\u25A0");
@@ -133,20 +146,22 @@ let Legend = class Legend extends React.Component {
             }
         }
         else {
-            if (legendItem.imageUrl) {
+            if (imageUrl || legendItem.marker) {
                 boxStyle = {
-                    backgroundImage: `url(${legendItem.imageUrl})`,
+                    transform: `rotate(${legendItem.rotation}deg)`,
+                    backgroundImage: `url(${imageUrl})`,
                     backgroundRepeat: "no-repeat",
                     backgroundPosition: "center",
+                    backgroundSize: "24px",
                     width: `${legendItem.imageWidth}px`,
                     ...boxStyle
                 };
             }
             else {
                 boxStyle = {
-                    border: `1px solid ${legendItem.outlineColor}`,
                     backgroundColor: legendItem.color,
-                    minWidth: "20px"
+                    minWidth: "20px",
+                    ...boxStyle
                 };
             }
         }
@@ -184,11 +199,19 @@ let Legend = class Legend extends React.Component {
                 this.props.item.scaleWorkbenchInfo))
             return null;
         if (isDefined(this.props.item.legends) &&
-            this.props.item.legends.length > 0)
+            this.props.item.legends.length > 0) {
+            const backgroundColor = hasTraits(this.props.item, LegendOwnerTraits, "legendBackgroundColor")
+                ? this.props.item.legendBackgroundColor
+                : undefined;
             return (React.createElement("ul", { className: Styles.legend },
-                React.createElement("div", { className: Styles.legendInner }, this.props.item.legends.map((legend, i) => (React.createElement(React.Fragment, { key: i },
-                    isDefined(legend.title) ? (React.createElement("h3", { className: Styles.legendTitle }, legend.title)) : null,
-                    this.renderLegend.bind(this)(legend, i)))))));
+                React.createElement("div", { className: Styles.legendInner, css: { position: "relative", " li": { backgroundColor } } },
+                    // Show temporary "legend button" - if custom styling has been applied
+                    TableMixin.isMixedInto(this.props.item) &&
+                        this.props.item.legendButton ? (React.createElement(Button, { primary: true, shortMinHeight: true, css: { position: "absolute", top: 10, right: 0 }, renderIcon: () => (React.createElement(StyledIcon, { light: true, glyph: Icon.GLYPHS.menuDotted, styledWidth: "12px" })), rightIcon: true, iconProps: { css: { marginRight: 0, marginLeft: 4 } }, onClick: this.props.item.legendButton.onClick.bind(this.props.item) }, this.props.item.legendButton.title)) : null,
+                    this.props.item.legends.map((legend, i) => (React.createElement(React.Fragment, { key: i },
+                        isDefined(legend.title) ? (React.createElement("h3", { className: Styles.legendTitle }, legend.title)) : null,
+                        this.renderLegend.bind(this)(legend, i)))))));
+        }
         return null;
     }
 };

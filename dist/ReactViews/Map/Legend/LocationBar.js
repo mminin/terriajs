@@ -28,7 +28,7 @@ const LocationBar = observer(createReactClass({
                 [Styles.useProjection]: this.props.mouseCoords.useProjection
             }), onClick: this.toggleUseProjection, css: `
             &:hover {
-              background: ${p => p.theme.colorPrimary};
+              background: ${(p) => p.theme.colorPrimary};
             }
           ` },
             React.createElement(Choose, null,

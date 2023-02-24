@@ -5,7 +5,6 @@ import createReactClass from "create-react-class";
 import PropTypes from "prop-types";
 import defined from "terriajs-cesium/Source/Core/defined";
 import knockout from "terriajs-cesium/Source/ThirdParty/knockout";
-import when from "terriajs-cesium/Source/ThirdParty/when";
 import GeoJsonCatalogItem from "../../Models/Catalog/CatalogItems/GeoJsonCatalogItem";
 import WebMapServiceCatalogItem from "../../Models/Catalog/Ows/WebMapServiceCatalogItem";
 import { withTranslation } from "react-i18next";
@@ -64,7 +63,7 @@ const RegionPicker = createReactClass({
                 return;
             }
             that._lastPickedFeatures = pickedFeatures;
-            when(pickedFeatures.allFeaturesAvailablePromise, function () {
+            pickedFeatures.allFeaturesAvailablePromise.then(function () {
                 if (pickedFeatures !== that._lastPickedFeatures ||
                     pickedFeatures.features.length === 0) {
                     return;
@@ -76,7 +75,7 @@ const RegionPicker = createReactClass({
         this.updateMapFromValue();
     },
     componentWillUnmount() {
-        this._subscriptions.forEach(subscription => subscription.dispose());
+        this._subscriptions.forEach((subscription) => subscription.dispose());
         if (defined(this._regionsCatalogItem)) {
             this._regionsCatalogItem.isEnabled = false;
             this._regionsCatalogItem = undefined;
@@ -120,12 +119,10 @@ const RegionPicker = createReactClass({
         }
         this._loadingRegionProvider = this.regionProvider;
         const that = this;
-        when
-            .all([
+        Promise.all([
             that.regionProvider.loadRegionIDs(),
             that.regionProvider.loadRegionNames()
-        ])
-            .then(function () {
+        ]).then(function () {
             if (that.regionProvider !== that._loadingRegionProvider) {
                 return;
             }
@@ -176,7 +173,7 @@ const RegionPicker = createReactClass({
                 that._selectedRegionCatalogItem.zoomTo();
             }
         })
-            .otherwise(function () {
+            .catch(function () {
             if (that.props.parameter.value !== value) {
                 // Value has already changed.
                 return;

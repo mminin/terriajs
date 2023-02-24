@@ -8,7 +8,7 @@ const million = 1000000;
 export default class StratumOrder {
     constructor() {
         /**
-         * The priorities of each named stratum. Stata with higher priority values are "above" and override
+         * The priorities of each named stratum. Strata with higher priority values are "above" and override
          * strata with lower priority values.
          */
         this.priorities = new ObservableMap();

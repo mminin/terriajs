@@ -17,10 +17,9 @@ import isDefined from "../../../Core/isDefined";
 import loadJson from "../../../Core/loadJson";
 import replaceUnderscores from "../../../Core/replaceUnderscores";
 import TerriaError, { networkRequestError } from "../../../Core/TerriaError";
-import proj4definitions from "../../../Map/Proj4Definitions";
+import proj4definitions from "../../../Map/Vector/Proj4Definitions";
 import CatalogMemberMixin from "../../../ModelMixins/CatalogMemberMixin";
 import DiscretelyTimeVaryingMixin from "../../../ModelMixins/DiscretelyTimeVaryingMixin";
-import MappableMixin from "../../../ModelMixins/MappableMixin";
 import UrlMixin from "../../../ModelMixins/UrlMixin";
 import ArcGisMapServerCatalogItemTraits from "../../../Traits/TraitsClasses/ArcGisMapServerCatalogItemTraits";
 import { InfoSectionTraits } from "../../../Traits/TraitsClasses/CatalogMemberTraits";
@@ -193,7 +192,8 @@ class MapServerStratum extends LoadableStratum(ArcGisMapServerCatalogItemTraits)
         const noDataRegex = /^No[\s_-]?Data$/i;
         const labelsRegex = /_Labels$/;
         let items = [];
-        (((_a = this._legends) === null || _a === void 0 ? void 0 : _a.layers) || []).forEach(l => {
+        (((_a = this._legends) === null || _a === void 0 ? void 0 : _a.layers) || []).forEach((l) => {
+            var _a;
             if (noDataRegex.test(l.layerName) || labelsRegex.test(l.layerName)) {
                 return;
             }
@@ -203,7 +203,7 @@ class MapServerStratum extends LoadableStratum(ArcGisMapServerCatalogItemTraits)
                 // layer not selected
                 return;
             }
-            l.legend.forEach(leg => {
+            (_a = l.legend) === null || _a === void 0 ? void 0 : _a.forEach((leg) => {
                 const title = replaceUnderscores(leg.label !== "" ? leg.label : l.layerName);
                 const dataUrl = "data:" + leg.contentType + ";base64," + leg.imageData;
                 items.push(createStratumInstance(LegendItemTraits, {
@@ -244,7 +244,7 @@ __decorate([
     computed
 ], MapServerStratum.prototype, "legends", null);
 StratumOrder.addLoadStratum(MapServerStratum.stratumName);
-export default class ArcGisMapServerCatalogItem extends MappableMixin(UrlMixin(DiscretelyTimeVaryingMixin(MinMaxLevelMixin(CatalogMemberMixin(CreateModel(ArcGisMapServerCatalogItemTraits)))))) {
+export default class ArcGisMapServerCatalogItem extends UrlMixin(DiscretelyTimeVaryingMixin(MinMaxLevelMixin(CatalogMemberMixin(CreateModel(ArcGisMapServerCatalogItemTraits))))) {
     constructor() {
         super(...arguments);
         this._createImageryProvider = createTransformerAllowUndefined((time) => {
@@ -264,6 +264,8 @@ export default class ArcGisMapServerCatalogItem extends MappableMixin(UrlMixin(D
                 layers: layers,
                 tilingScheme: new WebMercatorTilingScheme(),
                 maximumLevel: maximumLevel,
+                tileHeight: this.tileHeight,
+                tileWidth: this.tileWidth,
                 parameters: params,
                 enablePickFeatures: this.allowFeaturePicking,
                 usePreCachedTilesIfAvailable: !dynamicRequired,
@@ -315,7 +317,9 @@ export default class ArcGisMapServerCatalogItem extends MappableMixin(UrlMixin(D
         };
     }
     get _nextImageryParts() {
-        if (this.nextDiscreteTimeTag) {
+        if (this.terria.timelineStack.contains(this) &&
+            !this.isPaused &&
+            this.nextDiscreteTimeTag) {
             const dateAsUnix = new Date(this.nextDiscreteTimeTag).getTime();
             const imageryProvider = this._createImageryProvider(dateAsUnix.toString());
             if (imageryProvider === undefined) {
@@ -360,7 +364,7 @@ export default class ArcGisMapServerCatalogItem extends MappableMixin(UrlMixin(D
     }
     get layerIds() {
         const stratum = (this.strata.get(MapServerStratum.stratumName));
-        const ids = stratum ? stratum.allLayers.map(l => l.id) : [];
+        const ids = stratum ? stratum.allLayers.map((l) => l.id) : [];
         return ids.length === 0 ? undefined : ids.join(",");
     }
     get allSelectedLayers() {
@@ -373,7 +377,7 @@ export default class ArcGisMapServerCatalogItem extends MappableMixin(UrlMixin(D
             return stratum.allLayers;
         }
         const layerIds = this.layers.split(",");
-        return stratum.allLayers.filter(({ id }) => layerIds.find(x => x == id.toString()));
+        return stratum.allLayers.filter(({ id }) => layerIds.find((x) => x == id.toString()));
     }
 }
 ArcGisMapServerCatalogItem.type = "esri-mapServer";

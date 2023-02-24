@@ -34,23 +34,23 @@ export const shareConvertNotification = (messages) => (viewState) => {
     return (React.createElement(React.Fragment, null,
         React.createElement(Text, null, parseCustomMarkdownToReact(i18next.t("share.convertNotificationMessage"))),
         React.createElement(RawButton, { fullWidth: true, onClick: showHelp, css: `
-          text-align: left;
-        ` },
+            text-align: left;
+          ` },
             React.createElement(TextSpan, { textLight: true, bold: true, medium: true }, parseCustomMarkdownToReact(i18next.t("share.convertNotificationHelp")))),
         React.createElement(RawButton, { fullWidth: true, onClick: showFeedback, css: `
-          text-align: left;
-        ` },
+            text-align: left;
+          ` },
             React.createElement(TextSpan, { textLight: true, bold: true, medium: true }, parseCustomMarkdownToReact(i18next.t("share.convertNotificationFeedback")))),
         React.createElement(Spacing, { bottom: 2 }),
         React.createElement(Collapsible, { btnRight: true, title: i18next.t("share.convertNotificationWarningsTitle"), titleTextProps: { large: true }, bodyBoxProps: { padded: true } },
             rootMessages && (React.createElement(React.Fragment, null,
-                React.createElement("ul", null, rootMessages.map(message => (React.createElement("li", null, message)))),
+                React.createElement("ul", null, rootMessages.map((message) => (React.createElement("li", null, message)))),
                 React.createElement(Spacing, { bottom: 1 }))),
             Object.entries(messagesForPath).map(([path, messages]) => (React.createElement(React.Fragment, null,
                 React.createElement(Spacing, { bottom: 1 }),
                 React.createElement(Collapsible, { btnRight: true, title: path && path !== ""
                         ? path
                         : i18next.t("share.convertNotificationWarningsTitle") },
-                    React.createElement("ul", null, messages.map(message => (React.createElement("li", null, message)))))))))));
+                    React.createElement("ul", null, messages.map((message) => (React.createElement("li", null, message)))))))))));
 };
 //# sourceMappingURL=shareConvertNotification.js.map

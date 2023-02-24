@@ -10,7 +10,7 @@ import ErrorComponent from "./ErrorComponent";
 import Loading from "./Loading";
 import SearchForm from "./SearchForm";
 import SearchResults from "./SearchResults";
-const ItemSearchTool = observer(props => {
+const ItemSearchTool = observer((props) => {
     var _a;
     const { viewState, item, itemSearchProvider, t } = props;
     const itemName = CatalogMemberMixin.isMixedInto(item) ? item.name : "Item";
@@ -20,7 +20,7 @@ const ItemSearchTool = observer(props => {
     useEffect(function loadParameters() {
         itemSearchProvider
             .initialize()
-            .then(() => itemSearchProvider.describeParameters().then(parameters => {
+            .then(() => itemSearchProvider.describeParameters().then((parameters) => {
             setState({ is: "search" });
             setParameters(parameters);
             setQuery({});

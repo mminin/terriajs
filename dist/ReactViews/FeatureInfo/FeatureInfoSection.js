@@ -1,194 +1,220 @@
-"use strict";
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+import classNames from "classnames";
+import { merge } from "lodash-es";
+import { action, computed, observable, reaction, runInAction } from "mobx";
+import { observer } from "mobx-react";
 import Mustache from "mustache";
 import React from "react";
-import createReactClass from "create-react-class";
-import PropTypes from "prop-types";
-import CesiumMath from "terriajs-cesium/Source/Core/Math";
-import classNames from "classnames";
-import dateFormat from "dateformat";
-import defined from "terriajs-cesium/Source/Core/defined";
+import { withTranslation } from "react-i18next";
+import styled from "styled-components";
 import Ellipsoid from "terriajs-cesium/Source/Core/Ellipsoid";
 import JulianDate from "terriajs-cesium/Source/Core/JulianDate";
-import { observer } from "mobx-react";
-import CustomComponent from "../Custom/CustomComponent";
-import FeatureInfoDownload from "./FeatureInfoDownload";
-import formatNumberForLocale from "../../Core/formatNumberForLocale";
+import CesiumMath from "terriajs-cesium/Source/Core/Math";
+import filterOutUndefined from "../../Core/filterOutUndefined";
+import isDefined from "../../Core/isDefined";
+import TerriaError from "../../Core/TerriaError";
+import { getName } from "../../ModelMixins/CatalogMemberMixin";
+import DiscretelyTimeVaryingMixin from "../../ModelMixins/DiscretelyTimeVaryingMixin";
+import MappableMixin from "../../ModelMixins/MappableMixin";
+import TimeVarying from "../../ModelMixins/TimeVarying";
+import FeatureInfoContext from "../../Models/Feature/FeatureInfoContext";
 import Icon from "../../Styled/Icon";
-import propertyGetTimeValues from "../../Core/propertyGetTimeValues";
 import parseCustomMarkdownToReact from "../Custom/parseCustomMarkdownToReact";
-import { withTranslation } from "react-i18next";
+import { withViewState } from "../StandardUserInterface/ViewStateContext";
 import Styles from "./feature-info-section.scss";
-import { runInAction } from "mobx";
-import TableMixin from "../../ModelMixins/TableMixin";
+import FeatureInfoDownload from "./FeatureInfoDownload";
+import FeatureInfoPanelButton from "./FeatureInfoPanelButton";
+import { generateCesiumInfoHTMLFromProperties } from "./generateCesiumInfoHTMLFromProperties";
+import getFeatureProperties from "./getFeatureProperties";
+import { mustacheFormatDateTime, mustacheFormatNumberFunction, mustacheRenderPartialByName, mustacheURLEncodeText, mustacheURLEncodeTextComponent } from "./mustacheExpressions";
 // We use Mustache templates inside React views, where React does the escaping; don't escape twice, or eg. " => &quot;
 Mustache.escape = function (string) {
     return string;
 };
-// Individual feature info section
-export const FeatureInfoSection = observer(createReactClass({
-    displayName: "FeatureInfoSection",
-    propTypes: {
-        viewState: PropTypes.object.isRequired,
-        template: PropTypes.oneOfType([PropTypes.object, PropTypes.string]),
-        feature: PropTypes.object,
-        position: PropTypes.object,
-        catalogItem: PropTypes.object,
-        isOpen: PropTypes.bool,
-        onClickHeader: PropTypes.func,
-        printView: PropTypes.bool,
-        t: PropTypes.func.isRequired
-    },
-    getInitialState() {
-        return {
-            removeClockSubscription: undefined,
-            timeoutIds: [],
-            showRawData: false
-        };
-    },
-    /* eslint-disable-next-line camelcase */
-    UNSAFE_componentWillMount() {
-        setSubscriptionsAndTimeouts(this, this.props.feature);
-    },
-    /* eslint-disable-next-line camelcase */
-    UNSAFE_componentWillReceiveProps(nextProps) {
-        // If the feature changed (without an unmount/mount),
-        // change the subscriptions that handle time-varying data.
-        if (nextProps.feature !== this.props.feature) {
-            removeSubscriptionsAndTimeouts(this);
-            setSubscriptionsAndTimeouts(this, nextProps.feature);
+let FeatureInfoSection = class FeatureInfoSection extends React.Component {
+    constructor() {
+        super(...arguments);
+        /** Rendered feature info template - this is set using reaction.
+         * We can't use `@computed` values for custom templates - as CustomComponents may cause side-effects.
+         * For example
+         * - A CsvChartCustomComponent will create a new CsvCatalogItem and set traits
+         * See `rawDataReactNode` for rendered raw data
+         */
+        this.templatedFeatureInfoReactNode = undefined;
+        this.showRawData = false;
+        /** See `setFeatureChangedCounter` */
+        this.featureChangedCounter = 0;
+    }
+    componentDidMount() {
+        this.templateReactionDisposer = reaction(() => [
+            this.props.feature,
+            this.props.catalogItem.featureInfoTemplate.template,
+            this.props.catalogItem.featureInfoTemplate.partials,
+            // Note `mustacheContextData` will trigger update when `currentTime` changes (through this.featureProperties)
+            this.mustacheContextData
+        ], () => {
+            if (this.props.catalogItem.featureInfoTemplate.template &&
+                this.mustacheContextData) {
+                this.templatedFeatureInfoReactNode = parseCustomMarkdownToReact(Mustache.render(this.props.catalogItem.featureInfoTemplate.template, this.mustacheContextData, this.props.catalogItem.featureInfoTemplate.partials), this.parseMarkdownContextData);
+            }
+            else {
+                this.templatedFeatureInfoReactNode = undefined;
+            }
+        }, { fireImmediately: true });
+        this.setFeatureChangedCounter(this.props.feature);
+    }
+    componentDidUpdate(prevProps) {
+        if (prevProps.feature !== this.props.feature) {
+            this.setFeatureChangedCounter(this.props.feature);
         }
-    },
+    }
+    /** Dispose of reaction and cesium feature change event listener */
     componentWillUnmount() {
-        removeSubscriptionsAndTimeouts(this);
-    },
-    getPropertyValues() {
-        return getPropertyValuesForFeature(this.props.feature, currentTimeIfAvailable(this), this.props.template && this.props.template.formats);
-    },
-    getTemplateData() {
         var _a, _b;
-        const propertyData = Object.assign({}, this.getPropertyValues());
-        // Alises is a map from `key` (which exists in propertyData.properties) to some `aliasKey` which needs to resolve to `key`
-        // and Yes, this is awful, but not that much worse than what was done in V7
-        let aliases = [];
-        if (TableMixin.isMixedInto(this.props.catalogItem)) {
-            aliases = this.props.catalogItem.columns
-                .filter(col => col.name && col.title && col.name !== col.title)
-                .map(col => [col.name, col.title]);
-        }
-        // Always overwrite using aliases so that applying titles to columns doesn't break feature info templates
-        aliases.forEach(([name, title]) => {
-            propertyData[name] = propertyData[title];
-        });
+        (_a = this.templateReactionDisposer) === null || _a === void 0 ? void 0 : _a.call(this);
+        (_b = this.removeFeatureChangedSubscription) === null || _b === void 0 ? void 0 : _b.call(this);
+    }
+    /**
+     * We need to force `featureProperties` to re-compute when Cesium Feature properties change.
+     * We use `featureChangedCounter` and increment it every change
+     */
+    setFeatureChangedCounter(feature) {
+        var _a;
+        (_a = this.removeFeatureChangedSubscription) === null || _a === void 0 ? void 0 : _a.call(this);
+        this.removeFeatureChangedSubscription =
+            feature.definitionChanged.addEventListener(((changedFeature) => {
+                runInAction(() => {
+                    this.featureChangedCounter++;
+                });
+            }).bind(this));
+    }
+    get currentTimeIfAvailable() {
+        return TimeVarying.is(this.props.catalogItem)
+            ? this.props.catalogItem.currentTimeAsJulianDate
+            : undefined;
+    }
+    get featureProperties() {
+        var _a;
+        // Force computed to re-calculate when cesium feature properties change
+        this.featureChangedCounter;
+        return getFeatureProperties(this.props.feature, (_a = this.currentTimeIfAvailable) !== null && _a !== void 0 ? _a : JulianDate.now(), MappableMixin.isMixedInto(this.props.catalogItem) &&
+            this.props.catalogItem.featureInfoTemplate.formats
+            ? this.props.catalogItem.featureInfoTemplate.formats
+            : undefined);
+    }
+    /** This monstrosity contains properties which can be used by Mustache templates:
+     * - All feature properties
+     * - `properties` = array of key:value from feature properties
+     * - `terria` magical object
+     *     - a bunch of custom mustache expressions
+     *       - `partialByName`
+     *       - `formatNumber`
+     *       - `formatDateTime`
+     *       - `urlEncodeComponent`
+     *       - `urlEncode`
+     *     - `coords` with `latitude` and `longitude`
+     *     - `currentTime`
+     *     - `rawDataTable` contains markdown table
+     *  - properties provided by catalog item through `featureInfoContext` function
+     */
+    get mustacheContextData() {
+        var _a, _b, _c;
+        const propertyValues = Object.assign({}, this.featureProperties);
         // Properties accessible as {name, value} array; useful when you want
         // to iterate anonymous property values in the mustache template.
-        propertyData.properties = Object.entries(propertyData).map(([name, value]) => ({
+        const properties = Object.entries(propertyValues).map(([name, value]) => ({
             name,
             value
         }));
-        // Add entire feature object
-        propertyData.feature = this.props.feature;
-        const partials = (_b = (_a = this.props.template) === null || _a === void 0 ? void 0 : _a.partials) !== null && _b !== void 0 ? _b : {};
-        propertyData.terria = {
-            partialByName: mustacheRenderPartialByName(partials, propertyData),
+        const propertyData = {
+            ...propertyValues,
+            properties,
+            feature: this.props.feature
+        };
+        const terria = {
+            partialByName: mustacheRenderPartialByName((_b = (_a = this.props.catalogItem.featureInfoTemplate) === null || _a === void 0 ? void 0 : _a.partials) !== null && _b !== void 0 ? _b : {}, propertyData),
             formatNumber: mustacheFormatNumberFunction,
             formatDateTime: mustacheFormatDateTime,
             urlEncodeComponent: mustacheURLEncodeTextComponent,
-            urlEncode: mustacheURLEncodeText
+            urlEncode: mustacheURLEncodeText,
+            rawDataTable: this.rawDataMarkdown
         };
         if (this.props.position) {
             const latLngInRadians = Ellipsoid.WGS84.cartesianToCartographic(this.props.position);
-            propertyData.terria.coords = {
+            terria.coords = {
                 latitude: CesiumMath.toDegrees(latLngInRadians.latitude),
                 longitude: CesiumMath.toDegrees(latLngInRadians.longitude)
             };
         }
-        if (this.props.catalogItem) {
-            propertyData.terria.currentTime = this.props.catalogItem.discreteTime;
+        // Add currentTime property
+        // if discrete - use current discrete time
+        // otherwise - use current (continuous) time
+        if (DiscretelyTimeVaryingMixin.isMixedInto(this.props.catalogItem) &&
+            this.props.catalogItem.currentDiscreteJulianDate) {
+            terria.currentTime = JulianDate.toDate(this.props.catalogItem.currentDiscreteJulianDate);
         }
-        propertyData.terria.timeSeries = getTimeSeriesChartContext(this.props.catalogItem, this.props.feature, propertyData._terria_getChartDetails);
-        return propertyData;
-    },
+        else if (TimeVarying.is(this.props.catalogItem) &&
+            this.props.catalogItem.currentTimeAsJulianDate) {
+            terria.currentTime = JulianDate.toDate(this.props.catalogItem.currentTimeAsJulianDate);
+        }
+        // If catalog item has featureInfoContext function
+        // Merge it into other properties
+        if (FeatureInfoContext.is(this.props.catalogItem)) {
+            return merge({ ...propertyData, terria }, (_c = this.props.catalogItem.featureInfoContext(this.props.feature)) !== null && _c !== void 0 ? _c : {});
+        }
+        return { ...propertyData, terria };
+    }
     clickHeader() {
-        if (defined(this.props.onClickHeader)) {
+        if (isDefined(this.props.onClickHeader)) {
             this.props.onClickHeader(this.props.feature);
         }
-    },
-    hasTemplate() {
-        return (this.props.template &&
-            (typeof this.props.template === "string" ||
-                this.props.template.template));
-    },
-    descriptionFromTemplate() {
-        const { t } = this.props;
-        const template = this.props.template;
-        const templateData = this.getTemplateData();
-        // templateData may not be defined if a re-render gets triggered in the middle of a feature updating.
-        // (Recall we re-render whenever feature.definitionChanged triggers.)
-        if (defined(templateData)) {
-            return typeof template === "string"
-                ? Mustache.render(template, templateData)
-                : Mustache.render(template.template, templateData, template.partials);
-        }
-        else {
-            return t("featureInfo.noInfoAvailable");
-        }
-    },
-    descriptionFromFeature() {
+    }
+    /** Context object passed into "parseCustomMarkdownToReact"
+     * These will get passed to CustomComponents (eg CsvChartCustomComponent)
+     */
+    get parseMarkdownContextData() {
+        return {
+            terria: this.props.viewState.terria,
+            catalogItem: this.props.catalogItem,
+            feature: this.props.feature
+        };
+    }
+    /** Get raw data table as markdown string
+     *
+     * Will use feature.description if defined
+     * Otherwise, will generate cesium info HTML table from feature properties
+     */
+    get rawDataMarkdown() {
+        var _a, _b;
         const feature = this.props.feature;
-        const showStringIfPropertyValueIsNull = this.props.catalogItem === undefined
-            ? false
-            : this.props.catalogItem.showStringIfPropertyValueIsNull;
-        // This description could contain injected <script> tags etc.
-        // Before rendering, we will pass it through parseCustomMarkdownToReact, which applies
-        //     markdownToHtml (which applies MarkdownIt.render and DOMPurify.sanitize), and then
-        //     parseCustomHtmlToReact (which calls htmlToReactParser).
-        // Note that there is an unnecessary HTML encoding and decoding in this combination which would be good to remove.
-        const currentTime = currentTimeIfAvailable(this)
-            ? currentTimeIfAvailable(this)
-            : JulianDate.now();
-        let description = feature.currentDescription ||
-            getCurrentDescription(feature, currentTime);
-        if (!defined(description) && defined(feature.properties)) {
-            description = describeFromProperties(feature.properties, currentTime, showStringIfPropertyValueIsNull);
+        const currentTime = (_a = this.currentTimeIfAvailable) !== null && _a !== void 0 ? _a : JulianDate.now();
+        let description = (_b = feature.description) === null || _b === void 0 ? void 0 : _b.getValue(currentTime);
+        if (isDefined(description))
+            return description;
+        if (isDefined(feature.properties)) {
+            return generateCesiumInfoHTMLFromProperties(feature.properties, currentTime, MappableMixin.isMixedInto(this.props.catalogItem)
+                ? this.props.catalogItem.showStringIfPropertyValueIsNull
+                : undefined);
         }
-        return description;
-    },
-    renderDataTitle() {
-        const { t } = this.props;
-        const template = this.props.template;
-        if (typeof template === "object" && defined(template.name)) {
-            return Mustache.render(template.name, this.getPropertyValues());
-        }
-        const feature = this.props.feature;
-        return (feature && feature.name) || t("featureInfo.siteData");
-    },
-    isFeatureTimeVarying(feature) {
-        // The feature is NOT time-varying if:
-        // 1. There is no info (ie. no description and no properties).
-        // 2. A template is provided and all feature.properties are constant.
-        // OR
-        // 3. No template is provided, and feature.description is either not defined, or defined and constant.
-        // If info is time-varying, we need to keep updating the description.
-        if (!defined(feature.description) && !defined(feature.properties)) {
-            return false;
-        }
-        if (defined(this.props.template)) {
-            return !areAllPropertiesConstant(feature.properties);
-        }
-        if (defined(feature.description)) {
-            return !feature.description.isConstant; // This should always be a "Property" eg. a ConstantProperty.
-        }
-        return false;
-    },
+    }
+    /** Get Raw data as ReactNode.
+     * Note: this can be computed - as no custom components are used which cause side-effects (eg CSVChartCustomComponent)
+     * See `templatedFeatureInfoReactNode` for rendered feature info template
+     */
+    get rawFeatureInfoReactNode() {
+        if (this.rawDataMarkdown)
+            return parseCustomMarkdownToReact(this.rawDataMarkdown, this.parseMarkdownContextData);
+    }
     toggleRawData() {
-        this.setState({
-            showRawData: !this.state.showRawData
-        });
-    },
-    render() {
-        const { t } = this.props;
-        const catalogItemName = (this.props.catalogItem && this.props.catalogItem.name) || "";
-        let baseFilename = catalogItemName;
+        this.showRawData = !this.showRawData;
+    }
+    get downloadableData() {
+        let fileName = getName(this.props.catalogItem);
         // Add the Lat, Lon to the baseFilename if it is possible and not already present.
         if (this.props.position) {
             const position = Ellipsoid.WGS84.cartesianToCartographic(this.props.position);
@@ -196,590 +222,130 @@ export const FeatureInfoSection = observer(createReactClass({
             const longitude = CesiumMath.toDegrees(position.longitude);
             const precision = 5;
             // Check that baseFilename doesn't already contain the lat, lon with the similar or better precision.
-            if (typeof baseFilename !== "string" ||
-                !contains(baseFilename, latitude, precision) ||
-                !contains(baseFilename, longitude, precision)) {
-                baseFilename +=
+            if (!contains(fileName, latitude, precision) ||
+                !contains(fileName, longitude, precision)) {
+                fileName +=
                     " - Lat " +
                         latitude.toFixed(precision) +
                         " Lon " +
                         longitude.toFixed(precision);
             }
         }
-        const fullName = (catalogItemName ? catalogItemName + " - " : "") +
-            this.renderDataTitle();
-        const reactInfo = getInfoAsReactComponent(this);
+        return {
+            data: this.featureProperties && this.featureProperties !== {}
+                ? this.featureProperties
+                : undefined,
+            fileName
+        };
+    }
+    get generatedButtons() {
+        const { feature, catalogItem } = this.props;
+        const buttons = filterOutUndefined(this.props.viewState.featureInfoPanelButtonGenerators.map((generator) => {
+            try {
+                const dim = generator({ feature, item: catalogItem });
+                return dim;
+            }
+            catch (error) {
+                TerriaError.from(error).log();
+            }
+        }));
+        return buttons;
+    }
+    renderButtons() {
+        const { t } = this.props;
+        return (React.createElement(ButtonsContainer, null,
+            !this.props.printView && this.templatedFeatureInfoReactNode && (React.createElement(FeatureInfoPanelButton, { onClick: this.toggleRawData.bind(this), text: this.showRawData
+                    ? t("featureInfo.showCuratedData")
+                    : t("featureInfo.showRawData") })),
+            this.generatedButtons.map((button, i) => (React.createElement(FeatureInfoPanelButton, Object.assign({ key: i }, button))))));
+    }
+    render() {
+        var _a;
+        const { t } = this.props;
+        let title;
+        if (this.props.catalogItem.featureInfoTemplate.name) {
+            title = Mustache.render(this.props.catalogItem.featureInfoTemplate.name, this.featureProperties);
+        }
+        else
+            title =
+                getName(this.props.catalogItem) +
+                    " - " +
+                    (this.props.feature.name || this.props.t("featureInfo.siteData"));
+        /** Show feature info download if showing raw data - or showing template and `showFeatureInfoDownloadWithTemplate` is true
+         */
+        const showFeatureInfoDownload = this.showRawData ||
+            !this.templatedFeatureInfoReactNode ||
+            (this.templatedFeatureInfoReactNode &&
+                this.props.catalogItem.featureInfoTemplate
+                    .showFeatureInfoDownloadWithTemplate);
+        const titleElement = this.props.printView ? (React.createElement("h2", null, title)) : (React.createElement("button", { type: "button", onClick: this.clickHeader.bind(this), className: Styles.title },
+            React.createElement("span", null, title),
+            this.props.isOpen ? (React.createElement(Icon, { glyph: Icon.GLYPHS.opened })) : (React.createElement(Icon, { glyph: Icon.GLYPHS.closed }))));
+        // If feature is unavailable (or not showing) - show no info message
+        if (!this.props.feature.isAvailable((_a = this.currentTimeIfAvailable) !== null && _a !== void 0 ? _a : JulianDate.now()) ||
+            !this.props.feature.isShowing) {
+            return (React.createElement("li", { className: classNames(Styles.section) },
+                titleElement,
+                this.props.isOpen ? (React.createElement("section", { className: Styles.content },
+                    React.createElement("div", { ref: "no-info", key: "no-info" }, t("featureInfo.noInfoAvailable")))) : null));
+        }
         return (React.createElement("li", { className: classNames(Styles.section) },
-            React.createElement(If, { condition: this.props.printView },
-                React.createElement("h2", null, fullName)),
-            React.createElement(If, { condition: !this.props.printView },
-                React.createElement("button", { type: "button", onClick: this.clickHeader, className: Styles.title },
-                    React.createElement("span", null, fullName),
-                    this.props.isOpen ? (React.createElement(Icon, { glyph: Icon.GLYPHS.opened })) : (React.createElement(Icon, { glyph: Icon.GLYPHS.closed })))),
-            React.createElement(If, { condition: this.props.isOpen },
-                React.createElement("section", { className: Styles.content },
-                    React.createElement(If, { condition: !this.props.printView && this.hasTemplate() },
-                        React.createElement("button", { type: "button", className: Styles.rawDataButton, onClick: this.toggleRawData }, this.state.showRawData
-                            ? t("featureInfo.showCuratedData")
-                            : t("featureInfo.showRawData"))),
-                    React.createElement("div", null,
-                        React.createElement(Choose, null,
-                            React.createElement(When, { condition: reactInfo.showRawData || !this.hasTemplate() },
-                                React.createElement(If, { condition: reactInfo.hasRawData }, reactInfo.rawData),
-                                React.createElement(If, { condition: !reactInfo.hasRawData },
-                                    React.createElement("div", { ref: "no-info", key: "no-info" }, t("featureInfo.noInfoAvailable"))),
-                                React.createElement(If, { condition: !this.props.printView && reactInfo.timeSeriesChart },
-                                    React.createElement("div", { className: Styles.timeSeriesChart },
-                                        React.createElement("h4", null, reactInfo.timeSeriesChartTitle),
-                                        reactInfo.timeSeriesChart)),
-                                React.createElement(If, { condition: !this.props.printView &&
-                                        defined(reactInfo.downloadableData) },
-                                    React.createElement(FeatureInfoDownload, { key: "download", viewState: this.props.viewState, data: reactInfo.downloadableData, name: baseFilename }))),
-                            React.createElement(Otherwise, null, reactInfo.info)),
-                        React.createElement(For, { each: "ExtraComponent", index: "i", of: FeatureInfoSection.extraComponents },
-                            React.createElement(ExtraComponent, { key: i, viewState: this.props.viewState, template: this.props.template, feature: this.props.feature, position: this.props.position, 
-                                // We should deprecate clock here and remove it alltogether, but currently leaving so don't break API.
-                                // Clients can and should use catalogItem.clock and catalogItem.currentTime.
-                                clock: clockIfAvailable(this), catalogItem: this.props.catalogItem, isOpen: this.props.isOpen, onClickHeader: this.props.onClickHeader })))))));
+            titleElement,
+            this.props.isOpen ? (React.createElement("section", { className: Styles.content },
+                this.renderButtons(),
+                React.createElement("div", null,
+                    this.props.feature.loadingFeatureInfoUrl ? ("Loading") : this.showRawData || !this.templatedFeatureInfoReactNode ? (React.createElement(React.Fragment, null, this.rawFeatureInfoReactNode ? (this.rawFeatureInfoReactNode) : (React.createElement("div", { ref: "no-info", key: "no-info" }, t("featureInfo.noInfoAvailable"))))) : (
+                    // Show templated feature info
+                    this.templatedFeatureInfoReactNode),
+                    // Show FeatureInfoDownload
+                    !this.props.printView &&
+                        showFeatureInfoDownload &&
+                        isDefined(this.downloadableData.data) ? (React.createElement(FeatureInfoDownload, { key: "download", data: this.downloadableData.data, name: this.downloadableData.fileName })) : null))) : null));
     }
-}));
-/**
- * Returns the clockForDisplay for the catalogItem if it is avaliable, otherwise returns undefined.
- * @private
- */
-function clockIfAvailable(featureInfoSection) {
-    if (defined(featureInfoSection.props.catalogItem)) {
-        return featureInfoSection.props.catalogItem.clock;
-    }
-    return undefined;
-}
-/**
- * Returns the currentTime for the catalogItem if it is avaliable, otherwise returns undefined.
- * @private
- */
-function currentTimeIfAvailable(featureInfoSection) {
-    if (defined(featureInfoSection.props.catalogItem)) {
-        return featureInfoSection.props.catalogItem.currentTimeAsJulianDate;
-    }
-    return undefined;
-}
-/**
- * Do we need to dynamically update this feature info over time?
- * There are three situations in which we would:
- * 1. When the feature description or properties are time-varying.
- * 2. When a custom component self-updates.
- *    Eg. <chart poll-seconds="60" src="xyz.csv"> must reload data from xyz.csv every 60 seconds.
- * 3. When a catalog item changes a feature's properties, eg. changing from a daily view to a monthly view.
- *
- * For (1), use catalogItem.clock.currentTime knockout observable so don't need to do anything specific here.
- * For (2), use a regular javascript setTimeout to update a counter in feature's currentProperties.
- * For (3), use an event listener on the Feature's underlying Entity's "definitionChanged" event.
- *   Conceivably it could also be handled by the catalog item itself changing, if its change is knockout tracked, and the
- *   change leads to a change in what is rendered (unlikely).
- * Since the catalogItem is also a prop, this will trigger a rerender.
- * @private
- */
-function setSubscriptionsAndTimeouts(featureInfoSection, feature) {
-    featureInfoSection.setState({
-        removeFeatureChangedSubscription: feature.definitionChanged.addEventListener(function (changedFeature) {
-            runInAction(() => {
-                setCurrentFeatureValues(changedFeature, currentTimeIfAvailable(featureInfoSection));
-            });
-        })
-    });
-    // setTimeoutsForUpdatingCustomComponents(featureInfoSection);
-}
-/**
- * Remove the clock subscription (event listener) and timeouts.
- * @private
- */
-function removeSubscriptionsAndTimeouts(featureInfoSection) {
-    if (defined(featureInfoSection.state.removeFeatureChangedSubscription)) {
-        featureInfoSection.state.removeFeatureChangedSubscription();
-        featureInfoSection.setState({
-            removeFeatureChangedSubscription: undefined
-        });
-    }
-    featureInfoSection.state.timeoutIds.forEach(id => {
-        clearTimeout(id);
-    });
-}
-/**
- * Gets a map of property labels to property values for a feature at the provided current time.
- * @private
- * @param {Entity} feature A feature to get values for.
- * @param {JulianDate} currentTime A knockout observable containing the currentTime.
- * @param {Object} [formats] A map of property labels to the number formats that should be applied for them.
- */
-function getPropertyValuesForFeature(feature, currentTime, formats) {
-    // Manipulate the properties before templating them.
-    // If they require .getValue, apply that.
-    // If they have bad keys, fix them.
-    // If they have formatting, apply it.
-    const properties = feature.currentProperties ||
-        propertyGetTimeValues(feature.properties, currentTime);
-    // Try JSON.parse on values that look like JSON arrays or objects
-    let result = parseValues(properties);
-    result = replaceBadKeyCharacters(result);
-    if (defined(formats)) {
-        applyFormatsInPlace(result, formats);
-    }
-    return result;
-}
-function parseValues(properties) {
-    // JSON.parse property values that look like arrays or objects
-    const result = {};
-    for (const key in properties) {
-        if (Object.prototype.hasOwnProperty.call(properties, key)) {
-            let val = properties[key];
-            if (val &&
-                (typeof val === "string" || val instanceof String) &&
-                /^\s*[[{]/.test(val)) {
-                try {
-                    val = JSON.parse(val);
-                }
-                catch (e) { }
-            }
-            result[key] = val;
-        }
-    }
-    return result;
-}
-/**
- * Formats values in an object if their keys match the provided formats object.
- * @private
- * @param {Object} properties a map of property labels to property values.
- * @param {Object} formats A map of property labels to the number formats that should be applied for them.
- */
-function applyFormatsInPlace(properties, formats) {
-    // Optionally format each property. Updates properties in place, returning nothing.
-    for (const key in formats) {
-        if (Object.prototype.hasOwnProperty.call(properties, key)) {
-            // Default type if not provided is number.
-            if (!defined(formats[key].type) ||
-                (defined(formats[key].type) && formats[key].type === "number")) {
-                runInAction(() => {
-                    properties[key] = formatNumberForLocale(properties[key], formats[key]);
-                });
-            }
-            if (defined(formats[key].type)) {
-                if (formats[key].type === "dateTime") {
-                    runInAction(() => {
-                        properties[key] = formatDateTime(properties[key], formats[key]);
-                    });
-                }
-            }
-        }
-    }
-}
-/**
- * Recursively replace '.' and '#' in property keys with _, since Mustache cannot reference keys with these characters.
- * @private
- */
-function replaceBadKeyCharacters(properties) {
-    // if properties is anything other than an Object type, return it. Otherwise recurse through its properties.
-    if (!properties ||
-        typeof properties !== "object" ||
-        Array.isArray(properties)) {
-        return properties;
-    }
-    const result = {};
-    for (const key in properties) {
-        if (Object.prototype.hasOwnProperty.call(properties, key)) {
-            const cleanKey = key.replace(/[.#]/g, "_");
-            result[cleanKey] = replaceBadKeyCharacters(properties[key]);
-        }
-    }
-    return result;
-}
-/**
- * Determines whether all properties in the provided properties object have an isConstant flag set - otherwise they're
- * assumed to be time-varying.
- * @private
- * @returns {boolean}
- */
-function areAllPropertiesConstant(properties) {
-    // test this by assuming property is time-varying only if property.isConstant === false.
-    // (so if it is undefined or true, it is constant.)
-    let result = true;
-    if (defined(properties.isConstant)) {
-        return properties.isConstant;
-    }
-    for (const key in properties) {
-        if (Object.prototype.hasOwnProperty.call(properties, key)) {
-            result =
-                result &&
-                    defined(properties[key]) &&
-                    properties[key].isConstant !== false;
-        }
-    }
-    return result;
-}
-/**
- * Gets a text description for the provided feature at a certain time.
- * @private
- * @param {Entity} feature
- * @param {JulianDate} currentTime
- * @returns {String}
- */
-function getCurrentDescription(feature, currentTime) {
-    if (feature.description &&
-        typeof feature.description.getValue === "function") {
-        return feature.description.getValue(currentTime);
-    }
-    return feature.description;
-}
-/**
- * Updates {@link Entity#currentProperties} and {@link Entity#currentDescription} with the values at the provided time.
- * @private
- * @param {Entity} feature
- * @param {JulianDate} currentTime
- */
-function setCurrentFeatureValues(feature, currentTime) {
-    const newProperties = propertyGetTimeValues(feature.properties, currentTime);
-    if (newProperties !== feature.currentProperties) {
-        feature.currentProperties = newProperties;
-    }
-    const newDescription = getCurrentDescription(feature, currentTime);
-    if (newDescription !== feature.currentDescription) {
-        feature.currentDescription = newDescription;
-    }
-}
-/**
- * Returns a function which extracts JSON elements from the content of a Mustache section template and calls the
- * supplied customProcessing function with the extracted JSON options, example syntax processed:
- * {optionKey: optionValue}{{value}}
- * @private
- */
-function mustacheJsonSubOptions(customProcessing) {
-    return function (text, render) {
-        // Eg. "{foo:1}hi there".match(optionReg) = ["{foo:1}hi there", "{foo:1}", "hi there"].
-        // Note this won't work with nested objects in the options (but these aren't used yet).
-        // Note I use [\s\S]* instead of .* at the end - .* does not match newlines, [\s\S]* does.
-        const optionReg = /^(\{[^}]+\})([\s\S]*)/;
-        const components = text.match(optionReg);
-        // This regex unfortunately matches double-braced text like {{number}}, so detect that separately and do not treat it as option json.
-        const startsWithdoubleBraces = text.length > 4 && text[0] === "{" && text[1] === "{";
-        if (!components || startsWithdoubleBraces) {
-            // If no options were provided, just use the defaults.
-            return customProcessing(render(text));
-        }
-        // Allow {foo: 1} by converting it to {"foo": 1} for JSON.parse.
-        const quoteReg = /([{,])(\s*)([A-Za-z0-9_\-]+?)\s*:/g;
-        const jsonOptions = components[1].replace(quoteReg, '$1"$3":');
-        const options = JSON.parse(jsonOptions);
-        return customProcessing(render(components[2]), options);
-    };
-}
-/**
- * Returns a function which implements number formatting in Mustache templates, using this syntax:
- * {{#terria.formatNumber}}{useGrouping: true}{{value}}{{/terria.formatNumber}}
- * @private
- */
-function mustacheFormatNumberFunction() {
-    return mustacheJsonSubOptions(formatNumberForLocale);
-}
-/**
- * Returns a function that replaces value in Mustache templates, using this syntax:
- * {
- *   "template": {{#terria.partialByName}}{{value}}{{/terria.partialByName}}.
- *   "partials": {
- *     "value1": "replacement1",
- *     ...
- *   }
- * }
- *
- * E.g. {{#terria.partialByName}}{{value}}{{/terria.partialByName}}
-     "featureInfoTemplate": {
-        "template": "{{Pixel Value}} dwellings in {{#terria.partialByName}}{{feature.data.layerId}}{{/terria.partialByName}} radius.",
-        "partials": {
-          "0": "100m",
-          "1": "500m",
-          "2": "1km",
-          "3": "2km"
-        }
-      }
- * @private
- */
-function mustacheRenderPartialByName(partials, templateData) {
-    return () => {
-        return mustacheJsonSubOptions((value, options) => {
-            if (partials && typeof partials[value] === "string") {
-                return Mustache.render(partials[value], templateData);
-            }
-            else {
-                return Mustache.render(value, templateData);
-            }
-        });
-    };
-}
-/**
- * Formats the date according to the date format string.
- * If the date expression can't be parsed using Date.parse() it will be returned unmodified.
- *
- * @param {String} text The date to format.
- * @param {Object} options Object with the following properties:
- * @param {String} options.format If present, will override the default date format using the npm datefromat package
- *                                format (see https://www.npmjs.com/package/dateformat). E.g. "isoDateTime"
- *                                or "dd-mm-yyyy HH:MM:ss". If not supplied isoDateTime will be used.
- * @private
- */
-function formatDateTime(text, options) {
-    const date = Date.parse(text);
-    if (!defined(date) || isNaN(date)) {
-        return text;
-    }
-    if (defined(options) && defined(options.format)) {
-        return dateFormat(date, options.format);
-    }
-    return dateFormat(date, "isoDateTime");
-}
-/**
- * Returns a function which implements date/time formatting in Mustache templates, using this syntax:
- * {{#terria.formatDateTime}}{format: "npm dateFormat string"}DateExpression{{/terria.formatDateTime}}
- * format If present, will override the default date format (see https://www.npmjs.com/package/dateformat)
- * Eg. "isoDateTime" or "dd-mm-yyyy HH:MM:ss".
- * If the Date_Expression can't be parsed using Date.parse() it will be used(returned) unmodified by the terria.formatDateTime section expression.
- * If no valid date formatting options are present in the terria.formatDateTime section isoDateTime will be used.
- * @private
- */
-function mustacheFormatDateTime() {
-    return mustacheJsonSubOptions(formatDateTime);
-}
-/**
- * URL Encodes provided text: {{#terria.urlEncodeComponent}}{{value}}{{/terria.urlEncodeComponent}}.
- * See encodeURIComponent for details.
- *
- * {{#terria.urlEncodeComponent}}W/HO:E#1{{/terria.urlEncodeComponent}} -> W%2FHO%3AE%231
- * @private
- */
-function mustacheURLEncodeTextComponent() {
-    return function (text, render) {
-        return encodeURIComponent(render(text));
-    };
-}
-/**
- * URL Encodes provided text: {{#terria.urlEncode}}{{value}}{{/terria.urlEncode}}.
- * See encodeURI for details.
- *
- * {{#terria.urlEncode}}http://example.com/a b{{/terria.urlEncode}} -> http://example.com/a%20b
- * @private
- */
-function mustacheURLEncodeText() {
-    return function (text, render) {
-        return encodeURI(render(text));
-    };
-}
-const simpleStyleIdentifiers = [
-    "title",
-    "description",
-    "marker-size",
-    "marker-symbol",
-    "marker-color",
-    "stroke",
-    "stroke-opacity",
-    "stroke-width",
-    "fill",
-    "fill-opacity"
-];
-/**
- * A way to produce a description if properties are available but no template is given.
- * Derived from Cesium's geoJsonDataSource, but made to work with possibly time-varying properties.
- * @private
- */
-function describeFromProperties(properties, time, showStringIfPropertyValueIsNull) {
-    let html = "";
-    if (typeof properties.getValue === "function") {
-        properties = properties.getValue(time);
-    }
-    if (typeof properties === "object") {
-        for (const key in properties) {
-            if (Object.prototype.hasOwnProperty.call(properties, key)) {
-                if (simpleStyleIdentifiers.indexOf(key) !== -1) {
-                    continue;
-                }
-                let value = properties[key];
-                if (defined(showStringIfPropertyValueIsNull) && !defined(value)) {
-                    value = showStringIfPropertyValueIsNull;
-                }
-                if (defined(value)) {
-                    if (typeof value.getValue === "function") {
-                        value = value.getValue(time);
-                    }
-                    if (Array.isArray(properties)) {
-                        html +=
-                            "<tr><td>" +
-                                describeFromProperties(value, time, showStringIfPropertyValueIsNull) +
-                                "</td></tr>";
-                    }
-                    else if (typeof value === "object") {
-                        html +=
-                            "<tr><th>" +
-                                key +
-                                "</th><td>" +
-                                describeFromProperties(value, time, showStringIfPropertyValueIsNull) +
-                                "</td></tr>";
-                    }
-                    else {
-                        html += "<tr><th>" + key + "</th><td>" + value + "</td></tr>";
-                    }
-                }
-            }
-        }
-    }
-    else {
-        // properties is only a single value.
-        html += "<tr><th>" + "</th><td>" + properties + "</td></tr>";
-    }
-    if (html.length > 0) {
-        html =
-            '<table class="cesium-infoBox-defaultTable"><tbody>' +
-                html +
-                "</tbody></table>";
-    }
-    return html;
-}
-/**
- * Get parameters that should be exposed to the template, to help show a timeseries chart of the feature data.
- * @private
- */
-function getTimeSeriesChartContext(catalogItem, feature, getChartDetails) {
-    // Only show it as a line chart if the details are available, the data is sampled (so a line chart makes sense), and charts are available.
-    if (defined(getChartDetails) &&
-        defined(catalogItem) &&
-        catalogItem.isSampled &&
-        CustomComponent.isRegistered("chart")) {
-        const chartDetails = getChartDetails();
-        const { title, csvData } = chartDetails;
-        const distinguishingId = catalogItem.dataViewId;
-        const featureId = defined(distinguishingId)
-            ? distinguishingId + "--" + feature.id
-            : feature.id;
-        if (chartDetails) {
-            const result = {
-                ...chartDetails,
-                id: featureId === null || featureId === void 0 ? void 0 : featureId.replace(/\"/g, ""),
-                data: csvData === null || csvData === void 0 ? void 0 : csvData.replace(/\\n/g, "\\n")
-            };
-            const idAttr = 'id="' + result.id + '" ';
-            const sourceAttr = 'sources="1"';
-            const titleAttr = title ? `title="${title}"` : "";
-            result.chart = `<chart ${idAttr} ${sourceAttr} ${titleAttr}>${result.data}</chart>`;
-            return result;
-        }
-    }
-}
-/**
- * Wrangle the provided feature data into more convenient forms.
- * @private
- * @param  {ReactClass} that The FeatureInfoSection.
- * @return {Object} Returns {info, rawData, showRawData, hasRawData, ...}.
- *                  info is the main body of the info section, as a react component.
- *                  rawData is the same for the raw data, if it needs to be shown.
- *                  showRawData is whether to show the rawData.
- *                  hasRawData is whether there is any rawData to show.
- *                  timeSeriesChart - if the feature has timeseries data that could be shown in chart, this is the chart.
- *                  downloadableData is the same as template data, but numerical.
- */
-function getInfoAsReactComponent(that) {
-    const templateData = that.getPropertyValues();
-    const downloadableData = defined(templateData)
-        ? templateData._terria_numericalProperties || templateData
-        : undefined;
-    const updateCounters = that.props.feature.updateCounters;
-    const context = {
-        terria: that.props.viewState.terria,
-        catalogItem: that.props.catalogItem,
-        feature: that.props.feature,
-        updateCounters: updateCounters
-    };
-    let timeSeriesChart;
-    let timeSeriesChartTitle;
-    if (defined(templateData)) {
-        const timeSeriesChartContext = getTimeSeriesChartContext(that.props.catalogItem, that.props.feature, templateData._terria_getChartDetails);
-        if (defined(timeSeriesChartContext)) {
-            timeSeriesChart = parseCustomMarkdownToReact(timeSeriesChartContext.chart, context);
-            timeSeriesChartTitle = timeSeriesChartContext.title;
-        }
-    }
-    const showRawData = !that.hasTemplate() || that.state.showRawData;
-    let rawDataHtml;
-    let rawData;
-    if (showRawData) {
-        rawDataHtml = that.descriptionFromFeature();
-        if (defined(rawDataHtml)) {
-            rawData = parseCustomMarkdownToReact(rawDataHtml, context);
-        }
-    }
-    return {
-        info: that.hasTemplate()
-            ? parseCustomMarkdownToReact(that.descriptionFromTemplate(), context)
-            : rawData,
-        rawData: rawData,
-        showRawData: showRawData,
-        hasRawData: !!rawDataHtml,
-        timeSeriesChartTitle: timeSeriesChartTitle,
-        timeSeriesChart: timeSeriesChart,
-        downloadableData: downloadableData
-    };
-}
-// function setTimeoutsForUpdatingCustomComponents(that) {
-//   // eslint-disable-line require-jsdoc
-//   const { info } = getInfoAsReactComponent(that);
-//   const foundCustomComponents = CustomComponent.find(info);
-//   foundCustomComponents.forEach((match, componentNumber) => {
-//     const updateSeconds = match.type.selfUpdateSeconds(match.reactComponent);
-//     if (updateSeconds > 0) {
-//       setTimeoutForUpdatingCustomComponent(
-//         that,
-//         match.reactComponent,
-//         updateSeconds,
-//         componentNumber
-//       );
-//     }
-//   });
-// }
-// function setTimeoutForUpdatingCustomComponent(
-//   that,
-//   reactComponent,
-//   updateSeconds,
-//   componentNumber
-// ) {
-//   // eslint-disable-line require-jsdoc
-//   const timeoutId = setTimeout(() => {
-//     // Update the counter for this component. Handle various undefined cases.
-//     const updateCounters = that.props.feature.updateCounters;
-//     const counterObject = {
-//       reactComponent: reactComponent,
-//       counter:
-//         defined(updateCounters) && defined(updateCounters[componentNumber])
-//           ? updateCounters[componentNumber].counter + 1
-//           : 1
-//     };
-//     if (!defined(that.props.feature.updateCounters)) {
-//       const counters = {};
-//       counters[componentNumber] = counterObject;
-//       that.props.feature.updateCounters = counters;
-//     } else {
-//       that.props.feature.updateCounters[componentNumber] = counterObject;
-//     }
-//     // And finish by triggering the next timeout, but do this in another timeout so we aren't nesting setStates.
-//     setTimeout(() => {
-//       setTimeoutForUpdatingCustomComponent(
-//         that,
-//         reactComponent,
-//         updateSeconds,
-//         componentNumber
-//       );
-//       // console.log('Removing ' + timeoutId + ' from', that.state.timeoutIds);
-//       that.setState({
-//         timeoutIds: that.state.timeoutIds.filter(id => timeoutId !== id)
-//       });
-//     }, 5);
-//   }, updateSeconds * 1000);
-//   const timeoutIds = that.state.timeoutIds;
-//   that.setState({ timeoutIds: timeoutIds.concat(timeoutId) });
-// }
+};
+__decorate([
+    observable
+], FeatureInfoSection.prototype, "templatedFeatureInfoReactNode", void 0);
+__decorate([
+    observable
+], FeatureInfoSection.prototype, "showRawData", void 0);
+__decorate([
+    observable
+], FeatureInfoSection.prototype, "featureChangedCounter", void 0);
+__decorate([
+    action
+], FeatureInfoSection.prototype, "setFeatureChangedCounter", null);
+__decorate([
+    computed
+], FeatureInfoSection.prototype, "currentTimeIfAvailable", null);
+__decorate([
+    computed
+], FeatureInfoSection.prototype, "featureProperties", null);
+__decorate([
+    computed
+], FeatureInfoSection.prototype, "mustacheContextData", null);
+__decorate([
+    computed
+], FeatureInfoSection.prototype, "parseMarkdownContextData", null);
+__decorate([
+    computed
+], FeatureInfoSection.prototype, "rawDataMarkdown", null);
+__decorate([
+    computed
+], FeatureInfoSection.prototype, "rawFeatureInfoReactNode", null);
+__decorate([
+    action
+], FeatureInfoSection.prototype, "toggleRawData", null);
+__decorate([
+    computed
+], FeatureInfoSection.prototype, "downloadableData", null);
+__decorate([
+    computed
+], FeatureInfoSection.prototype, "generatedButtons", null);
+FeatureInfoSection = __decorate([
+    observer
+], FeatureInfoSection);
+export { FeatureInfoSection };
 // See if text contains the number (to a precision number of digits (after the dp) either fixed up or down on the last digit).
 function contains(text, number, precision) {
     // Take Math.ceil or Math.floor and use it to calculate the number with a precision number of digits (after the dp).
@@ -790,9 +356,10 @@ function contains(text, number, precision) {
     return (text.indexOf(fixed(Math.floor, number)) !== -1 ||
         text.indexOf(fixed(Math.ceil, number)) !== -1);
 }
-/**
- * Add your own react components to have them rendered in a FeatureInfoSection. ViewState will be passed as a prop.
- */
-FeatureInfoSection.extraComponents = [];
-export default withTranslation()(FeatureInfoSection);
+const ButtonsContainer = styled.div `
+  display: flex;
+  justify-content: flex-end;
+  padding: 7px 0 10px 0;
+`;
+export default withTranslation()(withViewState(FeatureInfoSection));
 //# sourceMappingURL=FeatureInfoSection.js.map

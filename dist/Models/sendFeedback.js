@@ -18,7 +18,7 @@ export default function sendFeedback(options) {
             : Promise.resolve(buildShareLink(terria))
         : Promise.resolve("Not shared");
     return shareLinkPromise
-        .then(shareLink => {
+        .then((shareLink) => {
         const feedbackData = {
             title: options.title,
             name: options.name,

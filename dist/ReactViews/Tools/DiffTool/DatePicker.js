@@ -141,7 +141,7 @@ const PagerButton = styled(Button).attrs({
     }
 }) `
   cursor: pointer;
-  background-color: ${props => props.theme.colorPrimary};
+  background-color: ${(props) => props.theme.colorPrimary};
   width: 40px;
   border: 1px solid transparent;
 
@@ -163,10 +163,10 @@ const NextButton = styled(PagerButton).attrs({
 const DateButton = styled(Button) `
   // z-index: 1000; // (Nanda): So that we don't loose the button clicks to the date picker popup
   z-index: 0;
-  ${props => props.isOpen && `z-index: 1000;`};
+  ${(props) => props.isOpen && `z-index: 1000;`};
 
   border-radius: 0px;
-  border: 1px solid ${props => props.theme.colorPrimary};
+  border: 1px solid ${(props) => props.theme.colorPrimary};
 
   min-width: 235px;
   @media (max-width: ${(props) => props.theme.lg}px) {

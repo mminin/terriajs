@@ -11,13 +11,12 @@ import primitiveTrait from "../Decorators/primitiveTrait";
 import mixTraits from "../mixTraits";
 import ModelTraits from "../ModelTraits";
 import CatalogMemberTraits from "./CatalogMemberTraits";
-import FeatureInfoTraits from "./FeatureInfoTraits";
 import GetCapabilitiesTraits from "./GetCapabilitiesTraits";
+import ImageryProviderTraits from "./ImageryProviderTraits";
 import LayerOrderingTraits from "./LayerOrderingTraits";
 import LegendOwnerTraits from "./LegendOwnerTraits";
 import LegendTraits from "./LegendTraits";
 import MappableTraits from "./MappableTraits";
-import RasterLayerTraits from "./RasterLayerTraits";
 import UrlTraits from "./UrlTraits";
 export class WebMapTileServiceAvailableStyleTraits extends ModelTraits {
     constructor() {
@@ -77,7 +76,7 @@ __decorate([
         idProperty: "identifier"
     })
 ], WebMapTileServiceAvailableLayerStylesTraits.prototype, "styles", void 0);
-export default class WebMapServiceCatalogItemTraits extends mixTraits(FeatureInfoTraits, LayerOrderingTraits, GetCapabilitiesTraits, RasterLayerTraits, UrlTraits, MappableTraits, CatalogMemberTraits, LegendOwnerTraits) {
+export default class WebMapServiceCatalogItemTraits extends mixTraits(LayerOrderingTraits, GetCapabilitiesTraits, ImageryProviderTraits, UrlTraits, MappableTraits, CatalogMemberTraits, LegendOwnerTraits) {
     constructor() {
         super(...arguments);
         this.isGeoServer = false;

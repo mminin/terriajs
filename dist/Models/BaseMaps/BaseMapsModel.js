@@ -7,6 +7,7 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 import { action, computed } from "mobx";
 import DeveloperError from "terriajs-cesium/Source/Core/DeveloperError";
 import isDefined from "../../Core/isDefined";
+import { isJsonObject } from "../../Core/Json";
 import Result from "../../Core/Result";
 import TerriaError from "../../Core/TerriaError";
 import ModelReference from "../../Traits/ModelReference";
@@ -16,8 +17,8 @@ import CommonStrata from "../Definition/CommonStrata";
 import CreateModel from "../Definition/CreateModel";
 import { BaseModel } from "../Definition/Model";
 import updateModelFromJson from "../Definition/updateModelFromJson";
-import filterOutUndefined from "./../../Core/filterOutUndefined";
 import { defaultBaseMaps } from "./defaultBaseMaps";
+import MappableMixin from "../../ModelMixins/MappableMixin";
 export class BaseMapModel extends CreateModel(BaseMapTraits) {
 }
 export class BaseMapsModel extends CreateModel(BaseMapsTraits) {
@@ -25,27 +26,22 @@ export class BaseMapsModel extends CreateModel(BaseMapsTraits) {
      * List of the basemaps to show in setting panel
      */
     get baseMapItems() {
-        return filterOutUndefined(this.filterBaseMapItems().map(({ item, image, contrastColor }) => !item || ModelReference.isRemoved(item)
-            ? undefined
-            : {
-                image,
-                contrastColor,
-                item: this.terria.getModelById(BaseModel, item)
-            }));
-    }
-    filterBaseMapItems() {
-        const items = this.items;
-        const baseMaps = [];
-        if (!this.enabledBaseMaps) {
-            return this.items;
-        }
-        for (const id of this.enabledBaseMaps) {
-            const baseMap = items === null || items === void 0 ? void 0 : items.find(baseMap => baseMap.item === id);
-            if ((baseMap === null || baseMap === void 0 ? void 0 : baseMap.item) && !ModelReference.isRemoved(baseMap.item)) {
-                baseMaps.push(baseMap);
+        const enabledBaseMaps = [];
+        this.items.forEach((baseMapItem) => {
+            if (baseMapItem.item &&
+                !ModelReference.isRemoved(baseMapItem.item) &&
+                (!this.enabledBaseMaps ||
+                    this.enabledBaseMaps.includes(baseMapItem.item))) {
+                const itemModel = this.terria.getModelById(BaseModel, baseMapItem.item);
+                if (MappableMixin.isMixedInto(itemModel))
+                    enabledBaseMaps.push({
+                        image: baseMapItem.image,
+                        contrastColor: baseMapItem.contrastColor,
+                        item: itemModel
+                    });
             }
-        }
-        return baseMaps;
+        });
+        return enabledBaseMaps;
     }
     // Can't do this in constructor since {@link CatalogMemberFactory} doesn't
     // have any values at the moment of initializing Terria class.
@@ -78,7 +74,7 @@ export class BaseMapsModel extends CreateModel(BaseMapsTraits) {
             const { items: itemsTrait } = this.traits;
             const newItemsIds = itemsTrait.fromJson(this, stratumId, items);
             (_a = newItemsIds.pushErrorTo(errors)) === null || _a === void 0 ? void 0 : _a.forEach((member) => {
-                const existingItem = this.items.find(baseMap => baseMap.item === member.item);
+                const existingItem = this.items.find((baseMap) => baseMap.item === member.item);
                 if (existingItem) {
                     // object array trait doesn't automatically update model item
                     existingItem.setTrait(stratumId, "image", member.image);
@@ -88,7 +84,10 @@ export class BaseMapsModel extends CreateModel(BaseMapsTraits) {
                 }
             });
         }
-        updateModelFromJson(this, stratumId, rest).pushErrorTo(errors);
+        if (isJsonObject(rest))
+            updateModelFromJson(this, stratumId, rest).pushErrorTo(errors);
+        else
+            errors.push(TerriaError.from("Invalid JSON object"));
         return new Result(undefined, TerriaError.combine(errors, `Failed to add members from JSON for model \`${this.uniqueId}\``));
     }
 }

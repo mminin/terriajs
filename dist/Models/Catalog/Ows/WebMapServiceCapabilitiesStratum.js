@@ -14,6 +14,7 @@ import createDiscreteTimesFromIsoSegments from "../../../Core/createDiscreteTime
 import filterOutUndefined from "../../../Core/filterOutUndefined";
 import isDefined from "../../../Core/isDefined";
 import isReadOnlyArray from "../../../Core/isReadOnlyArray";
+import { isJsonArray, isJsonString } from "../../../Core/Json";
 import TerriaError from "../../../Core/TerriaError";
 import { terriaTheme } from "../../../ReactViews/StandardUserInterface/StandardTheme";
 import { InfoSectionTraits, MetadataUrlTraits } from "../../../Traits/TraitsClasses/CatalogMemberTraits";
@@ -49,7 +50,7 @@ export default class WebMapServiceCapabilitiesStratum extends LoadableStratum(We
     }
     get metadataUrls() {
         const metadataUrls = [];
-        Array.from(this.capabilitiesLayers.values()).forEach(layer => {
+        Array.from(this.capabilitiesLayers.values()).forEach((layer) => {
             if (!(layer === null || layer === void 0 ? void 0 : layer.MetadataURL))
                 return;
             Array.isArray(layer === null || layer === void 0 ? void 0 : layer.MetadataURL)
@@ -57,23 +58,38 @@ export default class WebMapServiceCapabilitiesStratum extends LoadableStratum(We
                 : metadataUrls.push(layer === null || layer === void 0 ? void 0 : layer.MetadataURL);
         });
         return metadataUrls
-            .filter(m => { var _a; return (_a = m.OnlineResource) === null || _a === void 0 ? void 0 : _a["xlink:href"]; })
-            .map(m => createStratumInstance(MetadataUrlTraits, {
+            .filter((m) => { var _a; return (_a = m.OnlineResource) === null || _a === void 0 ? void 0 : _a["xlink:href"]; })
+            .map((m) => createStratumInstance(MetadataUrlTraits, {
             url: m.OnlineResource["xlink:href"]
         }));
     }
     get layers() {
+        var _a, _b;
         let layers;
         if (this.catalogItem.uri !== undefined) {
             // Try to extract a layer from the URL
-            const query = this.catalogItem.uri.query(true);
-            layers = query.layers;
+            const query = (_a = this.catalogItem.uri.query(true)) !== null && _a !== void 0 ? _a : {};
+            layers = (_b = query.layers) !== null && _b !== void 0 ? _b : query.LAYERS;
         }
         if (layers === undefined) {
             // Use all the top-level, named layers
-            layers = filterOutUndefined(this.capabilities.topLevelNamedLayers.map(layer => layer.Name)).join(",");
+            layers = filterOutUndefined(this.capabilities.topLevelNamedLayers.map((layer) => layer.Name)).join(",");
         }
         return layers;
+    }
+    get tileWidth() {
+        var _a, _b, _c, _d;
+        const queryParams = (_b = (_a = this.catalogItem.uri) === null || _a === void 0 ? void 0 : _a.query(true)) !== null && _b !== void 0 ? _b : {};
+        if (isDefined((_c = queryParams.width) !== null && _c !== void 0 ? _c : queryParams.WIDTH)) {
+            return parseInt((_d = queryParams.width) !== null && _d !== void 0 ? _d : queryParams.WIDTH, 10);
+        }
+    }
+    get tileHeight() {
+        var _a, _b, _c, _d;
+        const queryParams = (_b = (_a = this.catalogItem.uri) === null || _a === void 0 ? void 0 : _a.query(true)) !== null && _b !== void 0 ? _b : {};
+        if (isDefined((_c = queryParams.height) !== null && _c !== void 0 ? _c : queryParams.HEIGHT)) {
+            return parseInt((_d = queryParams.height) !== null && _d !== void 0 ? _d : queryParams.HEIGHT, 10);
+        }
     }
     /**
    * **How we determine WMS legends (in order)**
@@ -94,11 +110,11 @@ export default class WebMapServiceCapabilitiesStratum extends LoadableStratum(We
             let legendUri;
             let legendUrlMimeType;
             let legendScaling;
-            const layerAvailableStyles = (_a = availableStyles.find(candidate => candidate.layerName === layer)) === null || _a === void 0 ? void 0 : _a.styles;
+            const layerAvailableStyles = (_a = availableStyles.find((candidate) => candidate.layerName === layer)) === null || _a === void 0 ? void 0 : _a.styles;
             let layerStyle;
             if (isDefined(style)) {
                 // Attempt to find layer style based on AvailableStyleTraits
-                layerStyle = layerAvailableStyles === null || layerAvailableStyles === void 0 ? void 0 : layerAvailableStyles.find(candidate => candidate.name === style);
+                layerStyle = layerAvailableStyles === null || layerAvailableStyles === void 0 ? void 0 : layerAvailableStyles.find((candidate) => candidate.name === style);
             }
             // If no style is selected and this WMS doesn't support GetLegendGraphics - we must use the first style if none is explicitly specified.
             // (If WMS supports GetLegendGraphics we can use it and omit style parameter to get the "default" style's legend)
@@ -116,9 +132,10 @@ export default class WebMapServiceCapabilitiesStratum extends LoadableStratum(We
                 legendUri = URI(proxyCatalogItemUrl(this.catalogItem, this.catalogItem.url.split("?")[0]));
                 legendUri
                     .setQuery("service", "WMS")
-                    .setQuery("version", "1.3.0")
+                    .setQuery("version", this.catalogItem.useWmsVersion130 ? "1.3.0" : "1.1.1")
                     .setQuery("request", "GetLegendGraphic")
                     .setQuery("format", "image/png")
+                    .setQuery("sld_version", "1.1.0")
                     .setQuery("layer", layer);
                 // From OGC — about style property for GetLegendGraphic request:
                 // If not present, the default style is selected. The style may be any valid style available for a layer, including non-SLD internally-defined styles.
@@ -161,33 +178,35 @@ export default class WebMapServiceCapabilitiesStratum extends LoadableStratum(We
         return result;
     }
     get capabilitiesLayers() {
-        const lookup = name => [
-            name,
-            this.capabilities && this.capabilities.findLayer(name)
-        ];
+        const lookup = (name) => [name, this.capabilities && this.capabilities.findLayer(name)];
         return new Map(this.catalogItem.layersArray.map(lookup));
     }
     get availableCrs() {
         // Get set of supported CRS from layer hierarchy
         const layerCrs = new Set();
-        this.capabilitiesLayers.forEach(layer => {
+        this.capabilitiesLayers.forEach((layer) => {
             if (layer) {
                 const srs = this.capabilities.getInheritedValues(layer, "SRS");
                 const crs = this.capabilities.getInheritedValues(layer, "CRS");
                 [
                     ...(Array.isArray(srs) ? srs : [srs]),
                     ...(Array.isArray(crs) ? crs : [crs])
-                ].forEach(c => layerCrs.add(c));
+                ].forEach((c) => layerCrs.add(c));
             }
         });
         return Array.from(layerCrs);
     }
     get crs() {
-        var _a;
+        var _a, _b, _c, _d, _e, _f;
         // Note order is important here, the first one found will be used
         const supportedCrs = [...SUPPORTED_CRS_3857, ...SUPPORTED_CRS_4326];
+        // First check to see if URL has CRS or SRS
+        const queryParams = (_b = (_a = this.catalogItem.uri) === null || _a === void 0 ? void 0 : _a.query(true)) !== null && _b !== void 0 ? _b : {};
+        const urlCrs = (_e = (_d = (_c = queryParams.crs) !== null && _c !== void 0 ? _c : queryParams.CRS) !== null && _d !== void 0 ? _d : queryParams.srs) !== null && _e !== void 0 ? _e : queryParams.SRS;
+        if (urlCrs && supportedCrs.includes(urlCrs))
+            return urlCrs;
         // If nothing is supported, ask for EPSG:3857, and hope for the best.
-        return ((_a = supportedCrs.find(crs => this.availableCrs.includes(crs))) !== null && _a !== void 0 ? _a : "EPSG:3857");
+        return ((_f = supportedCrs.find((crs) => this.availableCrs.includes(crs))) !== null && _f !== void 0 ? _f : "EPSG:3857");
     }
     get availableDimensions() {
         const result = [];
@@ -204,8 +223,8 @@ export default class WebMapServiceCapabilitiesStratum extends LoadableStratum(We
             result.push({
                 layerName: layerName,
                 dimensions: dimensions
-                    .filter(dim => dim.name !== "time")
-                    .map(dim => {
+                    .filter((dim) => dim.name !== "time")
+                    .map((dim) => {
                     var _a;
                     return {
                         name: dim.name,
@@ -236,7 +255,7 @@ export default class WebMapServiceCapabilitiesStratum extends LoadableStratum(We
                 : [];
             result.push({
                 layerName: layerName,
-                styles: styles.map(style => {
+                styles: styles.map((style) => {
                     var wmsLegendUrl = isReadOnlyArray(style.LegendURL)
                         ? style.LegendURL[0]
                         : style.LegendURL;
@@ -270,9 +289,16 @@ export default class WebMapServiceCapabilitiesStratum extends LoadableStratum(We
      * This is because, to request a "default" legend we need GetLegendGraphics
      **/
     get styles() {
+        var _a, _b, _c;
+        if (this.catalogItem.uri !== undefined) {
+            // Try to extract a styles from the URL
+            const query = (_a = this.catalogItem.uri.query(true)) !== null && _a !== void 0 ? _a : {};
+            if (isDefined((_b = query.styles) !== null && _b !== void 0 ? _b : query.STYLES))
+                return (_c = query.styles) !== null && _c !== void 0 ? _c : query.STYLES;
+        }
         if (!this.catalogItem.supportsGetLegendGraphic) {
             return this.catalogItem.availableStyles
-                .map(layer => {
+                .map((layer) => {
                 var _a;
                 if (layer.layerName && layer.styles.length > 0) {
                     return (_a = layer.styles[0].name) !== null && _a !== void 0 ? _a : "";
@@ -374,7 +400,7 @@ export default class WebMapServiceCapabilitiesStratum extends LoadableStratum(We
         // If more than one layer, push layer description titles for each applicable layer
         if (this.capabilitiesLayers.size > 1) {
             layerDescriptions = [];
-            this.capabilitiesLayers.forEach(layer => {
+            this.capabilitiesLayers.forEach((layer) => {
                 if (layer &&
                     layer.Abstract &&
                     !containsAny(layer.Abstract, WebMapServiceCatalogItem.abstractsToIgnore)) {
@@ -413,8 +439,8 @@ export default class WebMapServiceCapabilitiesStratum extends LoadableStratum(We
     }
     get rectangle() {
         const layers = [...this.capabilitiesLayers.values()]
-            .filter(layer => layer !== undefined)
-            .map(l => l);
+            .filter((layer) => layer !== undefined)
+            .map((l) => l);
         // Get union of bounding rectangles for all layers
         const allLayersRectangle = layers.reduce((unionRectangle, layer) => {
             // Convert to cesium Rectangle (so we can use Rectangle.union)
@@ -481,14 +507,14 @@ export default class WebMapServiceCapabilitiesStratum extends LoadableStratum(We
                 continue;
             }
             const dimensions = this.capabilities.getInheritedValues(layer, "Dimension");
-            const timeDimension = dimensions.find(dimension => dimension.name.toLowerCase() === "time");
+            const timeDimension = dimensions.find((dimension) => dimension.name.toLowerCase() === "time");
             if (!timeDimension) {
                 continue;
             }
             let extent = timeDimension;
             // WMS 1.1.1 puts dimension values in an Extent element instead of directly in the Dimension element.
             const extentElements = this.capabilities.getInheritedValues(layer, "Extent");
-            const extentElement = extentElements.find(extent => extent.name.toLowerCase() === "time");
+            const extentElement = extentElements.find((extent) => extent.name.toLowerCase() === "time");
             if (extentElement) {
                 extent = extentElement;
             }
@@ -521,7 +547,7 @@ export default class WebMapServiceCapabilitiesStratum extends LoadableStratum(We
             if (!layer)
                 return;
             const dimensions = this.capabilities.getInheritedValues(layer, "Dimension");
-            const timeDimension = dimensions.find(dimension => dimension.name.toLowerCase() === "time");
+            const timeDimension = dimensions.find((dimension) => dimension.name.toLowerCase() === "time");
             return timeDimension === null || timeDimension === void 0 ? void 0 : timeDimension.default;
         }));
         // From WMS 1.3.0 spec:
@@ -534,9 +560,34 @@ export default class WebMapServiceCapabilitiesStratum extends LoadableStratum(We
         // Return first default time
         return defaultTimes[0];
     }
+    /** Prioritize format of GetFeatureInfo:
+     * - JSON
+     * - HTML
+     * - GML
+     * - Plain text
+     *
+     * If no matching format can be found in GetCapabilities, then Cesium will use defaults (see `WebMapServiceImageryProvider.DefaultGetFeatureInfoFormats`)
+     */
+    get getFeatureInfoFormat() {
+        var _a, _b, _c, _d;
+        const formats = (_d = (_c = (_b = (_a = this.capabilities.json) === null || _a === void 0 ? void 0 : _a.Capability) === null || _b === void 0 ? void 0 : _b.Request) === null || _c === void 0 ? void 0 : _c.GetFeatureInfo) === null || _d === void 0 ? void 0 : _d.Format;
+        const formatsArray = isJsonArray(formats)
+            ? formats
+            : isJsonString(formats)
+                ? [formats]
+                : [];
+        if (formatsArray.includes("application/json"))
+            return { format: "application/json", type: "json" };
+        if (formatsArray.includes("text/html"))
+            return { format: "text/html", type: "html" };
+        if (formatsArray.includes("application/vnd.ogc.gml"))
+            return { format: "application/vnd.ogc.gml", type: "xml" };
+        if (formatsArray.includes("text/plain"))
+            return { format: "text/plain", type: "text" };
+    }
     get linkedWcsParameters() {
         // Get outputCrs
-        // Note: this will be overriden by `WebCoverageServiceDescribeCoverageStratum` if a better outputCrs is found
+        // Note: this will be overridden by `WebCoverageServiceDescribeCoverageStratum` if a better outputCrs is found
         let outputCrs = this.availableCrs[0];
         // Unless it is Web Mercator of course - that would be stupid
         // If this is the case - use 4326
@@ -573,7 +624,7 @@ export default class WebMapServiceCapabilitiesStratum extends LoadableStratum(We
                 : undefined,
             // Add other dimensions
             ...dimensionSubsets
-        ]).map(subset => createStratumInstance(KeyValueTraits, subset));
+        ]).map((subset) => createStratumInstance(KeyValueTraits, subset));
         return createStratumInstance(WebCoverageServiceParameterTraits, {
             outputCrs,
             subsets,
@@ -589,6 +640,12 @@ __decorate([
 __decorate([
     computed
 ], WebMapServiceCapabilitiesStratum.prototype, "layers", null);
+__decorate([
+    computed
+], WebMapServiceCapabilitiesStratum.prototype, "tileWidth", null);
+__decorate([
+    computed
+], WebMapServiceCapabilitiesStratum.prototype, "tileHeight", null);
 __decorate([
     computed
 ], WebMapServiceCapabilitiesStratum.prototype, "legends", null);
@@ -649,6 +706,9 @@ __decorate([
 __decorate([
     computed
 ], WebMapServiceCapabilitiesStratum.prototype, "currentTime", null);
+__decorate([
+    computed
+], WebMapServiceCapabilitiesStratum.prototype, "getFeatureInfoFormat", null);
 __decorate([
     computed
 ], WebMapServiceCapabilitiesStratum.prototype, "linkedWcsParameters", null);

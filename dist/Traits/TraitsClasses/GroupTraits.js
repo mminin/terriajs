@@ -8,11 +8,13 @@ import CatalogMemberFactory from "../../Models/Catalog/CatalogMemberFactory";
 import modelReferenceArrayTrait from "../Decorators/modelReferenceArrayTrait";
 import primitiveArrayTrait from "../Decorators/primitiveArrayTrait";
 import primitiveTrait from "../Decorators/primitiveTrait";
-import ModelTraits from "../ModelTraits";
-export default class GroupTraits extends ModelTraits {
+import mixTraits from "../mixTraits";
+import { ItemPropertiesTraits } from "./ItemPropertiesTraits";
+export default class GroupTraits extends mixTraits(ItemPropertiesTraits) {
     constructor() {
         super(...arguments);
         this.isOpen = false;
+        this.mergeGroupsByName = false;
     }
 }
 __decorate([
@@ -29,6 +31,13 @@ __decorate([
         type: "boolean"
     })
 ], GroupTraits.prototype, "isOpen", void 0);
+__decorate([
+    primitiveTrait({
+        name: "Merge by name",
+        description: "Merge member groups by name.",
+        type: "boolean"
+    })
+], GroupTraits.prototype, "mergeGroupsByName", void 0);
 __decorate([
     primitiveTrait({
         name: "Sort members by",

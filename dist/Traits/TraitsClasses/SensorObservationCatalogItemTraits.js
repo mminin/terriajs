@@ -4,15 +4,14 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
+import i18next from "i18next";
+import objectArrayTrait from "../Decorators/objectArrayTrait";
+import primitiveArrayTrait from "../Decorators/primitiveArrayTrait";
 import primitiveTrait from "../Decorators/primitiveTrait";
 import mixTraits from "../mixTraits";
-import UrlTraits from "./UrlTraits";
-import TableTraits from "./TableTraits";
-import objectArrayTrait from "../Decorators/objectArrayTrait";
 import ModelTraits from "../ModelTraits";
-import primitiveArrayTrait from "../Decorators/primitiveArrayTrait";
-import FeatureInfoTraits from "./FeatureInfoTraits";
-import i18next from "i18next";
+import TableTraits from "./Table/TableTraits";
+import UrlTraits from "./UrlTraits";
 export class ObservablePropertyTraits extends ModelTraits {
 }
 __decorate([
@@ -45,7 +44,7 @@ __decorate([
 ], ObservablePropertyTraits.prototype, "defaultDuration", void 0);
 export class ProcedureTraits extends mixTraits(ObservablePropertyTraits) {
 }
-export default class SensorObservationCatalogItemTraits extends mixTraits(FeatureInfoTraits, TableTraits, UrlTraits) {
+export default class SensorObservationCatalogItemTraits extends mixTraits(TableTraits, UrlTraits) {
     constructor() {
         super(...arguments);
         this.requestSizeLimit = 200;

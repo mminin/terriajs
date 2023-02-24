@@ -11,7 +11,7 @@ export function getParentGroups(item) {
     return [
         ...getAncestors(dereferenced).map(getDereferencedIfExists),
         dereferenced
-    ].map(ancestor => (CatalogMemberMixin.isMixedInto(ancestor) && ancestor.nameInCatalog) ||
+    ].map((ancestor) => (CatalogMemberMixin.isMixedInto(ancestor) && ancestor.nameInCatalog) ||
         ancestor.uniqueId);
 }
 //# sourceMappingURL=getPath.js.map

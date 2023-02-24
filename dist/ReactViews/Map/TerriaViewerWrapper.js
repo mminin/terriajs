@@ -22,7 +22,7 @@ let TerriaViewerWrapper = class TerriaViewerWrapper extends React.Component {
         /**
          * @argument {HTMLDivElement} container
          */
-        this.containerRef = container => {
+        this.containerRef = (container) => {
             this.props.terria.mainViewer.attached &&
                 this.props.terria.mainViewer.detach();
             if (container !== null) {

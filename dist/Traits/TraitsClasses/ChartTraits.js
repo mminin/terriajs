@@ -6,9 +6,10 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 };
 import Glyphs from "../../ReactViews/Custom/Chart/Glyphs";
 import primitiveTrait from "../Decorators/primitiveTrait";
-import ModelTraits from "../ModelTraits";
+import mixTraits from "../mixTraits";
+import MappableTraits from "./MappableTraits";
 const availableChartGlyphStyles = Object.keys(Glyphs).join(", ");
-export default class ChartTraits extends ModelTraits {
+export default class ChartTraits extends mixTraits(MappableTraits) {
 }
 __decorate([
     primitiveTrait({

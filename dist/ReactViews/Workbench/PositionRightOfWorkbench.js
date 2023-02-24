@@ -14,7 +14,7 @@ import styled from "styled-components";
  *    `;
  *
  */
-const PositionRightOfWorkbench = observer(props => {
+const PositionRightOfWorkbench = observer((props) => {
     return (React.createElement(Container, { className: props.className, isMapFullScreen: props.viewState.isMapFullScreen }, props.children));
 });
 const Container = styled.div `
@@ -23,7 +23,7 @@ const Container = styled.div `
   left: 0;
   right: unset;
   bottom: unset;
-  margin-left: ${props => props.isMapFullScreen ? 16 : parseInt(props.theme.workbenchWidth) + 16}px};
+  margin-left: ${(props) => props.isMapFullScreen ? 16 : parseInt(props.theme.workbenchWidth) + 16}px};
   transition: margin-left 0.25s;
 `;
 export default PositionRightOfWorkbench;

@@ -4,30 +4,37 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
-import React from "react";
-import PropTypes from "prop-types";
-import Sortable from "react-anything-sortable";
-import WorkbenchSplitScreen from "./WorkbenchSplitScreen";
-import WorkbenchItem from "./WorkbenchItem";
-import { observer } from "mobx-react";
-import { action } from "mobx";
-import Styles from "./workbench-list.scss";
 import "!!style-loader!css-loader?sourceMap!./sortable.css";
+import { action } from "mobx";
+import { observer } from "mobx-react";
+import React from "react";
+//@ts-ignore
+import Sortable from "react-anything-sortable";
+import styled from "styled-components";
+import { Ul } from "../../Styled/List";
+import WorkbenchItem from "./WorkbenchItem";
+import WorkbenchSplitScreen from "./WorkbenchSplitScreen";
+const StyledUl = styled(Ul) `
+  margin: 5px 0;
+  li {
+    &:first-child {
+      margin-top: 0;
+    }
+  }
+`;
 let WorkbenchList = class WorkbenchList extends React.Component {
     onSort(sortedArray, currentDraggingSortData, currentDraggingIndex) {
         this.props.terria.workbench.moveItemToIndex(currentDraggingSortData, currentDraggingIndex);
     }
     render() {
-        return (React.createElement("ul", { className: Styles.workbenchContent },
+        return (React.createElement(StyledUl, { overflowY: "auto", overflowX: "hidden", scroll: true, paddedHorizontally: true, fullWidth: true, fullHeight: true, column: true },
             this.props.terria.showSplitter && (React.createElement(WorkbenchSplitScreen, { terria: this.props.terria })),
-            React.createElement(Sortable, { onSort: this.onSort, direction: "vertical", dynamic: true },
-                React.createElement(For, { each: "item", of: this.props.terria.workbench.items },
-                    React.createElement(WorkbenchItem, { item: item, sortData: item, key: item.uniqueId, viewState: this.props.viewState })))));
+            React.createElement(Sortable, { onSort: this.onSort, direction: "vertical", dynamic: true, css: `
+            width: 100%;
+          ` }, this.props.terria.workbench.items.map((item) => {
+                return (React.createElement(WorkbenchItem, { item: item, sortData: item, key: item.uniqueId, viewState: this.props.viewState }));
+            }))));
     }
-};
-WorkbenchList.propTypes = {
-    terria: PropTypes.object.isRequired,
-    viewState: PropTypes.object.isRequired
 };
 __decorate([
     action.bound
@@ -35,5 +42,5 @@ __decorate([
 WorkbenchList = __decorate([
     observer
 ], WorkbenchList);
-module.exports = WorkbenchList;
+export default WorkbenchList;
 //# sourceMappingURL=WorkbenchList.js.map

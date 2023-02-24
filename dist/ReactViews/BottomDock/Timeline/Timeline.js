@@ -1,17 +1,18 @@
 import createReactClass from "create-react-class";
 import dateFormat from "dateformat";
-import React from "react";
-import PropTypes from "prop-types";
 import { observer } from "mobx-react";
+import PropTypes from "prop-types";
+import React from "react";
+import { withTranslation } from "react-i18next";
 import defined from "terriajs-cesium/Source/Core/defined";
 import JulianDate from "terriajs-cesium/Source/Core/JulianDate";
-import TimelineControls from "./TimelineControls";
-import CesiumTimeline from "./CesiumTimeline";
-import DateTimePicker from "./DateTimePicker";
-import { formatDateTime } from "./DateFormats";
-import { withTranslation } from "react-i18next";
-import Styles from "./timeline.scss";
 import CommonStrata from "../../../Models/Definition/CommonStrata";
+import withControlledVisibility from "../../HOCs/withControlledVisibility";
+import CesiumTimeline from "./CesiumTimeline";
+import { formatDateTime } from "./DateFormats";
+import DateTimePicker from "./DateTimePicker";
+import Styles from "./timeline.scss";
+import TimelineControls from "./TimelineControls";
 export const Timeline = observer(createReactClass({
     displayName: "Timeline",
     propTypes: {
@@ -23,6 +24,12 @@ export const Timeline = observer(createReactClass({
         return {
             isPickerOpen: false
         };
+    },
+    componentDidMount() {
+        this.props.terria.timelineStack.activate();
+    },
+    componentWillUnmount() {
+        this.props.terria.timelineStack.deactivate();
     },
     changeDateTime(time) {
         this.props.terria.timelineClock.currentTime = JulianDate.fromDate(new Date(time));
@@ -61,7 +68,7 @@ export const Timeline = observer(createReactClass({
         const currentDiscreteJulianDate = catalogItem.currentDiscreteJulianDate;
         return (React.createElement("div", { className: Styles.timeline },
             React.createElement("div", { className: Styles.textRow, css: `
-              background: ${p => p.theme.dark};
+              background: ${(p) => p.theme.dark};
             ` },
                 React.createElement("div", { className: Styles.textCell, title: t("dateTime.timeline.textCell") },
                     React.createElement("div", { className: Styles.layerNameTruncated }, catalogItem.name),
@@ -75,5 +82,5 @@ export const Timeline = observer(createReactClass({
                 React.createElement(CesiumTimeline, { terria: terria }))));
     }
 }));
-export default withTranslation()(Timeline);
+export default withControlledVisibility(withTranslation()(Timeline));
 //# sourceMappingURL=Timeline.js.map

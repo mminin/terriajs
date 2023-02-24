@@ -54,13 +54,13 @@ export default withParentSize(BottomDockChart);
 let Chart = class Chart extends React.Component {
     get chartItems() {
         return sortChartItemsByType(this.props.chartItems)
-            .map(chartItem => {
+            .map((chartItem) => {
             return {
                 ...chartItem,
                 points: chartItem.points.sort((p1, p2) => p1.x - p2.x)
             };
         })
-            .filter(chartItem => chartItem.points.length > 0);
+            .filter((chartItem) => chartItem.points.length > 0);
     }
     get plotHeight() {
         const { height, margin } = this.props;
@@ -104,15 +104,15 @@ let Chart = class Chart extends React.Component {
         });
     }
     get initialScales() {
-        return this.chartItems.map(c => ({
+        return this.chartItems.map((c) => ({
             x: this.initialXScale,
-            y: this.yAxes.find(y => y.units === c.units).scale
+            y: this.yAxes.find((y) => y.units === c.units).scale
         }));
     }
     get zoomedScales() {
-        return this.chartItems.map(c => ({
+        return this.chartItems.map((c) => ({
             x: this.xScale,
-            y: this.yAxes.find(y => y.units === c.units).scale
+            y: this.yAxes.find((y) => y.units === c.units).scale
         }));
     }
     get cursorX() {
@@ -124,7 +124,7 @@ let Chart = class Chart extends React.Component {
         if (!this.mouseCoords)
             return [];
         return this.chartItems
-            .map(chartItem => ({
+            .map((chartItem) => ({
             chartItem,
             point: findNearestPoint(chartItem.points, this.mouseCoords, this.xScale, 7)
         }))
@@ -151,7 +151,7 @@ let Chart = class Chart extends React.Component {
         // outside the chart plot area. The labels of inner y-axes appear inside
         // the plot area.
         const leftmostYAxis = this.yAxes[0];
-        const maxLabelDigits = Math.max(0, ...leftmostYAxis.scale.ticks(numTicks).map(n => n.toString().length));
+        const maxLabelDigits = Math.max(0, ...leftmostYAxis.scale.ticks(numTicks).map((n) => n.toString().length));
         return maxLabelDigits * tickLabelFontSize;
     }
     setZoomedXScale(scale) {
@@ -182,7 +182,7 @@ let Chart = class Chart extends React.Component {
         return (React.createElement(ZoomX, { surface: "#zoomSurface", initialScale: this.initialXScale, scaleExtent: [1, Infinity], translateExtent: [
                 [0, 0],
                 [Infinity, Infinity]
-            ], onZoom: zoomedScale => this.setZoomedXScale(zoomedScale) },
+            ], onZoom: (zoomedScale) => this.setZoomedXScale(zoomedScale) },
             React.createElement(Legends, { width: this.plotWidth, chartItems: this.chartItems }),
             React.createElement("div", { style: { position: "relative" } },
                 React.createElement("svg", { width: "100%", height: height, onMouseMove: this.setMouseCoordsFromEvent.bind(this), onMouseLeave: () => this.setMouseCoords(undefined) },
@@ -268,7 +268,7 @@ Chart = __decorate([
 ], Chart);
 let Plot = class Plot extends React.Component {
     get chartRefs() {
-        return this.props.chartItems.map(_ => React.createRef());
+        return this.props.chartItems.map((_) => React.createRef());
     }
     componentDidUpdate() {
         Object.values(this.chartRefs).forEach(({ current: ref }, i) => {
@@ -286,7 +286,7 @@ let Plot = class Plot extends React.Component {
                 case "momentPoints": {
                     // Find a basis item to stick the points on, if we can't find one, we
                     // vertically center the points
-                    const basisItemIndex = chartItems.findIndex(item => (item.type === "line" || item.type === "lineAndPoint") &&
+                    const basisItemIndex = chartItems.findIndex((item) => (item.type === "line" || item.type === "lineAndPoint") &&
                         item.xAxis.scale === "time");
                     return (React.createElement(MomentPointsChart, { key: chartItem.key, ref: this.chartRefs[i], id: sanitizeIdString(chartItem.key), chartItem: chartItem, scales: initialScales[i], basisItem: chartItems[basisItemIndex], basisItemScales: initialScales[basisItemIndex], glyph: chartItem.glyphStyle }));
                 }
@@ -368,16 +368,16 @@ Cursor.propTypes = {
     x: PropTypes.number.isRequired
 };
 function PointsOnMap({ chartItems, terria }) {
-    return chartItems.map(chartItem => chartItem.pointOnMap && (React.createElement(PointOnMap, { key: `point-on-map-${chartItem.key}`, terria: terria, color: chartItem.getColor(), point: chartItem.pointOnMap })));
+    return chartItems.map((chartItem) => chartItem.pointOnMap && (React.createElement(PointOnMap, { key: `point-on-map-${chartItem.key}`, terria: terria, color: chartItem.getColor(), point: chartItem.pointOnMap })));
 }
 /**
  * Calculates a combined domain of all chartItems.
  */
 function calculateDomain(chartItems) {
-    const xmin = Math.min(...chartItems.map(c => c.domain.x[0]));
-    const xmax = Math.max(...chartItems.map(c => c.domain.x[1]));
-    const ymin = Math.min(...chartItems.map(c => c.domain.y[0]));
-    const ymax = Math.max(...chartItems.map(c => c.domain.y[1]));
+    const xmin = Math.min(...chartItems.map((c) => c.domain.x[0]));
+    const xmax = Math.max(...chartItems.map((c) => c.domain.x[1]));
+    const ymin = Math.min(...chartItems.map((c) => c.domain.y[0]));
+    const ymax = Math.max(...chartItems.map((c) => c.domain.y[1]));
     return {
         x: [xmin, xmax],
         y: [ymin, ymax]
@@ -422,7 +422,7 @@ function findNearestPoint(points, coords, xScale, maxDistancePx) {
     const leftPoint = points[mid - 1];
     const midPoint = points[mid];
     const rightPoint = points[mid + 1];
-    const nearestPoint = minBy([leftPoint, midPoint, rightPoint], p => p ? Math.abs(distance(coords, p)) : Infinity);
+    const nearestPoint = minBy([leftPoint, midPoint, rightPoint], (p) => p ? Math.abs(distance(coords, p)) : Infinity);
     return Math.abs(distance(coords, nearestPoint)) <= maxDistancePx
         ? nearestPoint
         : undefined;

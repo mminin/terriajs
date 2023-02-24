@@ -28,7 +28,7 @@ export class SdmxServerStratum extends LoadableStratum(SdmxCatalogGroupTraits) {
         this.dataflowTree = {};
         // If categorisations exist => organise Dataflows into a tree!
         if (isDefined(this.sdmxServer.categorisations)) {
-            this.sdmxServer.categorisations.forEach(categorisiation => {
+            this.sdmxServer.categorisations.forEach((categorisiation) => {
                 var _a;
                 const categorySchemeUrn = parseSdmxUrn(categorisiation.target);
                 const agencyId = categorySchemeUrn === null || categorySchemeUrn === void 0 ? void 0 : categorySchemeUrn.agencyId;
@@ -68,7 +68,7 @@ export class SdmxServerStratum extends LoadableStratum(SdmxCatalogGroupTraits) {
                 }
                 let categoryParentNode = categorySchemeNode;
                 // Make category nodes (may be nested)
-                categoryIds.forEach(categoryId => {
+                categoryIds.forEach((categoryId) => {
                     var _a;
                     // Create category node if it doesn't exist
                     if (!isDefined(categoryParentNode.members[categoryId])) {
@@ -155,10 +155,10 @@ export class SdmxServerStratum extends LoadableStratum(SdmxCatalogGroupTraits) {
         if (rootTreeNodes.length === 1 && isDefined(rootTreeNodes[0])) {
             rootTreeNodes = Object.values((_a = findRootGroup(rootTreeNodes[0]).members) !== null && _a !== void 0 ? _a : this.dataflowTree);
         }
-        return rootTreeNodes.map(node => this.getMemberId(node));
+        return rootTreeNodes.map((node) => this.getMemberId(node));
     }
     createMembers() {
-        Object.values(this.dataflowTree).forEach(node => this.createMemberFromLayer(node));
+        Object.values(this.dataflowTree).forEach((node) => this.createMemberFromLayer(node));
     }
     createMemberFromLayer(node) {
         const layerId = this.getMemberId(node);
@@ -166,11 +166,10 @@ export class SdmxServerStratum extends LoadableStratum(SdmxCatalogGroupTraits) {
             return;
         }
         // Replace the stratum inherited from the parent group.
-        const stratum = CommonStrata.underride;
         // If has nested layers -> create model for CatalogGroup
         if (node.members && Object.keys(node.members).length > 0) {
             // Create nested layers
-            Object.values(node.members).forEach(member => this.createMemberFromLayer(member));
+            Object.values(node.members).forEach((member) => this.createMemberFromLayer(member));
             // Create group
             const existingGroupModel = this.catalogGroup.terria.getModelById(CatalogGroup, layerId);
             let groupModel;
@@ -181,11 +180,11 @@ export class SdmxServerStratum extends LoadableStratum(SdmxCatalogGroupTraits) {
             else {
                 groupModel = existingGroupModel;
             }
-            groupModel.setTrait(stratum, "name", node.item.name || node.item.id);
-            groupModel.setTrait(stratum, "members", filterOutUndefined(Object.values(node.members).map(member => this.getMemberId(member))));
+            groupModel.setTrait(CommonStrata.definition, "name", node.item.name || node.item.id);
+            groupModel.setTrait(CommonStrata.definition, "members", filterOutUndefined(Object.values(node.members).map((member) => this.getMemberId(member))));
             // Set group description
             if (node.item.description) {
-                groupModel.setTrait(stratum, "description", node.item.description);
+                groupModel.setTrait(CommonStrata.definition, "description", node.item.description);
             }
             return;
         }
@@ -203,16 +202,16 @@ export class SdmxServerStratum extends LoadableStratum(SdmxCatalogGroupTraits) {
         else {
             itemModel = existingItemModel;
         }
-        itemModel.strata.delete(stratum);
-        itemModel.setTrait(stratum, "name", node.item.name || node.item.id);
-        itemModel.setTrait(stratum, "url", this.catalogGroup.url);
+        itemModel.strata.delete(CommonStrata.definition);
+        itemModel.setTrait(CommonStrata.definition, "name", node.item.name || node.item.id);
+        itemModel.setTrait(CommonStrata.definition, "url", this.catalogGroup.url);
         // Set group description
         if (node.item.description) {
-            itemModel.setTrait(stratum, "description", node.item.description);
+            itemModel.setTrait(CommonStrata.definition, "description", node.item.description);
         }
-        itemModel.setTrait(stratum, "agencyId", node.item.agencyID);
-        itemModel.setTrait(stratum, "dataflowId", node.item.id);
-        itemModel.setTrait(stratum, "modelOverrides", this.catalogGroup.traits.modelOverrides.toJson(this.catalogGroup.modelOverrides));
+        itemModel.setTrait(CommonStrata.definition, "agencyId", node.item.agencyID);
+        itemModel.setTrait(CommonStrata.definition, "dataflowId", node.item.id);
+        itemModel.setTrait(CommonStrata.definition, "modelOverrides", this.catalogGroup.traits.modelOverrides.toJson(this.catalogGroup.modelOverrides));
     }
     getMemberId(node) {
         return `${this.catalogGroup.uniqueId}/${node.type}-${node.item.id}`;
@@ -220,13 +219,13 @@ export class SdmxServerStratum extends LoadableStratum(SdmxCatalogGroupTraits) {
     getDataflow(id) {
         if (!isDefined(id))
             return;
-        return this.sdmxServer.dataflows.find(d => d.id === id);
+        return this.sdmxServer.dataflows.find((d) => d.id === id);
     }
     getCategoryScheme(id) {
         var _a;
         if (!isDefined(id))
             return;
-        return (_a = this.sdmxServer.categorySchemes) === null || _a === void 0 ? void 0 : _a.find(d => d.id === id);
+        return (_a = this.sdmxServer.categorySchemes) === null || _a === void 0 ? void 0 : _a.find((d) => d.id === id);
     }
     getCategoryFromCatagoryScheme(categoryScheme, id) {
         if (!isDefined(id))
@@ -237,16 +236,16 @@ export class SdmxServerStratum extends LoadableStratum(SdmxCatalogGroupTraits) {
         return this.getCategoryFromCategories(resolvedCategoryScheme === null || resolvedCategoryScheme === void 0 ? void 0 : resolvedCategoryScheme.categories, id);
     }
     getCategoryFromCategories(categories, id) {
-        return isDefined(id) ? categories === null || categories === void 0 ? void 0 : categories.find(c => c.id === id) : undefined;
+        return isDefined(id) ? categories === null || categories === void 0 ? void 0 : categories.find((c) => c.id === id) : undefined;
     }
     getAgency(id) {
         var _a;
         if (!isDefined(id))
             return;
-        const agencies = (_a = this.sdmxServer.agencySchemes) === null || _a === void 0 ? void 0 : _a.map(agencyScheme => agencyScheme.agencies);
+        const agencies = (_a = this.sdmxServer.agencySchemes) === null || _a === void 0 ? void 0 : _a.map((agencyScheme) => agencyScheme.agencies);
         if (!isDefined(agencies))
             return;
-        return flatten(filterOutUndefined(agencies)).find(d => d.id === id);
+        return flatten(filterOutUndefined(agencies)).find((d) => d.id === id);
     }
 }
 SdmxServerStratum.stratumName = "sdmxServer";
@@ -266,7 +265,7 @@ export function parseSdmxUrn(urn) {
     const matches = regexMatches(/.+=(.+):(.+)\((.+)\)\.*(.*)/g, urn);
     if (matches.length >= 1 &&
         matches[0].length >= 3 &&
-        !isDefined([0, 1, 2].find(idx => matches[0][idx] === null))) {
+        !isDefined([0, 1, 2].find((idx) => matches[0][idx] === null))) {
         return {
             agencyId: matches[0][0],
             resourceId: matches[0][1],

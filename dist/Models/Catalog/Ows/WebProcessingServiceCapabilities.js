@@ -2,7 +2,6 @@ import i18next from "i18next";
 import filterOutUndefined from "../../../Core/filterOutUndefined";
 import { isJsonObject, isJsonString } from "../../../Core/Json";
 import loadXML from "../../../Core/loadXML";
-import makeRealPromise from "../../../Core/makeRealPromise";
 import { networkRequestError } from "../../../Core/TerriaError";
 import xml2json from "../../../ThirdParty/xml2json";
 import { parseOnlineResource, parseOwsKeywordList } from "./OwsInterfaces";
@@ -12,7 +11,7 @@ export default class WebProcessingServiceCapabilities {
         this.capabilities = capabilities;
     }
     static fromUrl(url) {
-        return Promise.resolve(makeRealPromise(loadXML(url))).then(function (capabilitiesXml) {
+        return Promise.resolve(loadXML(url)).then(function (capabilitiesXml) {
             const capabilities = parseCapabilities(xml2json(capabilitiesXml));
             if (capabilities === undefined) {
                 throw networkRequestError({
@@ -59,7 +58,7 @@ function parseServiceIdentification(json) {
     const ServiceTypeVersion = isJsonString(json.ServiceTypeVersion)
         ? [json.ServiceTypeVersion]
         : Array.isArray(json.ServiceTypeVersion)
-            ? filterOutUndefined(json.ServiceTypeVersion.map(s => (isJsonString(s) ? s : undefined)))
+            ? filterOutUndefined(json.ServiceTypeVersion.map((s) => (isJsonString(s) ? s : undefined)))
             : undefined;
     if (ServiceType === undefined ||
         ServiceTypeVersion === undefined ||

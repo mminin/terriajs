@@ -144,8 +144,8 @@ class GetCapabilitiesStratum extends LoadableStratum(WebMapTileServiceCatalogIte
     }
     get legends() {
         var _a;
-        const layerAvailableStyles = (_a = this.catalogItem.availableStyles.find(candidate => { var _a; return candidate.layerName === ((_a = this.capabilitiesLayer) === null || _a === void 0 ? void 0 : _a.Identifier); })) === null || _a === void 0 ? void 0 : _a.styles;
-        const layerStyle = layerAvailableStyles === null || layerAvailableStyles === void 0 ? void 0 : layerAvailableStyles.find(candidate => candidate.identifier === this.catalogItem.style);
+        const layerAvailableStyles = (_a = this.catalogItem.availableStyles.find((candidate) => { var _a; return candidate.layerName === ((_a = this.capabilitiesLayer) === null || _a === void 0 ? void 0 : _a.Identifier); })) === null || _a === void 0 ? void 0 : _a.styles;
+        const layerStyle = layerAvailableStyles === null || layerAvailableStyles === void 0 ? void 0 : layerAvailableStyles.find((candidate) => candidate.identifier === this.catalogItem.style);
         if (isDefined(layerStyle === null || layerStyle === void 0 ? void 0 : layerStyle.legend)) {
             return [
                 createStratumInstance(LegendTraits, {
@@ -274,8 +274,8 @@ class GetCapabilitiesStratum extends LoadableStratum(WebMapTileServiceCatalogIte
         var _a, _b, _c, _d;
         if (!isDefined(this.catalogItem.layer))
             return;
-        const layerAvailableStyles = (_a = this.availableStyles.find(candidate => { var _a; return candidate.layerName === ((_a = this.capabilitiesLayer) === null || _a === void 0 ? void 0 : _a.Identifier); })) === null || _a === void 0 ? void 0 : _a.styles;
-        return ((_c = (_b = layerAvailableStyles === null || layerAvailableStyles === void 0 ? void 0 : layerAvailableStyles.find(style => style.isDefault)) === null || _b === void 0 ? void 0 : _b.identifier) !== null && _c !== void 0 ? _c : (_d = layerAvailableStyles === null || layerAvailableStyles === void 0 ? void 0 : layerAvailableStyles[0]) === null || _d === void 0 ? void 0 : _d.identifier);
+        const layerAvailableStyles = (_a = this.availableStyles.find((candidate) => { var _a; return candidate.layerName === ((_a = this.capabilitiesLayer) === null || _a === void 0 ? void 0 : _a.Identifier); })) === null || _a === void 0 ? void 0 : _a.styles;
+        return ((_c = (_b = layerAvailableStyles === null || layerAvailableStyles === void 0 ? void 0 : layerAvailableStyles.find((style) => style.isDefault)) === null || _b === void 0 ? void 0 : _b.identifier) !== null && _c !== void 0 ? _c : (_d = layerAvailableStyles === null || layerAvailableStyles === void 0 ? void 0 : layerAvailableStyles[0]) === null || _d === void 0 ? void 0 : _d.identifier);
     }
 }
 GetCapabilitiesStratum.stratumName = "wmtsServer";
@@ -342,6 +342,7 @@ class WebMapTileServiceCatalogItem extends MappableMixin(GetCapabilitiesMixin(Ur
         return "1d";
     }
     get imageryProvider() {
+        var _a, _b, _c, _d, _e;
         const stratum = (this.strata.get(GetCapabilitiesMixin.getCapabilitiesStratumName));
         if (!isDefined(this.layer) ||
             !isDefined(this.url) ||
@@ -391,13 +392,14 @@ class WebMapTileServiceCatalogItem extends MappableMixin(GetCapabilitiesMixin(Ur
             style: this.style,
             tileMatrixSetID: tileMatrixSet.id,
             tileMatrixLabels: tileMatrixSet.labels,
-            minimumLevel: tileMatrixSet.minLevel,
-            maximumLevel: tileMatrixSet.maxLevel,
-            tileWidth: tileMatrixSet.tileWidth,
-            tileHeight: tileMatrixSet.tileHeight,
+            minimumLevel: (_a = this.minimumLevel) !== null && _a !== void 0 ? _a : tileMatrixSet.minLevel,
+            maximumLevel: (_b = this.maximumLevel) !== null && _b !== void 0 ? _b : tileMatrixSet.maxLevel,
+            tileWidth: (_c = this.tileWidth) !== null && _c !== void 0 ? _c : tileMatrixSet.tileWidth,
+            tileHeight: (_e = (_d = this.tileHeight) !== null && _d !== void 0 ? _d : this.minimumLevel) !== null && _e !== void 0 ? _e : tileMatrixSet.tileHeight,
             tilingScheme: new WebMercatorTilingScheme(),
             format,
-            credit: this.attribution
+            credit: this.attribution,
+            enablePickFeatures: this.allowFeaturePicking
         });
         return imageryProvider;
     }
@@ -437,7 +439,7 @@ class WebMapTileServiceCatalogItem extends MappableMixin(GetCapabilitiesMixin(Ur
             }
         }
         if (Array.isArray(tileMatrixSetLabels)) {
-            const levels = tileMatrixSetLabels.map(label => {
+            const levels = tileMatrixSetLabels.map((label) => {
                 const lastIndex = label.lastIndexOf(":");
                 return Math.abs(Number(label.substring(lastIndex + 1)));
             });

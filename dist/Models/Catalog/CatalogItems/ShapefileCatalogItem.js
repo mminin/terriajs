@@ -16,10 +16,11 @@ import CatalogMemberMixin from "../../../ModelMixins/CatalogMemberMixin";
 import GeoJsonMixin from "../../../ModelMixins/GeojsonMixin";
 import ShapefileCatalogItemTraits from "../../../Traits/TraitsClasses/ShapefileCatalogItemTraits";
 import CreateModel from "../../Definition/CreateModel";
+import proxyCatalogItemUrl from "../proxyCatalogItemUrl";
 import { fileApiNotSupportedError } from "./GeoJsonCatalogItem";
 export function isJsonArrayOrDeepArrayOfObjects(value) {
     return (Array.isArray(value) &&
-        value.every(child => isJsonObject(child) || isJsonArrayOrDeepArrayOfObjects(child)));
+        value.every((child) => isJsonObject(child) || isJsonArrayOrDeepArrayOfObjects(child)));
 }
 class ShapefileCatalogItem extends GeoJsonMixin(CatalogMemberMixin(CreateModel(ShapefileCatalogItemTraits))) {
     get type() {
@@ -46,7 +47,7 @@ class ShapefileCatalogItem extends GeoJsonMixin(CatalogMemberMixin(CreateModel(S
                 if (typeof FileReader === "undefined") {
                     throw fileApiNotSupportedError(this.terria);
                 }
-                const blob = await loadBlob(this.url);
+                const blob = await loadBlob(proxyCatalogItemUrl(this, this.url));
                 return await parseShapefile(blob);
             }
             else {

@@ -9,19 +9,28 @@ import { action, runInAction } from "mobx";
 import { observer } from "mobx-react";
 import React from "react";
 import { Trans, withTranslation } from "react-i18next";
+import { Category, DataSourceAction } from "../Core/AnalyticEvents/analyticEvents";
 import isDefined from "../Core/isDefined";
+import Result from "../Core/Result";
 import CatalogMemberMixin, { getName } from "../ModelMixins/CatalogMemberMixin";
 import MappableMixin from "../ModelMixins/MappableMixin";
 import addUserFiles from "../Models/Catalog/addUserFiles";
 import Styles from "./drag-drop-file.scss";
-import Result from "../Core/Result";
+import { withViewState } from "./StandardUserInterface/ViewStateContext";
 let DragDropFile = class DragDropFile extends React.Component {
     async handleDrop(e) {
+        var _a;
         e.preventDefault();
         e.stopPropagation();
         const props = this.props;
+        for (let i = 0; i < e.dataTransfer.files.length; i++) {
+            // Log event to analytics for each file dropped (sometimes multiple files dropped in one DragEvent)
+            const fileType = e.dataTransfer.files[i].type ||
+                e.dataTransfer.files[i].name.split(".").pop(); // use file extension if type property is empty
+            (_a = this.props.viewState.terria.analytics) === null || _a === void 0 ? void 0 : _a.logEvent(Category.dataSource, DataSourceAction.addFromDragAndDrop, `File Type: ${fileType}, File Size(B): ${e.dataTransfer.files[i].size}`);
+        }
         try {
-            const addedCatalogItems = await addUserFiles(e.dataTransfer.files, props.terria, props.viewState);
+            const addedCatalogItems = await addUserFiles(e.dataTransfer.files, props.viewState.terria, props.viewState);
             if (isDefined(addedCatalogItems) && addedCatalogItems.length > 0) {
                 runInAction(() => (props.viewState.myDataIsUploadView = false));
                 if (props.viewState.explorerPanelIsVisible) {
@@ -30,20 +39,22 @@ let DragDropFile = class DragDropFile extends React.Component {
                 }
                 else {
                     // update last batch of uploaded files
-                    runInAction(() => (props.viewState.lastUploadedFiles = addedCatalogItems.map(item => CatalogMemberMixin.isMixedInto(item) ? item.name : item.uniqueId)));
+                    runInAction(() => (props.viewState.lastUploadedFiles = addedCatalogItems.map((item) => CatalogMemberMixin.isMixedInto(item)
+                        ? item.name
+                        : item.uniqueId)));
                 }
                 // Add load all mapable items
                 const mappableItems = addedCatalogItems.filter(MappableMixin.isMixedInto);
-                Result.combine(await Promise.all(mappableItems.map(f => f.loadMapItems())), "Failed to load uploaded files").raiseError(props.terria);
+                Result.combine(await Promise.all(mappableItems.map((f) => f.loadMapItems())), "Failed to load uploaded files").raiseError(props.viewState.terria);
                 // Zoom to first item
-                const firstZoomableItem = mappableItems.find(i => isDefined(i.rectangle));
+                const firstZoomableItem = mappableItems.find((i) => isDefined(i.rectangle) && i.disableZoomTo === false);
                 isDefined(firstZoomableItem) &&
-                    runInAction(() => props.terria.currentViewer.zoomTo(firstZoomableItem, 1));
+                    runInAction(() => props.viewState.terria.currentViewer.zoomTo(firstZoomableItem, 1));
             }
             runInAction(() => (props.viewState.isDraggingDroppingFile = false));
         }
         catch (e) {
-            props.terria.raiseErrorToUser(e, "Failed to upload files");
+            props.viewState.terria.raiseErrorToUser(e, "Failed to upload files");
         }
     }
     handleDragEnter(e) {
@@ -88,5 +99,5 @@ __decorate([
 DragDropFile = __decorate([
     observer
 ], DragDropFile);
-module.exports = withTranslation()(DragDropFile);
+export default withTranslation()(withViewState(DragDropFile));
 //# sourceMappingURL=DragDropFile.js.map

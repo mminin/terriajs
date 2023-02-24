@@ -28,7 +28,6 @@ import ExportWebCoverageServiceTraits, { WebCoverageServiceParameterTraits } fro
 import { getName } from "./CatalogMemberMixin";
 import ExportableMixin from "./ExportableMixin";
 import filterOutUndefined from "../Core/filterOutUndefined";
-const sprintf = require("terriajs-cesium/Source/ThirdParty/sprintf").default;
 /** Call WCS GetCapabilities to get list of:
  * - available coverages
  * - available CRS
@@ -207,7 +206,7 @@ function ExportWebCoverageServiceMixin(Base) {
                     this.linkedWcsParameters.duplicateSubsetValues.length > 0) {
                     let message = `WebCoverageService (WCS) only supports one value per dimension.\n\n  `;
                     // Add message for each duplicate subset
-                    message += this.linkedWcsParameters.duplicateSubsetValues.map(subset => `- Multiple dimension values have been set for \`${subset.key}\`. WCS GetCoverage request will use the first value (\`${subset.key} = "${subset.value}"\`).`);
+                    message += this.linkedWcsParameters.duplicateSubsetValues.map((subset) => `- Multiple dimension values have been set for \`${subset.key}\`. WCS GetCoverage request will use the first value (\`${subset.key} = "${subset.value}"\`).`);
                     error = new TerriaError({
                         title: "Warning: export may not reflect displayed data",
                         message,
@@ -226,7 +225,7 @@ function ExportWebCoverageServiceMixin(Base) {
                         `Long(${CesiumMath.toDegrees(bbox.west)},${CesiumMath.toDegrees(bbox.east)})`,
                         `Lat(${CesiumMath.toDegrees(bbox.south)},${CesiumMath.toDegrees(bbox.north)})`,
                         // Turn subsets into `key=(value)` format
-                        ...filterOutUndefined(((_a = this.linkedWcsParameters.subsets) !== null && _a !== void 0 ? _a : []).map(subset => subset.key && subset.value
+                        ...filterOutUndefined(((_a = this.linkedWcsParameters.subsets) !== null && _a !== void 0 ? _a : []).map((subset) => subset.key && subset.value
                             ? `${subset.key}(${
                             // Wrap string values in double quotes
                             typeof subset.value === "string"
@@ -257,7 +256,15 @@ function ExportWebCoverageServiceMixin(Base) {
             var _a, _b, _c, _d, _e, _f, _g;
             // Create pending workbench item
             const now = new Date();
-            const timestamp = sprintf("%04d-%02d-%02dT%02d:%02d:%02d", now.getFullYear(), now.getMonth() + 1, now.getDate(), now.getHours(), now.getMinutes(), now.getSeconds());
+            const timestamp = `${now.getFullYear().toString().padStart(4, "0")}-${(now.getMonth() + 1)
+                .toString()
+                .padStart(2, "0")}-${now.getDate().toString().padStart(2, "0")}T${now
+                .getHours()
+                .toString()
+                .padStart(2, "0")}:${now.getMinutes().toString().padStart(2, "0")}:${now
+                .getSeconds()
+                .toString()
+                .padStart(2, "0")}`;
             const pendingWorkbenchItem = new ResultPendingCatalogItem(`WCS: ${getName(this)} ${timestamp}`, this.terria);
             try {
                 runInAction(() => {

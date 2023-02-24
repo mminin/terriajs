@@ -20,6 +20,7 @@ export default class MapboxMapCatalogItem extends CatalogMemberMixin(MappableMix
         this.type = MapboxMapCatalogItem.type;
     }
     get imageryProvider() {
+        var _a;
         const mapId = this.mapId;
         const accessToken = this.accessToken;
         if (mapId === undefined || accessToken === undefined) {
@@ -31,7 +32,8 @@ export default class MapboxMapCatalogItem extends CatalogMemberMixin(MappableMix
             mapId,
             accessToken,
             credit: this.attribution,
-            maximumLevel: this.maximumLevel,
+            maximumLevel: (_a = this.maximumLevel) !== null && _a !== void 0 ? _a : 25,
+            minimumLevel: this.minimumLevel,
             format: this.format
         });
         return imageryProvider;

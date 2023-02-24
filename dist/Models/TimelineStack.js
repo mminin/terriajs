@@ -9,6 +9,8 @@ import ClockRange from "terriajs-cesium/Source/Core/ClockRange";
 import JulianDate from "terriajs-cesium/Source/Core/JulianDate";
 import filterOutUndefined from "../Core/filterOutUndefined";
 import ReferenceMixin from "../ModelMixins/ReferenceMixin";
+import { DATE_SECONDS_PRECISION } from "../ModelMixins/TimeVarying";
+import DefaultTimelineModel from "./DefaultTimelineModel";
 import CommonStrata from "./Definition/CommonStrata";
 /**
  * Manages a stack of all the time-varying datasets currently attached to the timeline. Provides
@@ -17,13 +19,16 @@ import CommonStrata from "./Definition/CommonStrata";
  * @constructor
  */
 export default class TimelineStack {
-    constructor(clock) {
+    constructor(terria, clock) {
+        this.terria = terria;
         this.clock = clock;
         /**
          * The stratum of each layer in the stack in which to store the current time as the clock ticks.
          */
         this.tickStratumId = CommonStrata.user;
         this.items = [];
+    }
+    activate() {
         // Keep the Cesium clock in sync with the top layer's clock.
         this._disposeClockAutorun = autorun(() => {
             const topLayer = this.top;
@@ -51,7 +56,7 @@ export default class TimelineStack {
             }
         });
     }
-    destroy() {
+    deactivate() {
         if (this._disposeClockAutorun) {
             this._disposeClockAutorun();
         }
@@ -65,7 +70,7 @@ export default class TimelineStack {
     get top() {
         // Find the first item with a current, start, and stop time.
         // Use the default if there isn't one.
-        return (this.items.find(item => {
+        return (this.items.find((item) => {
             const dereferenced = ReferenceMixin.isMixedInto(item) && item.target
                 ? item.target
                 : item;
@@ -75,7 +80,7 @@ export default class TimelineStack {
         }) || this.defaultTimeVarying);
     }
     get itemIds() {
-        return filterOutUndefined(this.items.map(item => item.uniqueId));
+        return filterOutUndefined(this.items.map((item) => item.uniqueId));
     }
     /**
      * Determines if the stack contains a given item.
@@ -134,11 +139,11 @@ export default class TimelineStack {
      */
     syncToClock(stratumId) {
         const clock = this.clock;
-        const currentTime = JulianDate.toIso8601(clock.currentTime);
+        const currentTime = JulianDate.toIso8601(clock.currentTime, DATE_SECONDS_PRECISION);
         const isPaused = !clock.shouldAnimate;
         if (this.top) {
-            this.top.setTrait(stratumId, "startTime", JulianDate.toIso8601(clock.startTime));
-            this.top.setTrait(stratumId, "stopTime", JulianDate.toIso8601(clock.stopTime));
+            this.top.setTrait(stratumId, "startTime", JulianDate.toIso8601(clock.startTime, DATE_SECONDS_PRECISION));
+            this.top.setTrait(stratumId, "stopTime", JulianDate.toIso8601(clock.stopTime, DATE_SECONDS_PRECISION));
             this.top.setTrait(stratumId, "multiplier", clock.multiplier);
         }
         for (let i = 0; i < this.items.length; ++i) {
@@ -150,6 +155,20 @@ export default class TimelineStack {
             this.defaultTimeVarying.setTrait(stratumId, "currentTime", currentTime);
             this.defaultTimeVarying.setTrait(stratumId, "isPaused", isPaused);
         }
+    }
+    setAlwaysShowTimeline(show = true) {
+        if (!show) {
+            this.defaultTimeVarying = undefined;
+        }
+        else {
+            this.defaultTimeVarying = new DefaultTimelineModel("defaultTimeVarying", this.terria);
+        }
+    }
+    get alwaysShowingTimeline() {
+        return (this.defaultTimeVarying !== undefined &&
+            this.defaultTimeVarying.startTimeAsJulianDate !== undefined &&
+            this.defaultTimeVarying.stopTimeAsJulianDate !== undefined &&
+            this.defaultTimeVarying.currentTimeAsJulianDate !== undefined);
     }
 }
 __decorate([
@@ -179,6 +198,12 @@ __decorate([
 __decorate([
     action
 ], TimelineStack.prototype, "syncToClock", null);
+__decorate([
+    action
+], TimelineStack.prototype, "setAlwaysShowTimeline", null);
+__decorate([
+    computed
+], TimelineStack.prototype, "alwaysShowingTimeline", null);
 function offsetIfUndefined(offsetSeconds, baseTime, time, result) {
     if (time === undefined) {
         return JulianDate.addSeconds(baseTime, offsetSeconds, result || new JulianDate());

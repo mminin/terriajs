@@ -15,13 +15,13 @@ import Loader from "../../../Loader";
 import { useKeyPress } from "../../../Hooks/useKeyPress.js";
 import { RawButton } from "../../../../Styled/Button";
 import Icon, { StyledIcon } from "../../../../Styled/Icon";
-const VideoWrapperBox = props => {
+const VideoWrapperBox = (props) => {
     const { viewState } = props;
     const handleClose = () => viewState.setVideoGuideVisible("");
     useKeyPress("Escape", () => {
         handleClose();
     });
-    return (React.createElement(Box, { centered: true, onClick: e => {
+    return (React.createElement(Box, { centered: true, onClick: (e) => {
             e.stopPropagation();
             handleClose();
         }, css: `
@@ -47,9 +47,11 @@ let VideoGuide = class VideoGuide extends React.Component {
         super(props);
     }
     render() {
+        const backgroundOpacity = this.props.backgroundOpacity;
+        const backgroundBlackOverlay = backgroundOpacity === undefined ? undefined : 1.0 - backgroundOpacity;
         return (React.createElement(FadeIn, { isVisible: this.props.viewState.videoGuideVisible === this.props.videoName },
             React.createElement(VideoWrapperBox, { viewState: this.props.viewState },
-                React.createElement(Box, { centered: true, col11: true, styledHeight: "87%", backgroundImage: this.props.background, css: `
+                React.createElement(Box, { centered: true, col11: true, styledHeight: "87%", backgroundImage: this.props.background, backgroundBlackOverlay: backgroundBlackOverlay, css: `
               svg {
                 fill: #fff;
                 width: 60px;
@@ -57,7 +59,7 @@ let VideoGuide = class VideoGuide extends React.Component {
                 top: -30px;
                 left: -30px;
               }
-            `, onClick: e => e.stopPropagation() },
+            `, onClick: (e) => e.stopPropagation() },
                     React.createElement(Loader, { message: ` ` }),
                     React.createElement("iframe", { src: this.props.videoLink, allow: "accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture", css: `
                 border: none;
@@ -75,6 +77,8 @@ VideoGuide.propTypes = {
     videoName: PropTypes.string.isRequired,
     videoLink: PropTypes.string,
     background: PropTypes.string,
+    // A number between 0 and 1.0
+    backgroundOpacity: PropTypes.number,
     theme: PropTypes.object,
     t: PropTypes.func
 };

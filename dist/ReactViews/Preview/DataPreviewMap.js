@@ -26,7 +26,7 @@ class AdaptForPreviewMap extends MappableMixin(CreateModel(MappableTraits)) {
     // Make all imagery 0 or 100% opacity
     get mapItems() {
         var _a, _b;
-        return ((_b = (_a = this.previewed) === null || _a === void 0 ? void 0 : _a.mapItems.map(m => ImageryParts.is(m)
+        return ((_b = (_a = this.previewed) === null || _a === void 0 ? void 0 : _a.mapItems.map((m) => ImageryParts.is(m)
             ? {
                 ...m,
                 alpha: m.alpha !== 0.0 ? 1.0 : 0.0,
@@ -60,7 +60,7 @@ let DataPreviewMap = class DataPreviewMap extends React.Component {
         /**
          * @param {HTMLElement | null} container
          */
-        this.containerRef = action(container => {
+        this.containerRef = action((container) => {
             this.previewViewer.attached && this.previewViewer.detach();
             if (container !== null) {
                 this.initPreview(container);
@@ -103,7 +103,7 @@ let DataPreviewMap = class DataPreviewMap extends React.Component {
         this.isZoomedToExtent = false;
         const baseMapItems = this.props.terria.baseMapsModel.baseMapItems;
         // Find preview basemap using `terria.previewBaseMapId`
-        const initPreviewBaseMap = baseMapItems.find(baseMap => baseMap.item.uniqueId ===
+        const initPreviewBaseMap = baseMapItems.find((baseMap) => baseMap.item.uniqueId ===
             this.props.terria.baseMapsModel.previewBaseMapId);
         if (initPreviewBaseMap !== undefined) {
             this.previewViewer.setBaseMap(initPreviewBaseMap.item);

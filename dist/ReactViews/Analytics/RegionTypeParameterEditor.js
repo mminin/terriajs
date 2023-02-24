@@ -17,14 +17,14 @@ const RegionTypeParameterEditor = createReactClass({
         if (!regionProviders) {
             return;
         }
-        const value = regionProviders.filter(r => r.regionType === e.target.value)[0];
+        const value = regionProviders.filter((r) => r.regionType === e.target.value)[0];
         this.props.parameter.setValue(CommonStrata.user, value);
     },
     getRegionProviders() {
         let regionProviders;
         // We expect this promise to resolve immediately because the parameter
         // should already be loaded before we display this React component.
-        this.props.parameter.getAllRegionTypes().then(rp => {
+        this.props.parameter.getAllRegionTypes().then((rp) => {
             regionProviders = rp;
         });
         return regionProviders;

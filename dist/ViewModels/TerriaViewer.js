@@ -4,14 +4,15 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
-import { action, computed, observable, untracked, runInAction } from "mobx";
+import { isEqual } from "lodash-es";
+import { action, computed, observable, reaction, runInAction, untracked } from "mobx";
 import { fromPromise, FULFILLED } from "mobx-utils";
 import CesiumEvent from "terriajs-cesium/Source/Core/Event";
 import Rectangle from "terriajs-cesium/Source/Core/Rectangle";
+import CatalogMemberMixin from "../ModelMixins/CatalogMemberMixin";
 import CameraView from "../Models/CameraView";
 import NoViewer from "../Models/NoViewer";
 import ViewerMode from "../Models/ViewerMode";
-import CatalogMemberMixin from "../ModelMixins/CatalogMemberMixin";
 const viewerOptionsDefaults = {
     useTerrain: true
 };
@@ -22,17 +23,22 @@ export default class TerriaViewer {
         this.viewerOptions = viewerOptionsDefaults;
         // Disable all mouse (& keyboard) interaction
         this.disableInteraction = false;
-        this.homeCamera = new CameraView(Rectangle.MAX_VALUE);
+        this._homeCamera = new CameraView(Rectangle.MAX_VALUE);
         /**
          * The distance between two pixels at the bottom center of the screen.
          * Set in lib/ReactViews/Map/Legend/DistanceLegend.jsx
          */
         this.scale = 1;
-        // TODO: hook these up
         this.beforeViewerChanged = new CesiumEvent();
         this.afterViewerChanged = new CesiumEvent();
+        this.viewerChangeTracker = undefined;
         this.terria = terria;
         this.items = items;
+        if (!this.viewerChangeTracker) {
+            this.viewerChangeTracker = reaction(() => this.currentViewer, () => {
+                this.afterViewerChanged.raiseEvent();
+            });
+        }
     }
     get baseMap() {
         return this._baseMap;
@@ -60,6 +66,15 @@ export default class TerriaViewer {
             }
         }
     }
+    get homeCamera() {
+        return this._homeCamera;
+    }
+    set homeCamera(cameraView) {
+        if (isEqual(this._homeCamera.rectangle, Rectangle.MAX_VALUE)) {
+            this.currentViewer.zoomTo(cameraView, 0.0);
+        }
+        this._homeCamera = cameraView;
+    }
     get attached() {
         return this.mapContainer !== undefined;
     }
@@ -70,15 +85,32 @@ export default class TerriaViewer {
         //  is changed
         const currentView = untracked(() => this.destroyCurrentViewer());
         let newViewer;
-        if (this.attached && this.viewerMode === ViewerMode.Leaflet) {
-            const LeafletOrNoViewer = this._getLeafletIfLoaded();
-            newViewer = untracked(() => new LeafletOrNoViewer(this, this.mapContainer));
+        try {
+            if (this.attached && this.viewerMode === ViewerMode.Leaflet) {
+                const LeafletOrNoViewer = this._getLeafletIfLoaded();
+                newViewer = untracked(() => new LeafletOrNoViewer(this, this.mapContainer));
+            }
+            else if (this.attached && this.viewerMode === ViewerMode.Cesium) {
+                const CesiumOrNoViewer = this._getCesiumIfLoaded();
+                newViewer = untracked(() => new CesiumOrNoViewer(this, this.mapContainer));
+            }
+            else {
+                newViewer = untracked(() => new NoViewer(this));
+            }
         }
-        else if (this.attached && this.viewerMode === ViewerMode.Cesium) {
-            const CesiumOrNoViewer = this._getCesiumIfLoaded();
-            newViewer = untracked(() => new CesiumOrNoViewer(this, this.mapContainer));
-        }
-        else {
+        catch (error) {
+            // Switch viewerMode inside computed. Could change viewers to
+            //  guarantee no throw in constructor and instead have a `start()`
+            //  method that can throw. Then call that `start()` method inside
+            //  a reaction (reaction would also deal with viewer fallback).
+            // Using this approach might remove the need for `untracked`
+            setTimeout(action(() => {
+                this.terria.raiseErrorToUser(error);
+                this.viewerMode =
+                    this.viewerMode === ViewerMode.Cesium
+                        ? ViewerMode.Leaflet
+                        : undefined;
+            }), 0);
             newViewer = untracked(() => new NoViewer(this));
         }
         console.log(`Creating a viewer: ${newViewer.type}`);
@@ -87,7 +119,7 @@ export default class TerriaViewer {
         return newViewer;
     }
     get _cesiumPromise() {
-        return fromPromise(import("../Models/Cesium").then(Cesium => Cesium.default));
+        return fromPromise(import("../Models/Cesium").then((Cesium) => Cesium.default));
     }
     _getCesiumIfLoaded() {
         if (this._cesiumPromise.state === FULFILLED) {
@@ -99,7 +131,7 @@ export default class TerriaViewer {
         }
     }
     get _leafletPromise() {
-        return fromPromise(import("../Models/Leaflet").then(Leaflet => Leaflet.default));
+        return fromPromise(import("../Models/Leaflet").then((Leaflet) => Leaflet.default));
     }
     _getLeafletIfLoaded() {
         if (this._leafletPromise.state === FULFILLED) {
@@ -126,6 +158,7 @@ export default class TerriaViewer {
     destroyCurrentViewer() {
         let currentView;
         if (this._lastViewer !== undefined) {
+            this.beforeViewerChanged.raiseEvent();
             console.log(`Destroying viewer: ${this._lastViewer.type}`);
             currentView = this._lastViewer.getCurrentCameraView();
             this._lastViewer.destroy();
@@ -147,8 +180,8 @@ __decorate([
     observable
 ], TerriaViewer.prototype, "disableInteraction", void 0);
 __decorate([
-    observable
-], TerriaViewer.prototype, "homeCamera", void 0);
+    computed
+], TerriaViewer.prototype, "homeCamera", null);
 __decorate([
     observable
 ], TerriaViewer.prototype, "mapContainer", void 0);

@@ -22,6 +22,8 @@ export default class CkanCatalogGroupTraits extends mixTraits(GroupTraits, UrlTr
         ];
         this.groupBy = "organization";
         this.ungroupedTitle = "No group";
+        this.allowEntireWmsServers = true;
+        this.excludeInactiveDatasets = true;
     }
 }
 __decorate([
@@ -59,4 +61,18 @@ __decorate([
       If the value is a blank string or undefined, these items will be left at the top level, not grouped.`
     })
 ], CkanCatalogGroupTraits.prototype, "ungroupedTitle", void 0);
+__decorate([
+    primitiveTrait({
+        type: "boolean",
+        name: "Allow entire WMS Servers",
+        description: "True to allow entire WMS servers (that is, WMS resources without a clearly-defined layer) to be added to the catalog; otherwise, false."
+    })
+], CkanCatalogGroupTraits.prototype, "allowEntireWmsServers", void 0);
+__decorate([
+    primitiveTrait({
+        type: "boolean",
+        name: "Exclude inactive datasets",
+        description: `True to remove inactive datasets. Where \`state = "deleted"\` (CKAN official), \`state === "draft"\` (CKAN official) or \`data_state === "inactive"\` (Data.gov.au CKAN).`
+    })
+], CkanCatalogGroupTraits.prototype, "excludeInactiveDatasets", void 0);
 //# sourceMappingURL=CkanCatalogGroupTraits.js.map

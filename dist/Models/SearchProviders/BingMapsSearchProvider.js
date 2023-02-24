@@ -70,7 +70,7 @@ export default class BingMapsSearchProvider extends SearchProvider {
             }
         }), "jsonp");
         return promise
-            .then(result => {
+            .then((result) => {
             if (searchResults.isCanceled) {
                 // A new search has superseded this one, so ignore the result.
                 return;

@@ -6,6 +6,7 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 };
 import { Document } from "flexsearch";
 import { action, observable, runInAction } from "mobx";
+import { isJsonObject, isJsonString, isJsonStringArray } from "../../Core/Json";
 import loadBlob, { isZip, parseZipJsonBlob } from "../../Core/loadBlob";
 import loadJson from "../../Core/loadJson";
 import CatalogIndexReference from "../Catalog/CatalogReferences/CatalogIndexReference";
@@ -47,7 +48,6 @@ export default class CatalogIndex {
     /** The catalog index is loaded automatically on startup.
      * It is loaded the first time loadInitSources is called (see Terria.forceLoadInitSources) */
     async loadCatalogIndex() {
-        var _a, _b;
         // Load catalog index
         try {
             const url = this.terria.corsProxy.getURLProxyIfNecessary(this.url);
@@ -63,7 +63,7 @@ export default class CatalogIndex {
              *    - "strict" = index whole words
              *  - resolution property = score resolution
              *
-             * Note: beacuse we have set `worker: true`, we must use async calls
+             * Note: because we have set `worker: true`, we must use async calls
              */
             this._searchIndex = new Document({
                 worker: true,
@@ -87,18 +87,22 @@ export default class CatalogIndex {
             const promises = [];
             for (let idx = 0; idx < indexModels.length; idx++) {
                 const [id, model] = indexModels[idx];
+                if (!isJsonObject(model, false))
+                    return;
                 const reference = new CatalogIndexReference(id, this.terria);
-                updateModelFromJson(reference, CommonStrata.definition, model);
-                if (model.shareKeys) {
-                    model.shareKeys.map(s => this.shareKeysMap.set(s, id));
+                updateModelFromJson(reference, CommonStrata.definition, model).logError("Error ocurred adding adding catalog model reference");
+                if (isJsonStringArray(model.shareKeys)) {
+                    model.shareKeys.map((s) => this.shareKeysMap.set(s, id));
                 }
                 // Add model to CatalogIndexReference map
                 this._models.set(id, reference);
                 // Add document to search index
                 promises.push(this._searchIndex.addAsync(id, {
                     id,
-                    name: (_a = model.name) !== null && _a !== void 0 ? _a : "",
-                    description: (_b = model.description) !== null && _b !== void 0 ? _b : ""
+                    name: isJsonString(model.name) ? model.name : "",
+                    description: isJsonString(model.description)
+                        ? model.description
+                        : ""
                 }));
             }
             await Promise.all(promises);

@@ -1,4 +1,3 @@
-"use strict";
 import React from "react";
 import createReactClass from "create-react-class";
 import PropTypes from "prop-types";
@@ -101,5 +100,5 @@ const ColorScaleRangeSection = createReactClass({
             React.createElement("button", { type: "submit", title: t("workbench.colorScaleUpdateRange"), className: Styles.btn }, t("workbench.colorScaleUpdateRange"))));
     }
 });
-module.exports = withTranslation()(ColorScaleRangeSection);
+export default withTranslation()(ColorScaleRangeSection);
 //# sourceMappingURL=ColorScaleRangeSection.js.map

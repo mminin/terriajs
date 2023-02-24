@@ -10,7 +10,7 @@ import MovementsController from "./MovementsController";
 const mouseControlsImage = require("../../../../wwwroot/images/mouse-control.svg");
 const wasdControlsImage = require("../../../../wwwroot/images/wasd.svg");
 const heightControlsImage = require("../../../../wwwroot/images/height-controls.svg");
-const MovementControls = props => {
+const MovementControls = (props) => {
     const [isMaximized, setIsMaximized] = useState(true);
     const [t] = useTranslation();
     const toggleMaximized = () => setIsMaximized(!isMaximized);
@@ -44,7 +44,7 @@ const Title = styled(Box).attrs({
   padding: 0 0.5em;
   border-bottom: 1px solid #c0c0c0;
 `;
-const MinimizeMaximizeButton = styled(Button).attrs(props => ({
+const MinimizeMaximizeButton = styled(Button).attrs((props) => ({
     renderIcon: () => (React.createElement(ButtonIcon, { glyph: props.maximized ? Icon.GLYPHS.minimize : Icon.GLYPHS.maximize }))
 })) `
   padding: 0;

@@ -2,18 +2,18 @@
 const React = require("react");
 const createReactClass = require("create-react-class");
 const PropTypes = require("prop-types");
-import Styles from "./full_screen_button.scss";
 import classNames from "classnames";
-import Icon from "../../Styled/Icon";
-import { withTranslation } from "react-i18next";
 import { observer } from "mobx-react";
-import withControlledVisibility from "../HOCs/withControlledVisibility";
+import { withTranslation } from "react-i18next";
 import { Category, ViewAction } from "../../Core/AnalyticEvents/analyticEvents";
+import Icon from "../../Styled/Icon";
+import withControlledVisibility from "../HOCs/withControlledVisibility";
+import { withViewState } from "../StandardUserInterface/ViewStateContext";
+import Styles from "./full_screen_button.scss";
 // The button to make the map full screen and hide the workbench.
 const FullScreenButton = observer(createReactClass({
     displayName: "FullScreenButton",
     propTypes: {
-        terria: PropTypes.object,
         viewState: PropTypes.object.isRequired,
         btnText: PropTypes.string,
         minified: PropTypes.bool,
@@ -29,7 +29,7 @@ const FullScreenButton = observer(createReactClass({
         var _a;
         this.props.viewState.setIsMapFullScreen(!this.props.viewState.isMapFullScreen);
         // log a GA event
-        (_a = this.props.terria.analytics) === null || _a === void 0 ? void 0 : _a.logEvent(Category.view, this.props.viewState.isMapFullScreen
+        (_a = this.props.viewState.terria.analytics) === null || _a === void 0 ? void 0 : _a.logEvent(Category.view, this.props.viewState.isMapFullScreen
             ? ViewAction.exitFullScreen
             : ViewAction.enterFullScreen);
     },
@@ -65,5 +65,5 @@ const FullScreenButton = observer(createReactClass({
                     : t("sui.hideWorkbench") }, this.renderButtonText())));
     }
 }));
-module.exports = withTranslation()(withControlledVisibility(FullScreenButton));
+export default withTranslation()(withViewState(withControlledVisibility(FullScreenButton)));
 //# sourceMappingURL=FullScreenButton.js.map

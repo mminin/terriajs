@@ -23,7 +23,8 @@ const PointParameterEditor = createReactClass({
     inputOnChange(e) {
         const text = e.target.value;
         this.props.parameterViewModel.userValue = text;
-        this.props.parameterViewModel.isValueValid = PointParameterEditor.setValueFromText(e, this.props.parameter);
+        this.props.parameterViewModel.isValueValid =
+            PointParameterEditor.setValueFromText(e, this.props.parameter);
     },
     inputOnBlur(e) {
         const isCurrentlyInvalid = !this.props.parameterViewModel.isValueValid;
@@ -134,7 +135,7 @@ export function selectOnMap(terria, viewState, parameter, interactionMessage) {
     runInAction(() => {
         terria.mapInteractionModeStack.push(pickPointMode);
     });
-    autorun(reaction => {
+    autorun((reaction) => {
         pickedFeaturesSubscription = reaction;
         if (pickPointMode.pickedFeatures) {
             const pickedFeatures = pickPointMode.pickedFeatures;

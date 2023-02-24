@@ -16,7 +16,7 @@ import Icon, { GLYPHS } from "../../../Styled/Icon";
 import { OVERFLOW_ITEM_ID } from "../../../ViewModels/MapNavigation/MapNavigationModel";
 import withControlledVisibility from "../../HOCs/withControlledVisibility";
 import MapIconButton from "../../MapIconButton/MapIconButton";
-import { Control, MapNavigationItem } from "./Items/MapNavigationItem";
+import MapNavigationItem, { Control } from "./Items/MapNavigationItem";
 import { registerMapNavigations } from "./registerMapNavigations";
 const OVERFLOW_ACTION_SIZE = 42;
 /**
@@ -30,12 +30,12 @@ const StyledMapNavigation = styled.div `
   right: 5px;
   z-index: 1;
   bottom: 25px;
-  @media (min-width: ${props => props.theme.sm}px) {
+  @media (min-width: ${(props) => props.theme.sm}px) {
     top: 80px;
     bottom: 50px;
     right: 16px;
   }
-  @media (max-width: ${props => props.theme.mobile}px) {
+  @media (max-width: ${(props) => props.theme.mobile}px) {
     & > div {
       flex-direction: row;
     }
@@ -46,13 +46,13 @@ const StyledMapNavigation = styled.div `
     pointer-events: auto;
   }
 
-  ${p => p.trainerBarVisible &&
+  ${(p) => p.trainerBarVisible &&
     `
     top: ${Number(p.theme.trainerHeight) + Number(p.theme.mapNavigationTop)}px;
   `}
 `;
 const ControlWrapper = styled(Box) `
-  @media (min-width: ${props => props.theme.sm}px) {
+  @media (min-width: ${(props) => props.theme.sm}px) {
     & > :first-child {
       margin-top: 0 !important;
       padding-top: 0 !important;
@@ -74,7 +74,7 @@ let MapNavigation = class MapNavigation extends React.Component {
         this.resizeListener = debounce(() => this.updateNavigation(), 250);
         this.itemSizeInBar = new Map();
         this.computeSizes();
-        this.overflows = runInAction(() => this.model.visibleItems.some(item => item.controller.collapsed));
+        this.overflows = runInAction(() => this.model.visibleItems.some((item) => item.controller.collapsed));
         this.viewerModeReactionDisposer = reaction(() => this.viewState.terria.currentViewer, () => this.updateNavigation(), {
             equals: (a, b) => {
                 return a === b;
@@ -98,7 +98,7 @@ let MapNavigation = class MapNavigation extends React.Component {
             : Orientation.VERTICAL;
     }
     computeSizes(items) {
-        (items !== null && items !== void 0 ? items : this.model.visibleItems).forEach(item => {
+        (items !== null && items !== void 0 ? items : this.model.visibleItems).forEach((item) => {
             if (this.orientation === Orientation.VERTICAL) {
                 if (item.controller.height && item.controller.height > 0) {
                     this.itemSizeInBar.set(item.id, item.controller.height || 42);
@@ -123,12 +123,12 @@ let MapNavigation = class MapNavigation extends React.Component {
         if (this.computeSizes.length !== this.model.visibleItems.length) {
             this.computeSizes();
         }
-        let itemsToShow = this.model.visibleItems.filter(item => filterViewerAndScreenSize(item, this.viewState));
+        let itemsToShow = this.model.visibleItems.filter((item) => filterViewerAndScreenSize(item, this.viewState));
         // items we have to show in the navigation bar
-        let pinnedItems = this.model.pinnedItems.filter(item => filterViewerAndScreenSize(item, this.viewState));
+        let pinnedItems = this.model.pinnedItems.filter((item) => filterViewerAndScreenSize(item, this.viewState));
         // items that are possible to be collapsed
         let possibleToCollapse = itemsToShow
-            .filter(item => !pinnedItems.some(pinnedItem => pinnedItem.id === item.id))
+            .filter((item) => !pinnedItems.some((pinnedItem) => pinnedItem.id === item.id))
             .reverse();
         // Ensure we are not showing more composites than we have height for
         let overflows = false;
@@ -149,7 +149,7 @@ let MapNavigation = class MapNavigation extends React.Component {
             }
         }
         if (pinnedItems.length > maxVisible) {
-            possibleToCollapse.forEach(item => {
+            possibleToCollapse.forEach((item) => {
                 this.model.setCollapsed(item.id, true);
             });
             //there is nothing else we can do, we have to show the rest of items as it is.
@@ -192,7 +192,7 @@ let MapNavigation = class MapNavigation extends React.Component {
         else {
             this.overflows = false;
         }
-        this.model.visibleItems.forEach(item => {
+        this.model.visibleItems.forEach((item) => {
             if (itemsToCollapseId.includes(item.id)) {
                 this.model.setCollapsed(item.id, true);
             }
@@ -204,12 +204,12 @@ let MapNavigation = class MapNavigation extends React.Component {
     render() {
         const { viewState, t } = this.props;
         const terria = viewState.terria;
-        let items = terria.mapNavigationModel.visibleItems.filter(item => !item.controller.collapsed &&
+        let items = terria.mapNavigationModel.visibleItems.filter((item) => !item.controller.collapsed &&
             filterViewerAndScreenSize(item, this.viewState));
         let bottomItems;
         if (!this.overflows && this.orientation !== Orientation.HORIZONTAL) {
-            bottomItems = items.filter(item => item.location === "BOTTOM");
-            items = items.filter(item => item.location === "TOP");
+            bottomItems = items.filter((item) => item.location === "BOTTOM");
+            items = items.filter((item) => item.location === "TOP");
         }
         return (React.createElement(StyledMapNavigation, { trainerBarVisible: viewState.trainerBarVisible },
             React.createElement(Box, { centered: true, column: true, justifySpaceBetween: true, fullHeight: true, alignItemsFlexEnd: true, ref: this.navigationRef },
@@ -218,7 +218,7 @@ let MapNavigation = class MapNavigation extends React.Component {
                         `margin-bottom: 5px;
                 flex-wrap: wrap;`}
             ` },
-                    items.map(item => {
+                    items.map((item) => {
                         // Do not expand in place for horizontal orientation
                         // as it results in buttons overlapping and hiding neighboring buttons.
                         return (React.createElement(MapNavigationItem, { expandInPlace: this.orientation !== Orientation.HORIZONTAL, key: item.id, item: item, terria: terria }));
@@ -227,7 +227,7 @@ let MapNavigation = class MapNavigation extends React.Component {
                         React.createElement(MapIconButton, { expandInPlace: true, iconElement: () => React.createElement(Icon, { glyph: GLYPHS.moreItems }), title: t("mapNavigation.additionalToolsTitle"), onClick: () => runInAction(() => {
                                 viewState.showCollapsedNavigation = true;
                             }) }, t("mapNavigation.additionalTools"))))),
-                React.createElement(ControlWrapper, { column: this.orientation === Orientation.VERTICAL }, bottomItems === null || bottomItems === void 0 ? void 0 : bottomItems.map(item => (React.createElement(MapNavigationItem, { key: item.id, item: item, terria: terria })))))));
+                React.createElement(ControlWrapper, { column: this.orientation === Orientation.VERTICAL }, bottomItems === null || bottomItems === void 0 ? void 0 : bottomItems.map((item) => (React.createElement(MapNavigationItem, { key: item.id, item: item, terria: terria })))))));
     }
 };
 MapNavigation.displayName = "MapNavigation";
@@ -251,16 +251,18 @@ MapNavigation = __decorate([
 ], MapNavigation);
 export default withTranslation()(withTheme(withControlledVisibility(MapNavigation)));
 export function filterViewerAndScreenSize(item, viewState) {
+    var _a;
     const currentViewer = viewState.terria.mainViewer.viewerMode;
+    const screenSize = (_a = item.screenSize) !== null && _a !== void 0 ? _a : "any";
     if (viewState.useSmallScreenInterface) {
         return ((!isDefined(item.controller.viewerMode) ||
             item.controller.viewerMode === currentViewer) &&
-            (!isDefined(item.screenSize) || item.screenSize === "small"));
+            (screenSize === "any" || item.screenSize === "small"));
     }
     else {
         return ((!isDefined(item.controller.viewerMode) ||
             item.controller.viewerMode === currentViewer) &&
-            (!isDefined(item.screenSize) || item.screenSize === "medium"));
+            (screenSize === "any" || item.screenSize === "medium"));
     }
 }
 //# sourceMappingURL=MapNavigation.js.map

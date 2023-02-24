@@ -7,6 +7,8 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 import { action, computed, observable, runInAction, toJS } from "mobx";
 import filterOutUndefined from "../../Core/filterOutUndefined";
 import flatten from "../../Core/flatten";
+import isDefined from "../../Core/isDefined";
+import TerriaError from "../../Core/TerriaError";
 import { getObjectId } from "../../Traits/ArrayNestedStrataMap";
 import addModelStrataView from "./addModelStrataView";
 import createStratumInstance from "./createStratumInstance";
@@ -44,7 +46,7 @@ export default function CreateModel(Traits) {
             /**
              * Gets the uniqueIds of models that are known to contain this one.
              * This is important because strata sometimes flow from container to
-             * containee, so the properties of this model may not be complete
+             * container, so the properties of this model may not be complete
              * if the container isn't loaded yet. It's also important for locating
              * this model in a hierarchical catalog.
              */
@@ -64,12 +66,26 @@ export default function CreateModel(Traits) {
             return result;
         }
         duplicateModel(newId, sourceReference) {
-            const newModel = new this.constructor(newId, this.terria, sourceReference);
+            let newModel;
+            try {
+                newModel = new this.constructor(newId, this.terria, sourceReference);
+            }
+            catch (e) {
+                throw TerriaError.from(`Failed to create model \`"${newId}"\``);
+            }
             this.strata.forEach((stratum, stratumId) => {
-                const newStratum = isLoadableStratum(stratum)
-                    ? stratum.duplicateLoadableStratum(newModel)
-                    : createStratumInstance(Traits, toJS(stratum));
-                newModel.strata.set(stratumId, newStratum);
+                try {
+                    const newStratum = isLoadableStratum(stratum)
+                        ? stratum.duplicateLoadableStratum(newModel)
+                        : createStratumInstance(Traits, toJS(stratum));
+                    newModel.strata.set(stratumId, newStratum);
+                }
+                catch (e) {
+                    throw TerriaError.from(e, {
+                        message: `Failed to duplicate stratum \`${stratumId}\` for model \`${newId}\`.`,
+                        importance: -1
+                    });
+                }
             });
             return newModel;
         }
@@ -89,24 +105,42 @@ export default function CreateModel(Traits) {
             const trait = this.traits[traitId];
             const nestedTraitsClass = trait.type;
             const newStratum = createStratumInstance(nestedTraitsClass);
-            newStratum[trait.idProperty] = objectId;
             const stratum = this.getOrCreateStratum(stratumId);
             let array = stratum[traitId];
             if (array === undefined) {
                 stratum[traitId] = [];
                 array = stratum[traitId];
             }
-            array.push(newStratum);
-            const models = this[traitId];
-            return models.find((o, i) => getObjectId(trait.idProperty, o, i) === objectId);
+            // If objectID is provided, set idProperty and then return new object
+            if (isDefined(objectId)) {
+                newStratum[trait.idProperty] = objectId;
+                array.push(newStratum);
+                const models = this[traitId];
+                return models.find((o, i) => getObjectId(trait.idProperty, o, i) === objectId);
+            }
+            // If no objectID is provided, we create a new object the end of the array (across all strata)
+            // This method `isRemoval` and `idProperty="index"` into account.
+            else {
+                let maxIndex = -1;
+                this.strata.forEach((s) => { var _a; return (_a = s[traitId]) === null || _a === void 0 ? void 0 : _a.forEach((e, idx) => (maxIndex = idx > maxIndex ? idx : maxIndex)); });
+                // Make array in this stratum the same length as largest array across all strata
+                for (let i = array.length; i <= maxIndex; i++) {
+                    array[i] = createStratumInstance(nestedTraitsClass);
+                }
+                // Add new object at the end of the array
+                array[maxIndex + 1] = newStratum;
+                // Return newly created model
+                const models = this[traitId];
+                return models[models.length - 1];
+            }
         }
         /** Return full list of knownContainerUniqueIds.
-         * This will recursively travese tree of knownContainerUniqueIds models to return full list of dependencies
+         * This will recursively traverse tree of knownContainerUniqueIds models to return full list of dependencies
          */
         get completeKnownContainerUniqueIds() {
             const findContainers = (model) => [
                 ...model.knownContainerUniqueIds,
-                ...flatten(filterOutUndefined(model.knownContainerUniqueIds.map(parentId => {
+                ...flatten(filterOutUndefined(model.knownContainerUniqueIds.map((parentId) => {
                     const parent = this.terria.getModelById(BaseModel, parentId);
                     if (parent) {
                         return findContainers(parent);

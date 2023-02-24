@@ -29,7 +29,7 @@ export function SearchInDataCatalog({ viewState, handleClick }) {
             React.createElement(StyledIcon, { styledWidth: "14px", glyph: Icon.GLYPHS["dataCatalog"] }),
             React.createElement(Spacing, { right: 2 }),
             React.createElement(Text, { textAlignLeft: true, textLight: true, large: true, fullWidth: true },
-                React.createElement(Trans, { i18nKey: "search.searchInDataCatalog", locationSearchText: locationSearchText },
+                React.createElement(Trans, { i18nKey: "search.searchInDataCatalog", values: { locationSearchText } },
                     "Search ",
                     React.createElement("strong", null, locationSearchText),
                     " in the Data Catalogue")),
@@ -42,7 +42,7 @@ SearchInDataCatalog.propTypes = {
 const PresentationBox = styled(Box).attrs({
     fullWidth: true
 }) `
-  ${props => props.highlightBottom &&
+  ${(props) => props.highlightBottom &&
     `
       // styled-components doesn't seem to prefix linear-gradient.. soo
       background-image: linear-gradient(bottom, ${props.theme.greyLightest} 50%, transparent 50%);
@@ -123,10 +123,10 @@ export class SearchBoxAndResultsRaw extends React.Component {
                 React.createElement(If, { condition: shouldShowResults },
                     React.createElement(Box, { position: "absolute", fullWidth: true, column: true, css: `
                 top: 100%;
-                background-color: ${props => props.theme.greyLightest};
+                background-color: ${(props) => props.theme.greyLightest};
                 max-height: calc(100vh - 120px);
-                border-radius: 0 0 ${props => props.theme.radius40Button}px
-                  ${props => props.theme.radius40Button}px;
+                border-radius: 0 0 ${(props) => props.theme.radius40Button}px
+                  ${(props) => props.theme.radius40Button}px;
               ` },
                         searchState.catalogSearchProvider && (React.createElement(Box, { column: true, paddedRatio: 2 },
                             React.createElement(SearchInDataCatalog, { viewState: viewState, handleClick: () => {
@@ -136,7 +136,7 @@ export class SearchBoxAndResultsRaw extends React.Component {
                   overflow-y: auto;
                 ` },
                             React.createElement(For, { each: "search", of: this.props.viewState.searchState.locationSearchResults },
-                                React.createElement(LocationSearchResults, { key: search.searchProvider.name, terria: this.props.terria, viewState: this.props.viewState, search: search, locationSearchText: locationSearchText, onLocationClick: result => {
+                                React.createElement(LocationSearchResults, { key: search.searchProvider.name, terria: this.props.terria, viewState: this.props.viewState, search: search, locationSearchText: locationSearchText, onLocationClick: (result) => {
                                         addMarker(this.props.terria, result);
                                         result.clickAction();
                                         runInAction(() => {

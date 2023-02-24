@@ -5,11 +5,10 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
 import anyTrait from "../Decorators/anyTrait";
-import FeatureInfoTraits from "./FeatureInfoTraits";
-import mixTraits from "../mixTraits";
-import ModelTraits from "../ModelTraits";
 import objectArrayTrait from "../Decorators/objectArrayTrait";
 import primitiveTrait from "../Decorators/primitiveTrait";
+import mixTraits from "../mixTraits";
+import ModelTraits from "../ModelTraits";
 import CatalogFunctionJobTraits from "./CatalogFunctionJobTraits";
 import WebProcessingServiceCatalogFunctionTraits from "./WebProcessingServiceCatalogFunctionTraits";
 export class WPSParameterTraits extends ModelTraits {
@@ -35,7 +34,7 @@ __decorate([
         description: "WPS input parameter type"
     })
 ], WPSParameterTraits.prototype, "inputType", void 0);
-export default class WebProcessingServiceCatalogJobTraits extends mixTraits(FeatureInfoTraits, CatalogFunctionJobTraits, WebProcessingServiceCatalogFunctionTraits) {
+export default class WebProcessingServiceCatalogJobTraits extends mixTraits(CatalogFunctionJobTraits, WebProcessingServiceCatalogFunctionTraits) {
 }
 __decorate([
     objectArrayTrait({
