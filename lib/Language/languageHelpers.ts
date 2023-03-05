@@ -1,5 +1,6 @@
 import { i18n } from "i18next";
 import { isJsonString } from "../Core/Json";
+import i18next from "i18next";
 
 export const TRANSLATE_KEY_PREFIX = "translate#";
 
@@ -14,6 +15,22 @@ export const TRANSLATE_KEY_PREFIX = "translate#";
  * @param keyOrString Either a prefixed translation key or a string
  * @param i18n An i18next instance
  */
+
+
+export function useTranslationIfExists(
+  keyOrString: string = "",
+  options?: { [key: string]: string }
+) {
+  if (keyOrString.indexOf("translate#") === 0) {
+    const translationKey = keyOrString.substr("translate#".length);
+    return i18next.exists(translationKey)
+      ? i18next.t(translationKey, options)
+      : translationKey;
+  } else {
+    return keyOrString;
+  }
+}
+
 export function applyTranslationIfExists(
   keyOrString: string,
   i18n: i18n,
