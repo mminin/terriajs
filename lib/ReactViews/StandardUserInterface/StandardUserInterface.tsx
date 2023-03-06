@@ -13,6 +13,8 @@ import DragDropFile from "../DragDropFile";
 import DragDropNotification from "../DragDropNotification";
 import ExplorerWindow from "../ExplorerWindow/ExplorerWindow";
 import FeatureInfoPanel from "../FeatureInfo/FeatureInfoPanel";
+import SpectralDisplay from "../FeatureInfo/SpectralDisplay";
+import BandDisplay from "../FeatureInfo/BandDisplay";
 import FeedbackForm from "../Feedback/FeedbackForm";
 import { Medium, Small } from "../Generic/Responsive";
 import SatelliteHelpPrompt from "../HelpScreens/SatelliteHelpPrompt";
@@ -285,6 +287,12 @@ const StandardUserInterface: React.FC<StandardUserInterfaceProps> = observer(
               })}
             >
               <FeatureInfoPanel />
+              <SpectralDisplay 
+                  viewState={props.viewState}
+                />
+               <BandDisplay 
+                  viewState={props.viewState}
+                />
             </div>
             <DragDropFile />
             <DragDropNotification />
