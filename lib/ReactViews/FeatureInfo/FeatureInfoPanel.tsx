@@ -33,6 +33,9 @@ import { withViewState } from "../StandardUserInterface/ViewStateContext";
 import Styles from "./feature-info-panel.scss";
 import FeatureInfoCatalogItem from "./FeatureInfoCatalogItem";
 
+export let currentLongitude = "0";
+export let currentLatitude = "0";
+
 const DragWrapper = require("../DragWrapper");
 
 interface Props {
@@ -239,6 +242,12 @@ class FeatureInfoPanel extends React.Component<Props> {
     const locationButtonStyle = isMarkerVisible(this.props.viewState.terria)
       ? Styles.btnLocationSelected
       : Styles.btnLocation;
+  /* MIKHAIL EDITS START */
+    this.props.viewState.setSpectralLocationSelected(false);
+    currentLatitude = latitude.toFixed(6);
+    currentLongitude = longitude.toFixed(6);
+    console.log("updating long lat", currentLatitude, currentLongitude);
+ /* MIKHAIL EDITS END */
 
     return (
       <div className={Styles.location}>

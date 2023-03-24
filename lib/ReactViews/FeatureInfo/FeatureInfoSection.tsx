@@ -42,6 +42,13 @@ import {
   mustacheURLEncodeTextComponent
 } from "./mustacheExpressions";
 
+/* IMPORT SPECTRAL PROFILE */
+import { currentLatitude, currentLongitude } from "./FeatureInfoPanel";
+import { spectralActive, spectralApiRequest } from "../Map/Navigation/Items/SpectralProfile";
+
+
+
+
 // We use Mustache templates inside React views, where React does the escaping; don't escape twice, or eg. " => &quot;
 Mustache.escape = function (string) {
   return string;
@@ -392,6 +399,39 @@ export class FeatureInfoSection extends React.Component<FeatureInfoProps> {
     const { t } = this.props;
 
     let title: string;
+
+    /* MIKHAIL EDITS START */
+
+    
+    //console.log(properties["_ProductID"]); // Maybe here?
+    let properties=this.props.feature.properties;
+//    let key = "_ProductID";
+//    let val = properties?.[key] ?? '';
+
+    let val ='';
+    for (const key in properties){
+      if (key == "_ProductId") {
+        val=properties[key]._value;
+      }
+    }
+
+    console.log(val);
+    //let val='M3_Archytas'; //This, i think, should be the value of the ProductId property.
+
+
+    if (spectralActive && !this.props.viewState.spectralLocationSelected) {
+    // Build around that spectralAtomic thing
+      console.log('curretLongitude ' + currentLongitude);
+      if (currentLongitude != this.props.viewState.spectralDataObject.lon || 
+        currentLatitude  != this.props.viewState.spectralDataObject.lat){
+        // I think spectral atomic should be set to true here somewhere. => WORKS!
+          this.props.viewState.setSpectralAtomic(true);
+      }
+      this.props.viewState.setSpectralLocationSelected(true);
+      this.props.viewState.setSpectralDataObject(val, currentLatitude, currentLongitude);
+      console.log("spectralDataObject: ", this.props.viewState.spectralDataObject);
+    }
+    /* MIKHAIL EDITS END */
 
     if (this.props.catalogItem.featureInfoTemplate.name) {
       title = Mustache.render(

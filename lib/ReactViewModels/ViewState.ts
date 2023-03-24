@@ -55,6 +55,15 @@ interface ViewStateOptions {
   errorHandlingProvider?: any;
 }
 
+    /* MIKHAIL EDITS START */
+interface SpectralDataObject {
+  image_id: string;
+  lat: string;
+  lon: string;
+}
+ /* MIKHAIL EDITS END */
+
+
 /**
  * Root of a global view model. Presumably this should get nested as more stuff goes into it. Basically this belongs to
  * the root of the UI and then it can choose to pass either the whole thing or parts down as props to its children.
@@ -172,7 +181,7 @@ export default class ViewState {
     this.spectralAtomic = bool;
   }
 
-  @observable spectralDataObject: object = {
+  @observable spectralDataObject: SpectralDataObject = {
     image_id: "",
     lat: "",
     lon: ""
