@@ -67,8 +67,8 @@ export default class BandDisplay extends React.Component {
 	}
 
 	imageIdHandleChange(image_id){
-		rgbObj.image_id = image_id;
-		console.log(rgbObj); 
+		rgbObj.image_id = image_id.target.value;
+		console.log(image_id); 
 	}
 
 	redHandleChange(band){
