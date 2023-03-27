@@ -67,7 +67,7 @@ export default class BandDisplay extends React.Component {
 	}
 
 	imageIdHandleChange(image_id){
-		rgbObj.image_id = "M3_Archytas";
+		rgbObj.image_id = image_id;
 		console.log(rgbObj); 
 	}
 
